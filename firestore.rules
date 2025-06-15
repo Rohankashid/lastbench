@@ -1,0 +1,37 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Users collection rules
+    match /users/{userId} {
+      // Allow users to read and write their own data
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      // Allow admins to read all user data
+      allow read: if isAdmin();
+    }
+
+    // Materials collection rules
+    match /materials/{materialId} {
+      // Allow authenticated users to read all materials
+      allow read: if isAuthenticated();
+      // Allow only admins to write materials
+      allow write: if isAdmin();
+    }
+
+    // Default deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 
