@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import Link from 'next/link';
 import SkeletonCard from '@/components/SkeletonCard';
 
 interface Note {
@@ -17,6 +16,7 @@ interface Note {
   university: string;
   year: string;
   downloadUrl: string;
+  fileUrl: string;
   uploadedBy: string;
   uploadedAt: string;
 }
@@ -29,46 +29,47 @@ export default function NotesPage() {
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({
     semester: '',
-    subject: '',
+    branch: '',
     university: '',
   });
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    fetchNotes();
-  }, [user, router]);
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [debouncedUniversity, setDebouncedUniversity] = useState(filters.university);
 
-  const fetchNotes = async () => {
+  useEffect(() => {
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(() => {
+      setDebouncedUniversity(filters.university);
+    }, 400);
+  }, [filters.university]);
+
+  const fetchNotes = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
-
       let q = query(
         collection(db, 'materials'),
         where('category', '==', 'note'),
         orderBy('uploadedAt', 'desc')
       );
-
-      // Apply filters if they exist
       if (filters.semester) {
         q = query(q, where('semester', '==', filters.semester));
       }
-      if (filters.subject) {
-        q = query(q, where('subject', '==', filters.subject));
+      if (filters.branch) {
+        q = query(q, where('branch', '==', filters.branch));
       }
-      if (filters.university) {
-        q = query(q, where('university', '==', filters.university));
-      }
-
+      // Do NOT filter university in Firestore
       const querySnapshot = await getDocs(q);
-      const notesData = querySnapshot.docs.map(doc => ({
+      let notesData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Note[];
-
+      // Client-side, case-insensitive, partial match for university
+      if (debouncedUniversity) {
+        notesData = notesData.filter(note =>
+          note.university && note.university.toLowerCase().includes(debouncedUniversity.toLowerCase())
+        );
+      }
       setNotes(notesData);
     } catch (error) {
       console.error('Error fetching notes:', error);
@@ -76,25 +77,27 @@ export default function NotesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters.semester, filters.branch, debouncedUniversity]);
 
-  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    fetchNotes();
+  }, [user, router, fetchNotes]);
+
+  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleFilterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchNotes();
   };
 
   const handleResetFilters = () => {
     setFilters({
       semester: '',
-      subject: '',
+      branch: '',
       university: '',
     });
-    fetchNotes();
   };
 
   if (loading) {
@@ -110,6 +113,7 @@ export default function NotesPage() {
   }
 
   return (
+    <div>
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center">
@@ -124,7 +128,7 @@ export default function NotesPage() {
         {/* Filters */}
         <div className="mt-12 bg-white shadow-xl rounded-lg overflow-hidden">
           <div className="px-4 py-5 sm:p-6">
-            <form onSubmit={handleFilterSubmit} className="space-y-6">
+            <form className="space-y-6">
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                 <div>
                   <label htmlFor="semester" className="block text-sm font-medium text-gray-700">
@@ -150,18 +154,25 @@ export default function NotesPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
-                    Subject
+                  <label htmlFor="branch" className="block text-sm font-medium text-gray-700">
+                    Branch
                   </label>
-                  <input
-                    type="text"
-                    name="subject"
-                    id="subject"
-                    value={filters.subject}
+                  <select
+                    id="branch"
+                    name="branch"
+                    value={filters.branch}
                     onChange={handleFilterChange}
-                    placeholder="Enter subject name"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  />
+                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                  >
+                    <option value="">All Branches</option>
+                    <option value="Computer Engineering / Computer Science and Engineering (CSE)">Computer Engineering / Computer Science and Engineering (CSE)</option>
+                    <option value="Information Technology (IT)">Information Technology (IT)</option>
+                    <option value="Electronics and Telecommunication (ENTC / E&TC)">Electronics and Telecommunication (ENTC / E&TC)</option>
+                    <option value="Mechanical Engineering">Mechanical Engineering</option>
+                    <option value="Civil Engineering">Civil Engineering</option>
+                    <option value="Electrical Engineering">Electrical Engineering</option>
+                    <option value="Electronics Engineering">Electronics Engineering</option>
+                  </select>
                 </div>
 
                 <div>
@@ -191,17 +202,9 @@ export default function NotesPage() {
                   </svg>
                   Reset Filters
                 </button>
-                <button
-                  type="submit"
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-                >
-                  <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
-                  </svg>
-                  Apply Filters
-                </button>
-              </div>
-            </form>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
 

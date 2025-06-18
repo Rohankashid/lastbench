@@ -64,16 +64,20 @@ export default function SignUpPage() {
       });
 
       router.push('/');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Signup error:', error);
-      if (error.code === 'auth/email-already-in-use') {
-        setError('This email is already registered. Please use a different email or sign in.');
-      } else if (error.code === 'auth/invalid-email') {
-        setError('Please enter a valid email address.');
-      } else if (error.code === 'auth/weak-password') {
-        setError('Password is too weak. Please use a stronger password.');
+      if (error && typeof error === 'object' && 'code' in error) {
+        if (error.code === 'auth/email-already-in-use') {
+          setError('This email is already registered. Please use a different email or sign in.');
+        } else if (error.code === 'auth/invalid-email') {
+          setError('Please enter a valid email address.');
+        } else if (error.code === 'auth/weak-password') {
+          setError('Password is too weak. Please use a stronger password.');
+        } else {
+          setError('Failed to create account');
+        }
       } else {
-        setError(error.message || 'Failed to create account');
+        setError('An unexpected error occurred');
       }
     } finally {
       setLoading(false);

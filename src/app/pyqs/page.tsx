@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import Link from 'next/link';
 import SkeletonCard from '@/components/SkeletonCard';
 
 interface PYQ {
@@ -18,6 +17,7 @@ interface PYQ {
   year: string;
   examYear: string;
   downloadUrl: string;
+  fileUrl: string;
   uploadedBy: string;
   uploadedAt: string;
 }
@@ -30,50 +30,47 @@ export default function PYQsPage() {
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({
     semester: '',
-    subject: '',
+    branch: '',
     university: '',
-    examYear: '',
   });
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    fetchPYQs();
-  }, [user, router]);
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [debouncedUniversity, setDebouncedUniversity] = useState(filters.university);
 
-  const fetchPYQs = async () => {
+  useEffect(() => {
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(() => {
+      setDebouncedUniversity(filters.university);
+    }, 400);
+  }, [filters.university]);
+
+  const fetchPYQs = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
-
       let q = query(
         collection(db, 'materials'),
         where('category', '==', 'pyq'),
         orderBy('uploadedAt', 'desc')
       );
-
-      // Apply filters if they exist
       if (filters.semester) {
         q = query(q, where('semester', '==', filters.semester));
       }
-      if (filters.subject) {
-        q = query(q, where('subject', '==', filters.subject));
+      if (filters.branch) {
+        q = query(q, where('branch', '==', filters.branch));
       }
-      if (filters.university) {
-        q = query(q, where('university', '==', filters.university));
-      }
-      if (filters.examYear) {
-        q = query(q, where('examYear', '==', filters.examYear));
-      }
-
+      // Do NOT filter university in Firestore
       const querySnapshot = await getDocs(q);
-      const pyqsData = querySnapshot.docs.map(doc => ({
+      let pyqsData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as PYQ[];
-
+      // Client-side, case-insensitive, partial match for university
+      if (debouncedUniversity) {
+        pyqsData = pyqsData.filter(pyq =>
+          pyq.university && pyq.university.toLowerCase().includes(debouncedUniversity.toLowerCase())
+        );
+      }
       setPYQs(pyqsData);
     } catch (error) {
       console.error('Error fetching PYQs:', error);
@@ -81,31 +78,28 @@ export default function PYQsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters.semester, filters.branch, debouncedUniversity]);
 
-  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    fetchPYQs();
+  }, [user, router, fetchPYQs]);
+
+  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleFilterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchPYQs();
   };
 
   const handleResetFilters = () => {
     setFilters({
       semester: '',
-      subject: '',
+      branch: '',
       university: '',
-      examYear: '',
     });
-    fetchPYQs();
   };
-
-  // Generate exam year options (last 5 years)
-  const currentYear = new Date().getFullYear();
-  const examYears = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString());
 
   if (loading) {
     return (
@@ -133,11 +127,11 @@ export default function PYQsPage() {
 
         {/* Filters */}
         <div className="mt-12 bg-white shadow-xl rounded-lg overflow-hidden">
-          <div className="px-4 py-5 sm:p-6">
-            <form onSubmit={handleFilterSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-4">
+          <div className="px-6 py-8 sm:p-8">
+            <form className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 <div>
-                  <label htmlFor="semester" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="semester" className="block text-sm font-medium text-gray-700 mb-1">
                     Semester
                   </label>
                   <select
@@ -145,7 +139,7 @@ export default function PYQsPage() {
                     name="semester"
                     value={filters.semester}
                     onChange={handleFilterChange}
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                    className="block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   >
                     <option value="">All Semesters</option>
                     <option value="1">Semester 1</option>
@@ -158,24 +152,29 @@ export default function PYQsPage() {
                     <option value="8">Semester 8</option>
                   </select>
                 </div>
-
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
-                    Subject
+                  <label htmlFor="branch" className="block text-sm font-medium text-gray-700 mb-1">
+                    Branch
                   </label>
-                  <input
-                    type="text"
-                    name="subject"
-                    id="subject"
-                    value={filters.subject}
+                  <select
+                    id="branch"
+                    name="branch"
+                    value={filters.branch}
                     onChange={handleFilterChange}
-                    placeholder="Enter subject name"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  />
+                    className="block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  >
+                    <option value="">All Branches</option>
+                    <option value="Computer Engineering / Computer Science and Engineering (CSE)">Computer Engineering / Computer Science and Engineering (CSE)</option>
+                    <option value="Information Technology (IT)">Information Technology (IT)</option>
+                    <option value="Electronics and Telecommunication (ENTC / E&TC)">Electronics and Telecommunication (ENTC / E&TC)</option>
+                    <option value="Mechanical Engineering">Mechanical Engineering</option>
+                    <option value="Civil Engineering">Civil Engineering</option>
+                    <option value="Electrical Engineering">Electrical Engineering</option>
+                    <option value="Electronics Engineering">Electronics Engineering</option>
+                  </select>
                 </div>
-
                 <div>
-                  <label htmlFor="university" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="university" className="block text-sm font-medium text-gray-700 mb-1">
                     University
                   </label>
                   <input
@@ -185,27 +184,11 @@ export default function PYQsPage() {
                     value={filters.university}
                     onChange={handleFilterChange}
                     placeholder="Enter university name"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="year" className="block text-sm font-medium text-gray-700">
-                    Exam Year
-                  </label>
-                  <input
-                    type="number"
-                    name="year"
-                    id="year"
-                    value={filters.year}
-                    onChange={handleFilterChange}
-                    placeholder="Enter exam year"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   />
                 </div>
               </div>
-
-              <div className="flex justify-end space-x-3">
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={handleResetFilters}
@@ -215,15 +198,6 @@ export default function PYQsPage() {
                     <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
                   </svg>
                   Reset Filters
-                </button>
-                <button
-                  type="submit"
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-                >
-                  <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
-                  </svg>
-                  Apply Filters
                 </button>
               </div>
             </form>

@@ -14,11 +14,11 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    year: '',
     university: '',
     semester: '',
     subject: '',
     category: 'note', 
+    branch: '',
     file: null as File | null,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,15 +56,6 @@ export default function UploadPage() {
     checkAdminStatus();
   }, [user, router]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData(prev => ({
-        ...prev,
-        file: e.target.files![0]
-      }));
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.file) {
@@ -91,11 +82,11 @@ export default function UploadPage() {
       // 2. Add document to Firestore with S3 URL
       await addDoc(collection(db, 'materials'), {
         name: formData.name,
-        year: formData.year,
         university: formData.university,
         semester: formData.semester,
         subject: formData.subject,
         category: formData.category,
+        branch: formData.branch,
         fileUrl: data.url, // S3 URL
         uploadedBy: user?.email,
         uploadedAt: new Date().toISOString(),
@@ -104,11 +95,11 @@ export default function UploadPage() {
       // Reset form
       setFormData({
         name: '',
-        year: '',
         university: '',
         semester: '',
         subject: '',
         category: 'note',
+        branch: '',
         file: null,
       });
 
@@ -121,18 +112,6 @@ export default function UploadPage() {
     }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileChange({ target: { files: e.dataTransfer.files } } as any);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
 
   if (loading) {
     return (
@@ -161,6 +140,7 @@ export default function UploadPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
+        
         <div className="text-center">
           <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">
             Upload Study Material
@@ -190,7 +170,45 @@ export default function UploadPage() {
 
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                  <div>
+  <label htmlFor="branch" className="block text-sm font-medium text-gray-700">
+    Branch
+  </label>
+  <div className="mt-1">
+    <select
+      id="branch"
+      name="branch"
+      value={formData.branch}
+      onChange={e => setFormData(prev => ({ ...prev, branch: e.target.value }))}
+      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+      required
+    >
+      <option value="">Select Branch</option>
+      <option value="Computer Engineering / Computer Science and Engineering (CSE)">
+        Computer Engineering / Computer Science and Engineering (CSE)
+      </option>
+      <option value="Information Technology (IT)">
+        Information Technology (IT)
+      </option>
+      <option value="Electronics and Telecommunication (ENTC / E&TC)">
+        Electronics and Telecommunication (ENTC / E&TC)
+      </option>
+      <option value="Mechanical Engineering">
+        Mechanical Engineering
+      </option>
+      <option value="Civil Engineering">
+        Civil Engineering
+      </option>
+      <option value="Electrical Engineering">
+        Electrical Engineering
+      </option>
+      <option value="Electronics Engineering">
+        Electronics Engineering
+      </option>
+    </select>
+  </div>
+</div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mt-2">
                     Material Name
                   </label>
                   <div className="mt-1">
@@ -207,23 +225,6 @@ export default function UploadPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="year" className="block text-sm font-medium text-gray-700">
-                    Year
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="year"
-                      id="year"
-                      value={formData.year}
-                      onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="Enter year"
-                      required
-                    />
-                  </div>
-                </div>
 
                 <div className="sm:col-span-2">
                   <label htmlFor="university" className="block text-sm font-medium text-gray-700">

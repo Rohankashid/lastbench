@@ -8,7 +8,7 @@ import { getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function Home() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -30,14 +30,6 @@ export default function Home() {
     fetchUserRole();
   }, [user]);
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      router.push('/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -61,12 +53,6 @@ export default function Home() {
                   >
                     Profile
                   </Link>
-                  <button
-                    onClick={handleSignOut}
-                    className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Sign Out
-                  </button>
                 </>
               ) : (
                 <>
@@ -89,19 +75,13 @@ export default function Home() {
             {/* Mobile menu button */}
             <div className="md:hidden">
               <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                onClick={() => router.push('/profile')}
                 className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
               >
-                <span className="sr-only">Open main menu</span>
-                {!isMenuOpen ? (
-                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                ) : (
-                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                )}
+                <span className="sr-only">Go to profile</span>
+                <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
               </button>
             </div>
           </div>
@@ -120,15 +100,6 @@ export default function Home() {
                   >
                     Profile
                   </Link>
-                  <button
-                    onClick={() => {
-                      handleSignOut();
-                      setIsMenuOpen(false);
-                    }}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                  >
-                    Sign Out
-                  </button>
                 </>
               ) : (
                 <>
@@ -154,57 +125,57 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-extrabold text-gray-900 mb-6">
+      <main className="max-w-7xl mx-auto px-1 sm:px-2 md:px-4 lg:px-8 py-8 sm:py-12">
+        <div className="text-center mb-10 sm:mb-16">
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 mb-4 sm:mb-6">
             Welcome to <span className="text-blue-600">LastBench</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-base sm:text-xl text-gray-600 max-w-3xl mx-auto">
             Your one-stop solution for engineering study resources. Access comprehensive notes, previous year questions, and more.
           </p>
         </div>
 
         {user ? (
-          <div className="space-y-12">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="space-y-10 sm:space-y-12">
+            <div className="text-center mb-6 sm:mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
                 Welcome back, {user.displayName || user.email}!
               </h2>
-              <p className="text-gray-600">What would you like to explore today?</p>
+              <p className="text-gray-600 text-sm sm:text-base">What would you like to explore today?</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 gap-y-6 max-w-4xl mx-auto">
               <Link
                 href="/notes"
-                className="group relative overflow-hidden rounded-2xl bg-white p-8 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1"
+                className="group relative w-full overflow-hidden rounded-2xl bg-white p-6 sm:p-8 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 transition-opacity group-hover:opacity-100" />
                 <div className="relative">
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-3">Study Notes</h3>
-                  <p className="text-gray-600">Access comprehensive study materials and notes for your courses</p>
+                  <h3 className="text-lg sm:text-2xl font-semibold text-gray-900 mb-2 sm:mb-3">Study Notes</h3>
+                  <p className="text-gray-600 text-sm sm:text-base">Access comprehensive study materials and notes for your courses</p>
                 </div>
               </Link>
 
               <Link
                 href="/pyqs"
-                className="group relative overflow-hidden rounded-2xl bg-white p-8 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1"
+                className="group relative w-full overflow-hidden rounded-2xl bg-white p-6 sm:p-8 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 transition-opacity group-hover:opacity-100" />
                 <div className="relative">
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-3">Previous Year Questions</h3>
-                  <p className="text-gray-600">Browse and practice with previous year question papers</p>
+                  <h3 className="text-lg sm:text-2xl font-semibold text-gray-900 mb-2 sm:mb-3">Previous Year Questions</h3>
+                  <p className="text-gray-600 text-sm sm:text-base">Browse and practice with previous year question papers</p>
                 </div>
               </Link>
 
               {userRole === 'admin' && (
                 <Link
                   href="/upload"
-                  className="group relative overflow-hidden rounded-2xl bg-white p-8 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 md:col-span-2"
+                  className="group relative w-full overflow-hidden rounded-2xl bg-white p-6 sm:p-8 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 md:col-span-2"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 transition-opacity group-hover:opacity-100" />
                   <div className="relative">
-                    <h3 className="text-2xl font-semibold text-gray-900 mb-3">Upload Content</h3>
-                    <p className="text-gray-600">Share your study materials and previous year questions with the community</p>
+                    <h3 className="text-lg sm:text-2xl font-semibold text-gray-900 mb-2 sm:mb-3">Upload Content</h3>
+                    <p className="text-gray-600 text-sm sm:text-base">Share your study materials and previous year questions with the community</p>
                   </div>
                 </Link>
               )}

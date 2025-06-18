@@ -21,9 +21,13 @@ export default function LoginPage() {
     try {
       await signIn(email, password);
       router.push('/');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
-      setError(error.message || 'Failed to sign in');
+      if (error && typeof error === 'object' && 'message' in error) {
+        setError(error.message as string || 'Failed to sign in');
+      } else {
+        setError('Failed to sign in');
+      }
     } finally {
       setLoading(false);
     }
@@ -38,7 +42,7 @@ export default function LoginPage() {
               Welcome Back
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
                 Create one now
               </Link>
