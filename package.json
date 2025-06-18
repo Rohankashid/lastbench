@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.830.0",
     "@firebase/auth": "^1.10.7",
     "@firebase/firestore": "^4.7.17",
     "@firebase/storage": "^0.13.13",
