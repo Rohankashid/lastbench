@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState , useEffect} from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -21,6 +21,7 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const router = useRouter();
+  const {user} = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -29,6 +30,12 @@ export default function SignUpPage() {
       [name]: value
     }));
   };
+
+  useEffect(()=>{
+    if(user){
+      router.replace('/');
+    }
+  },[user , router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

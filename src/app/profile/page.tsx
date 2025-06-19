@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { CheckCircleIcon, PencilIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, PencilIcon, XCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 interface ProfileData {
   name: string;
@@ -150,6 +150,14 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white shadow-2xl rounded-2xl p-8 sm:p-10 flex flex-col items-center relative">
+          {/* Back Button */}
+          <button
+            onClick={() => router.push('/')}
+            className="absolute top-4 left-4 p-2 rounded-full hover:bg-gray-100 focus:outline-none"
+            aria-label="Back to Home"
+          >
+            <ArrowLeftIcon className="h-6 w-6 text-gray-500" />
+          </button>
           {/* Avatar and Basic Info */}
           <div className="flex flex-col items-center w-full mb-8">
             <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center text-4xl font-bold text-blue-600 mb-4">
