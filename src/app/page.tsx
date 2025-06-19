@@ -206,6 +206,14 @@ export default function Home() {
             </div>
           </div>
         )}
+        <footer className="mt-16 text-center text-sm text-gray-500">
+          <a
+            href="mailto:contact.lastbench@gmail.com"
+            className="underline hover:text-blue-600 transition-colors"
+          >
+            Contact Us
+          </a>
+        </footer>
       </main>
     </div>
   );
