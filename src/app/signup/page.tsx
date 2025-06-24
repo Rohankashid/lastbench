@@ -164,44 +164,6 @@ export default function SignUpPage() {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="new-password"
-                    required
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    placeholder="Create a password"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                  Confirm Password
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    required
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    placeholder="Confirm your password"
-                  />
-                </div>
-              </div>
-
-              <div>
                 <label htmlFor="college" className="block text-sm font-medium text-gray-700">
                   College
                 </label>
@@ -256,6 +218,44 @@ export default function SignUpPage() {
                     <option value="3">Third Year</option>
                     <option value="4">Fourth Year</option>
                   </select>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="Create a password"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                  Confirm Password
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="Confirm your password"
+                  />
                 </div>
               </div>
             </div>

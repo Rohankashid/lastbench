@@ -13,6 +13,7 @@ export default function LoginPage() {
   const { signIn } = useAuth();
   const router = useRouter();
   const {user} = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,13 +23,28 @@ export default function LoginPage() {
     try {
       await signIn(email, password);
       router.push('/');
-    } catch (error: unknown) {
-      console.error('Login error:', error);
-      if (error && typeof error === 'object' && 'message' in error) {
-        setError(error.message as string || 'Failed to sign in');
-      } else {
-        setError('Failed to sign in');
+    } catch (error: any) {
+      // Map Firebase error codes to user-friendly messages
+      let friendlyMessage = 'Failed to sign in.';
+      if (error && error.code) {
+        switch (error.code) {
+          case 'auth/user-not-found':
+            friendlyMessage = 'No account found with this email.';
+            break;
+          case 'auth/wrong-password':
+            friendlyMessage = 'Incorrect password. Please try again.';
+            break;
+          case 'auth/invalid-credential':
+            friendlyMessage = 'Invalid credentials. Please check your email and password.';
+            break;
+          case 'auth/too-many-requests':
+            friendlyMessage = 'Too many attempts. Please try again later.';
+            break;
+          default:
+            friendlyMessage = 'Something went wrong. Please try again.';
+        }
       }
+      setError(friendlyMessage);
     } finally {
       setLoading(false);
     }
@@ -97,18 +113,36 @@ export default function LoginPage() {
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
               </label>
-              <div className="mt-1">
+              <div className="mt-1 relative">
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10"
                   placeholder="Enter your password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    // Eye-off SVG
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.657.336-3.234.938-4.675M15 12a3 3 0 11-6 0 3 3 0 016 0zm6.062-4.675A9.956 9.956 0 0122 9c0 5.523-4.477 10-10 10a9.956 9.956 0 01-4.675-.938" />
+                    </svg>
+                  ) : (
+                    // Eye SVG
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10z" />
+                    </svg>
+                  )}
+                </button>
               </div>
             </div>
 
@@ -126,9 +160,9 @@ export default function LoginPage() {
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
                   Forgot your password?
-                </a>
+                </Link>
               </div>
             </div>
 

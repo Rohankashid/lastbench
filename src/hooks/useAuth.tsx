@@ -51,7 +51,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       return userCredential.user;
     } catch (error) {
-      console.error('Error signing in:', error);
       throw error;
     }
   };
@@ -62,7 +61,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await updateProfile(userCredential.user, { displayName: name });
       return userCredential.user;
     } catch (error) {
-      console.error('Error signing up:', error);
       throw error;
     }
   };
@@ -71,7 +69,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await firebaseSignOut(auth);
     } catch (error) {
-      console.error('Error signing out:', error);
       throw error;
     }
   };
