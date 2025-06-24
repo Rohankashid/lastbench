@@ -20,23 +20,27 @@ export default function ForgotPasswordPage(){
         try{
             await sendPasswordResetEmail(auth, email);
             setMessage('Password reset email sent! Please check your inbox.');
-        } catch (err: any) {
-            // Map Firebase error codes to user-friendly messages
+        } catch (err: unknown) {
+            type FirebaseError = { code: string };
+            let errorCode = '';
+            if (err && typeof err === 'object' && 'code' in err && typeof (err as FirebaseError).code === 'string') {
+                errorCode = (err as FirebaseError).code;
+            }
             let friendlyMessage = 'Failed to send password reset email.';
-            if (err && err.code) {
-                switch (err.code) {
-                    case 'auth/user-not-found':
-                        friendlyMessage = 'No account found with this email.';
-                        break;
-                    case 'auth/invalid-email':
-                        friendlyMessage = 'Please enter a valid email address.';
-                        break;
-                    case 'auth/too-many-requests':
-                        friendlyMessage = 'Too many requests. Please try again later.';
-                        break;
-                    default:
+            switch (errorCode) {
+                case 'auth/user-not-found':
+                    friendlyMessage = 'No account found with this email.';
+                    break;
+                case 'auth/invalid-email':
+                    friendlyMessage = 'Please enter a valid email address.';
+                    break;
+                case 'auth/too-many-requests':
+                    friendlyMessage = 'Too many requests. Please try again later.';
+                    break;
+                default:
+                    if (errorCode) {
                         friendlyMessage = 'Something went wrong. Please try again.';
-                }
+                    }
             }
             setError(friendlyMessage);
         } finally {

@@ -23,26 +23,30 @@ export default function LoginPage() {
     try {
       await signIn(email, password);
       router.push('/');
-    } catch (error: any) {
-      // Map Firebase error codes to user-friendly messages
+    } catch (error: unknown) {
+      type FirebaseError = { code: string };
+      let errorCode = '';
+      if (error && typeof error === 'object' && 'code' in error && typeof (error as FirebaseError).code === 'string') {
+        errorCode = (error as FirebaseError).code;
+      }
       let friendlyMessage = 'Failed to sign in.';
-      if (error && error.code) {
-        switch (error.code) {
-          case 'auth/user-not-found':
-            friendlyMessage = 'No account found with this email.';
-            break;
-          case 'auth/wrong-password':
-            friendlyMessage = 'Incorrect password. Please try again.';
-            break;
-          case 'auth/invalid-credential':
-            friendlyMessage = 'Invalid credentials. Please check your email and password.';
-            break;
-          case 'auth/too-many-requests':
-            friendlyMessage = 'Too many attempts. Please try again later.';
-            break;
-          default:
+      switch (errorCode) {
+        case 'auth/user-not-found':
+          friendlyMessage = 'No account found with this email.';
+          break;
+        case 'auth/wrong-password':
+          friendlyMessage = 'Incorrect password. Please try again.';
+          break;
+        case 'auth/invalid-credential':
+          friendlyMessage = 'Invalid credentials. Please check your email and password.';
+          break;
+        case 'auth/too-many-requests':
+          friendlyMessage = 'Too many attempts. Please try again later.';
+          break;
+        default:
+          if (errorCode) {
             friendlyMessage = 'Something went wrong. Please try again.';
-        }
+          }
       }
       setError(friendlyMessage);
     } finally {
