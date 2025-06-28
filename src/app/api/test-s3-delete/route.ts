@@ -78,19 +78,20 @@ export async function POST(req: NextRequest) {
 
     // Step 4: Verify deletion
     try {
-      console.log('Step 4: Verifying deletion...');
+      console.log('Verifying deletion...');
       const verifyHeadCommand = new HeadObjectCommand({
         Bucket: bucketName,
         Key: key,
       });
       
       await s3.send(verifyHeadCommand);
-      console.error('File still exists after deletion!');
+      console.error('File still exists after deletion attempt!');
       return NextResponse.json({ 
         error: 'File still exists after deletion', 
-        details: 'Deletion appeared successful but file still exists'
+        details: 'Deletion appeared successful but file still exists',
+        params: { bucket: bucketName, key: key }
       }, { status: 500 });
-    } catch (verifyError) {
+    } catch {
       console.log('File successfully deleted (verification passed)');
     }
 

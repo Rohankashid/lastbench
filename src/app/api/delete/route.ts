@@ -90,7 +90,7 @@ export async function DELETE(req: NextRequest) {
             details: 'Deletion appeared successful but file still exists',
             params: deleteParams
           }, { status: 500 });
-        } catch (verifyError) {
+        } catch {
           console.log('File successfully deleted (verification passed)');
         }
         

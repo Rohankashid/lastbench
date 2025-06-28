@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { S3Client, ListObjectsV2Command, HeadObjectCommand } from '@aws-sdk/client-s3';
+import {  NextResponse } from 'next/server';
+import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
 
 export async function GET() {
   try {
