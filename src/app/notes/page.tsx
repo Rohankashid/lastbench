@@ -3,8 +3,9 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { ref, deleteObject } from 'firebase/storage';
+import { db, storage } from '@/lib/firebase';
 import SkeletonCard from '@/components/SkeletonCard';
 
 interface Note {
@@ -27,6 +28,8 @@ export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     semester: '',
     branch: '',
@@ -42,6 +45,21 @@ export default function NotesPage() {
       setDebouncedUniversity(filters.university);
     }, 400);
   }, [filters.university]);
+
+  const checkAdminStatus = useCallback(async () => {
+    if (!user) return false;
+    
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        return userData.role === 'admin';
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+    return false;
+  }, [user]);
 
   const fetchNotes = useCallback(async () => {
     try {
@@ -84,8 +102,15 @@ export default function NotesPage() {
       router.push('/login');
       return;
     }
-    fetchNotes();
-  }, [user, router, fetchNotes]);
+    
+    const initializePage = async () => {
+      const adminStatus = await checkAdminStatus();
+      setIsAdmin(adminStatus);
+      await fetchNotes();
+    };
+    
+    initializePage();
+  }, [user, router, fetchNotes, checkAdminStatus]);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -98,6 +123,89 @@ export default function NotesPage() {
       branch: '',
       university: '',
     });
+  };
+
+  const handleDelete = async (note: Note) => {
+    setError('');
+    if (!window.confirm('Are you sure you want to delete this note?')) {
+      return;
+    }
+
+    try {
+      console.log('Deleting note:', note.title, 'URL:', note.fileUrl, 'ID:', note.id);
+
+      // Check if this is an S3 URL or Firebase Storage URL
+      if (note.fileUrl && (note.fileUrl.includes('s3.amazonaws.com') || note.fileUrl.includes('s3.'))) {
+        // This is an S3 URL - delete from S3
+        try {
+          console.log('S3 URL detected, deleting from S3');
+          const response = await fetch('/api/delete', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ fileUrl: note.fileUrl }),
+          });
+          
+          const result = await response.json();
+          console.log('S3 deletion result:', result);
+          
+          if (!response.ok) {
+            console.error('S3 deletion failed:', result);
+            throw new Error('S3 deletion failed');
+          }
+          
+          console.log('S3 file deleted successfully');
+        } catch (s3Error) {
+          console.error('S3 delete failed:', s3Error);
+          throw new Error('Failed to delete file from S3');
+        }
+      } else if (note.fileUrl && note.fileUrl.includes('firebasestorage.googleapis.com')) {
+        // This is a Firebase Storage URL - delete from Firebase Storage
+        try {
+          console.log('Firebase Storage URL detected, deleting from Firebase Storage');
+          const firebaseUrl = new URL(note.fileUrl);
+          const pathMatch = firebaseUrl.pathname.match(/\/o\/(.+?)\?/);
+          const filePath = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
+          
+          if (filePath) {
+            console.log('Firebase Storage path:', filePath);
+            const fileRef = ref(storage, filePath);
+            await deleteObject(fileRef);
+            console.log('Firebase Storage file deleted successfully');
+          } else {
+            console.warn('Could not extract Firebase Storage path from URL');
+            throw new Error('Could not extract Firebase Storage path');
+          }
+        } catch (storageError) {
+          console.error('Firebase Storage delete failed:', storageError);
+          throw new Error('Failed to delete file from Firebase Storage');
+        }
+      } else {
+        console.warn('Unknown URL format, skipping file deletion');
+        console.log('URL that was not recognized:', note.fileUrl);
+      }
+
+      // Delete from Firestore
+      try {
+        console.log('Attempting to delete Firestore doc with id:', note.id);
+        await deleteDoc(doc(db, 'materials', note.id));
+        console.log('Firestore document deleted successfully for id:', note.id);
+      } catch (firestoreError) {
+        console.error('Error deleting Firestore document:', firestoreError, 'for id:', note.id);
+        throw new Error('Failed to delete Firestore document');
+      }
+      
+      // Update local state
+      setNotes(prevNotes => {
+        const updatedNotes = prevNotes.filter(n => n.id !== note.id);
+        console.log('Updated notes state after deletion:', updatedNotes);
+        return updatedNotes;
+      });
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      setError('Failed to delete note: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
   };
 
   if (loading) {
@@ -228,8 +336,8 @@ export default function NotesPage() {
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No notes found</h3>
-              <p className="mt-1 text-sm text-gray-500">Get started by uploading a new note.</p>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No study notes found</h3>
+              <p className="mt-1 text-sm text-gray-500">Get started by uploading a new study note.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -265,7 +373,7 @@ export default function NotesPage() {
                             {note.uploadedBy}
                           </div>
                         </div>
-                        <div className="mt-6">
+                        <div className="mt-6 flex items-center space-x-2">
                           <a
                             href={note.fileUrl}
                             download
@@ -278,6 +386,30 @@ export default function NotesPage() {
                             </svg>
                             Download Note
                           </a>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDelete(note)}
+                              disabled={deleting === note.id}
+                              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-red-400 transition-colors duration-200"
+                            >
+                              {deleting === note.id ? (
+                                <>
+                                  <svg className="animate-spin -ml-0.5 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  Deleting...
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                  </svg>
+                                  Delete
+                                </>
+                              )}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

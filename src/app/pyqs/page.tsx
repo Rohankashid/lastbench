@@ -3,8 +3,9 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { ref, deleteObject } from 'firebase/storage';
+import { db, storage } from '@/lib/firebase';
 import SkeletonCard from '@/components/SkeletonCard';
 
 interface PYQ {
@@ -28,6 +29,8 @@ export default function PYQsPage() {
   const [pyqs, setPYQs] = useState<PYQ[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     semester: '',
     branch: '',
@@ -43,6 +46,21 @@ export default function PYQsPage() {
       setDebouncedUniversity(filters.university);
     }, 400);
   }, [filters.university]);
+
+  const checkAdminStatus = useCallback(async () => {
+    if (!user) return false;
+    
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        return userData.role === 'admin';
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+    return false;
+  }, [user]);
 
   const fetchPYQs = useCallback(async () => {
     try {
@@ -85,8 +103,15 @@ export default function PYQsPage() {
       router.push('/login');
       return;
     }
-    fetchPYQs();
-  }, [user, router, fetchPYQs]);
+    
+    const initializePage = async () => {
+      const adminStatus = await checkAdminStatus();
+      setIsAdmin(adminStatus);
+      await fetchPYQs();
+    };
+    
+    initializePage();
+  }, [user, router, fetchPYQs, checkAdminStatus]);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -99,6 +124,78 @@ export default function PYQsPage() {
       branch: '',
       university: '',
     });
+  };
+
+  const handleDelete = async (pyq: PYQ) => {
+    if (!confirm(`Are you sure you want to delete "${pyq.title}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      console.log('Deleting PYQ:', pyq.title, 'URL:', pyq.fileUrl);
+
+      // Check if this is an S3 URL or Firebase Storage URL
+      if (pyq.fileUrl && (pyq.fileUrl.includes('s3.amazonaws.com') || pyq.fileUrl.includes('s3.'))) {
+        // This is an S3 URL - delete from S3
+        try {
+          console.log('S3 URL detected, deleting from S3');
+          const response = await fetch('/api/delete', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ fileUrl: pyq.fileUrl }),
+          });
+          
+          const result = await response.json();
+          console.log('S3 deletion result:', result);
+          
+          if (!response.ok) {
+            console.error('S3 deletion failed:', result);
+            throw new Error('S3 deletion failed');
+          }
+          
+          console.log('S3 file deleted successfully');
+        } catch (s3Error) {
+          console.error('S3 delete failed:', s3Error);
+          throw new Error('Failed to delete file from S3');
+        }
+      } else if (pyq.fileUrl && pyq.fileUrl.includes('firebasestorage.googleapis.com')) {
+        // This is a Firebase Storage URL - delete from Firebase Storage
+        try {
+          console.log('Firebase Storage URL detected, deleting from Firebase Storage');
+          const firebaseUrl = new URL(pyq.fileUrl);
+          const pathMatch = firebaseUrl.pathname.match(/\/o\/(.+?)\?/);
+          const filePath = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
+          
+          if (filePath) {
+            console.log('Firebase Storage path:', filePath);
+            const fileRef = ref(storage, filePath);
+            await deleteObject(fileRef);
+            console.log('Firebase Storage file deleted successfully');
+          } else {
+            console.warn('Could not extract Firebase Storage path from URL');
+            throw new Error('Could not extract Firebase Storage path');
+          }
+        } catch (storageError) {
+          console.error('Firebase Storage delete failed:', storageError);
+          throw new Error('Failed to delete file from Firebase Storage');
+        }
+      } else {
+        console.warn('Unknown URL format, skipping file deletion');
+        console.log('URL that was not recognized:', pyq.fileUrl);
+      }
+
+      // Delete from Firestore
+      await deleteDoc(doc(db, 'materials', pyq.id));
+      console.log('Firestore document deleted successfully');
+      
+      // Update local state
+      setPYQs(pyqs.filter(p => p.id !== pyq.id));
+    } catch (error) {
+      console.error('Error deleting PYQ:', error);
+      setError('Failed to delete PYQ: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
   };
 
   if (loading) {
@@ -267,7 +364,7 @@ export default function PYQsPage() {
                             {pyq.uploadedBy}
                           </div>
                         </div>
-                        <div className="mt-6">
+                        <div className="mt-6 flex items-center space-x-2">
                           <a
                             href={pyq.fileUrl}
                             download
@@ -280,6 +377,30 @@ export default function PYQsPage() {
                             </svg>
                             Download Question Paper
                           </a>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDelete(pyq)}
+                              disabled={deleting === pyq.id}
+                              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-red-400 transition-colors duration-200"
+                            >
+                              {deleting === pyq.id ? (
+                                <>
+                                  <svg className="animate-spin -ml-0.5 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  Deleting...
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                  </svg>
+                                  Delete
+                                </>
+                              )}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
