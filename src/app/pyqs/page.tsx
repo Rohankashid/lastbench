@@ -356,12 +356,6 @@ export default function PYQsPage() {
                             </svg>
                             Year {pyq.year}
                           </div>
-                          <div className="flex items-center text-sm text-gray-500">
-                            <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                            </svg>
-                            {pyq.uploadedBy}
-                          </div>
                         </div>
                         <div className="mt-6 flex items-center space-x-2">
                           <a
