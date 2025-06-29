@@ -49,13 +49,12 @@ function getClientIdentifier(req: NextRequest): string {
   const realIp = req.headers.get('x-real-ip');
   const cfConnectingIp = req.headers.get('cf-connecting-ip');
   
-  let ip = req.ip || 
-           (forwarded && forwarded.split(',')[0]) ||
-           realIp ||
-           cfConnectingIp ||
-           'unknown';
+let ip = (forwarded && forwarded.split(',')[0]) ||
+         realIp ||
+         cfConnectingIp ||
+         'unknown';
   
-  ip = ip.replace(/^::ffff:/, ''); // Remove IPv6 prefix
+  ip = ip.replace(/^::ffff:/, '');
   
   if (ip === 'unknown' || ip === '127.0.0.1') {
     const userAgent = req.headers.get('user-agent') || 'unknown';
@@ -127,7 +126,7 @@ export function rateLimit(
 }
 
 
-export function withRateLimit<T extends any[]>(
+export function withRateLimit<T extends[]>(
   handler: (req: NextRequest, ...args: T) => Promise<NextResponse>,
   config: RateLimitConfig = RATE_LIMIT_CONFIGS.general
 ) {

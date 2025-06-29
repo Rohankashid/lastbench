@@ -6,6 +6,27 @@ import { useRouter } from 'next/navigation';
 import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
+// Client-side file validation configuration (matches server-side)
+const CLIENT_VALIDATION = {
+  maxSizeBytes: 10 * 1024 * 1024, // 10MB
+  allowedExtensions: ['.pdf', '.docx', '.doc', '.pptx', '.ppt', '.xlsx', '.xls', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.webp'],
+  allowedMimeTypes: [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+    'text/plain',
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+  ],
+};
+
 export default function UploadPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -21,6 +42,12 @@ export default function UploadPage() {
     branch: '',
     file: null as File | null,
   });
+  const [fileValidation, setFileValidation] = useState<{
+    isValid: boolean;
+    error?: string;
+    size?: string;
+    type?: string;
+  }>({ isValid: false });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -56,10 +83,66 @@ export default function UploadPage() {
     checkAdminStatus();
   }, [user, router]);
 
+  // Client-side file validation
+  const validateFile = (file: File) => {
+    const errors: string[] = [];
+
+    // Check file size
+    if (file.size > CLIENT_VALIDATION.maxSizeBytes) {
+      errors.push(`File size (${(file.size / 1024 / 1024).toFixed(2)}MB) exceeds 10MB limit`);
+    }
+
+    // Check file extension
+    const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    if (!CLIENT_VALIDATION.allowedExtensions.includes(ext)) {
+      errors.push(`File extension ${ext} not allowed. Allowed: ${CLIENT_VALIDATION.allowedExtensions.join(', ')}`);
+    }
+
+    // Check MIME type
+    if (!CLIENT_VALIDATION.allowedMimeTypes.includes(file.type)) {
+      errors.push(`File type ${file.type} not allowed`);
+    }
+
+    // Check filename length
+    if (file.name.length > 255) {
+      errors.push('Filename too long (max 255 characters)');
+    }
+
+    // Check for suspicious filenames
+    if (file.name.toLowerCase().includes('virus') || file.name.toLowerCase().includes('malware')) {
+      errors.push('Suspicious filename detected');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      error: errors.join('; '),
+      size: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+      type: file.type,
+    };
+  };
+
+  const handleFileChange = (file: File | null) => {
+    if (!file) {
+      setFileValidation({ isValid: false });
+      setFormData(prev => ({ ...prev, file: null }));
+      return;
+    }
+
+    const validation = validateFile(file);
+    setFileValidation(validation);
+    setFormData(prev => ({ ...prev, file }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!formData.file) {
       setError('Please select a file');
+      return;
+    }
+
+    if (!fileValidation.isValid) {
+      setError(`File validation failed: ${fileValidation.error}`);
       return;
     }
 
@@ -77,7 +160,14 @@ export default function UploadPage() {
       });
 
       const data = await res.json();
-      if (!data.url) throw new Error('Failed to upload to S3');
+      
+      if (!res.ok) {
+        throw new Error(data.details || data.error || 'Upload failed');
+      }
+
+      if (!data.url) {
+        throw new Error('Failed to upload to S3');
+      }
 
       // 2. Add document to Firestore with S3 URL
       await addDoc(collection(db, 'materials'), {
@@ -88,6 +178,10 @@ export default function UploadPage() {
         category: formData.category,
         branch: formData.branch,
         fileUrl: data.url, // S3 URL
+        filename: data.filename, // Secure filename
+        originalName: data.originalName, // Original filename
+        fileSize: data.size,
+        fileType: data.type,
         uploadedBy: user?.email,
         uploadedAt: new Date().toISOString(),
       });
@@ -102,16 +196,16 @@ export default function UploadPage() {
         branch: '',
         file: null,
       });
+      setFileValidation({ isValid: false });
 
       alert('Material uploaded successfully!');
     } catch (error) {
       console.error('Error uploading material:', error);
-      setError('Failed to upload material');
+      setError(error instanceof Error ? error.message : 'Failed to upload material');
     } finally {
       setUploading(false);
     }
   };
-
 
   if (loading) {
     return (
@@ -225,7 +319,6 @@ export default function UploadPage() {
                   </div>
                 </div>
 
-
                 <div className="sm:col-span-2">
                   <label htmlFor="university" className="block text-sm font-medium text-gray-700">
                     University
@@ -253,7 +346,7 @@ export default function UploadPage() {
                       id="semester"
                       name="semester"
                       value={formData.semester}
-                      onChange={(e) => setFormData(prev => ({ ...prev, semester: e.target.value }))}
+                      onChange={e => setFormData(prev => ({ ...prev, semester: e.target.value }))}
                       className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       required
                     >
@@ -308,25 +401,30 @@ export default function UploadPage() {
 
                 <div className="sm:col-span-2">
   <label className="block text-sm font-medium text-gray-700">
-    File (PDF)
+    File
   </label>
   <div
-    className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md relative cursor-pointer"
-    onClick={() => fileInputRef.current?.click()} // Add this click handler
+    className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md relative cursor-pointer ${
+      fileValidation.isValid 
+        ? 'border-green-300 bg-green-50' 
+        : formData.file 
+        ? 'border-red-300 bg-red-50' 
+        : 'border-gray-300'
+    }`}
+    onClick={() => fileInputRef.current?.click()}
     onDrop={e => {
       e.preventDefault();
       if (e.dataTransfer.files[0]) {
-        setFormData(prev => ({
-          ...prev,
-          file: e.dataTransfer.files[0],
-        }));
+        handleFileChange(e.dataTransfer.files[0]);
       }
     }}
     onDragOver={e => e.preventDefault()}
   >
     <div className="space-y-1 text-center">
       <svg
-        className="mx-auto h-12 w-12 text-gray-400"
+        className={`mx-auto h-12 w-12 ${
+          fileValidation.isValid ? 'text-green-400' : formData.file ? 'text-red-400' : 'text-gray-400'
+        }`}
         stroke="currentColor"
         fill="none"
         viewBox="0 0 48 48"
@@ -343,30 +441,43 @@ export default function UploadPage() {
         Upload a file
       </div>
       <p className="pl-1">or drag and drop</p>
-      <p className="text-xs text-gray-500">PDF up to 10MB</p>
+      <p className="text-xs text-gray-500">
+        Allowed: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, Images (JPG, PNG, GIF, WebP)
+      </p>
+      <p className="text-xs text-gray-500">Maximum size: 10MB</p>
     </div>
   </div>
-  {/* File Input (unchanged) */}
+  
   <input
     id="file-upload"
     type="file"
-    accept=".pdf"
+    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.webp"
     ref={fileInputRef}
     onChange={e => {
       if (e.target.files && e.target.files[0]) {
-        setFormData(prev => ({
-          ...prev,
-          file: e.target.files![0],
-        }));
+        handleFileChange(e.target.files[0]);
       }
     }}
     className="sr-only"
-    //required
   />
+  
   {formData.file && (
-    <p className="mt-2 text-sm text-gray-500">
-      Selected file: {formData.file.name}
-    </p>
+    <div className="mt-2">
+      <p className={`text-sm ${fileValidation.isValid ? 'text-green-600' : 'text-red-600'}`}>
+        Selected: {formData.file.name}
+        {fileValidation.size && ` (${fileValidation.size})`}
+      </p>
+      {fileValidation.error && (
+        <p className="text-sm text-red-600 mt-1">
+          ❌ {fileValidation.error}
+        </p>
+      )}
+      {fileValidation.isValid && (
+        <p className="text-sm text-green-600 mt-1">
+          ✅ File validation passed
+        </p>
+      )}
+    </div>
   )}
 </div>
               </div>
@@ -374,7 +485,7 @@ export default function UploadPage() {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  disabled={uploading}
+                  disabled={uploading || !fileValidation.isValid}
                   className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                 >
                   {uploading ? (
