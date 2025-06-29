@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { S3Client, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { withRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/rateLimit';
 
-export async function DELETE(req: NextRequest) {
+async function deleteHandler(req: NextRequest) {
   try {
     const { fileUrl } = await req.json();
 
@@ -11,9 +12,7 @@ export async function DELETE(req: NextRequest) {
 
     console.log('Attempting to delete file:', fileUrl);
 
-    // Check if this is an S3 URL (broader pattern matching)
     if (fileUrl.includes('s3.amazonaws.com') || fileUrl.includes('s3.')) {
-      // Extract the key from the S3 URL
       const url = new URL(fileUrl);
       const key = decodeURIComponent(url.pathname.substring(1)); // Remove leading slash and decode URL
       
@@ -34,8 +33,6 @@ export async function DELETE(req: NextRequest) {
           secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
         },
       });
-
-      // Try with extracted bucket name first, then fallback to env variable
       const bucketName = extractedBucketName || process.env.S3_BUCKET_NAME!;
       
       const deleteParams = {
@@ -43,15 +40,6 @@ export async function DELETE(req: NextRequest) {
         Key: key,
       };
 
-      console.log('S3 delete params:', deleteParams);
-      console.log('Environment variables:');
-      console.log('- AWS_REGION:', process.env.AWS_REGION);
-      console.log('- S3_BUCKET_NAME (env):', process.env.S3_BUCKET_NAME);
-      console.log('- Extracted bucket name:', extractedBucketName);
-      console.log('- Final bucket name used:', bucketName);
-      console.log('- AWS_ACCESS_KEY_ID:', process.env.AWS_ACCESS_KEY_ID ? 'Set' : 'Not set');
-
-      // First, check if the file exists
       try {
         console.log('Checking if file exists before deletion...');
         const headCommand = new HeadObjectCommand({
@@ -75,7 +63,6 @@ export async function DELETE(req: NextRequest) {
         const result = await s3.send(new DeleteObjectCommand(deleteParams));
         console.log('S3 delete command result:', result);
         
-        // Verify deletion by trying to head the object again
         try {
           console.log('Verifying deletion...');
           const verifyHeadCommand = new HeadObjectCommand({
@@ -114,7 +101,6 @@ export async function DELETE(req: NextRequest) {
         }, { status: 500 });
       }
     } else {
-      // This is not an S3 URL (likely Firebase Storage)
       console.log('Not an S3 URL, skipping S3 deletion');
       return NextResponse.json({ 
         success: true, 
@@ -129,4 +115,5 @@ export async function DELETE(req: NextRequest) {
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
-} 
+}
+export const DELETE = withRateLimit(deleteHandler, RATE_LIMIT_CONFIGS.delete); 

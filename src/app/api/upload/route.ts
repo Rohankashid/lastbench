@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { withRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/rateLimit';
 
-export async function POST(req: NextRequest) {
-  // Parse the multipart form data
+async function uploadHandler(req: NextRequest) {
   const formData = await req.formData();
   const file = formData.get('file') as File;
 
@@ -10,7 +10,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
   }
 
-  // Read the file into a buffer
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
@@ -38,4 +37,6 @@ export async function POST(req: NextRequest) {
     console.error('S3 upload error:', error);
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
-} 
+}
+
+export const POST = withRateLimit(uploadHandler, RATE_LIMIT_CONFIGS.upload); 

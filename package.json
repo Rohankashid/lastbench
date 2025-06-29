@@ -15,8 +15,8 @@
     "@firebase/storage": "^0.13.13",
     "@heroicons/react": "^2.2.0",
     "@reduxjs/toolkit": "^2.8.2",
-    "axios": "^1.10.0",
     "firebase": "^11.9.1",
+    "lru-cache": "^11.1.0",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -27,11 +27,14 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/lru-cache": "^7.10.9",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "axios": "^1.10.0",
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
+    "form-data": "^4.0.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
