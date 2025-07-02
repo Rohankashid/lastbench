@@ -278,27 +278,14 @@ export default function UploadPage() {
       required
     >
       <option value="">Select Branch</option>
-      <option value="Computer Engineering / Computer Science and Engineering (CSE)">
-        Computer Engineering / Computer Science and Engineering (CSE)
-      </option>
-      <option value="Information Technology (IT)">
-        Information Technology (IT)
-      </option>
-      <option value="Electronics and Telecommunication (ENTC / E&TC)">
-        Electronics and Telecommunication (ENTC / E&TC)
-      </option>
-      <option value="Mechanical Engineering">
-        Mechanical Engineering
-      </option>
-      <option value="Civil Engineering">
-        Civil Engineering
-      </option>
-      <option value="Electrical Engineering">
-        Electrical Engineering
-      </option>
-      <option value="Electronics Engineering">
-        Electronics Engineering
-      </option>
+      <option value="First Year">First Year</option>
+      <option value="Computer Engineering / Computer Science and Engineering (CSE)">Computer Engineering / Computer Science and Engineering (CSE)</option>
+      <option value="Information Technology (IT)">Information Technology (IT)</option>
+      <option value="Electronics and Telecommunication (ENTC / E&TC)">Electronics and Telecommunication (ENTC / E&TC)</option>
+      <option value="Mechanical Engineering">Mechanical Engineering</option>
+      <option value="Civil Engineering">Civil Engineering</option>
+      <option value="Electrical Engineering">Electrical Engineering</option>
+      <option value="Electronics Engineering">Electronics Engineering</option>
     </select>
   </div>
 </div>

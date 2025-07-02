@@ -10,7 +10,6 @@ import { db } from '@/lib/firebase';
 export default function Home() {
   const { user } = useAuth();
   const router = useRouter();
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -19,7 +18,7 @@ export default function Home() {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
-            setUserRole(userDoc.data().role);
+            // setUserRole(userDoc.data().role);
           }
         } catch (error) {
           console.error('Error fetching user role:', error);
@@ -167,7 +166,7 @@ export default function Home() {
                 </div>
               </Link>
 
-              {userRole === 'admin' && (
+              {user && (
                 <Link
                   href="/upload"
                   className="group relative w-full overflow-hidden rounded-2xl bg-white p-6 sm:p-8 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 md:col-span-2"
