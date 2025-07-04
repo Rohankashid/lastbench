@@ -56,7 +56,7 @@ export default function LoginPage() {
 
   useEffect(()=>{
     if(user){
-      router.replace('/');
+      router.replace('/'); // Home page with main content
     }
   } , [user , router]);
 

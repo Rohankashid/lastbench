@@ -33,7 +33,7 @@ export default function SignUpPage() {
 
   useEffect(()=>{
     if(user){
-      router.replace('/');
+      router.replace('/'); // Home page with main content
     }
   },[user , router]);
 
@@ -92,23 +92,24 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="text-center">
-            <h2 className="mt-6 text-4xl font-extrabold text-gray-900">
-              Create Your Account
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
-                Sign in here
-              </Link>
-            </p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-purple-50 to-yellow-50 py-12 px-4 sm:px-6 lg:px-8 relative overflow-x-hidden">
+      {/* Decorative blurred gradient blob */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[140px] bg-gradient-to-tr from-blue-300 via-purple-200 to-yellow-200 opacity-60 blur-2xl z-0 pointer-events-none" />
+      <div className="max-w-md w-full space-y-6 z-10">
+        <div className="text-center">
+          <div className="flex justify-center mb-1">
+            <svg className="w-10 h-10 text-blue-400 drop-shadow-lg" fill="none" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="currentColor" opacity="0.15"/><path d="M24 24c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm0 3c-4.418 0-13 2.239-13 6.667V38h26v-4.333C37 29.239 28.418 27 24 27z" fill="#60a5fa"/></svg>
           </div>
+          <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold text-gray-900 drop-shadow">Create Your Account</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Already have an account?{' '}
+            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
+              Sign in here
+            </Link>
+          </p>
         </div>
 
-        <div className="mt-8 bg-white py-8 px-4 shadow-xl rounded-lg sm:px-10">
+        <div className="mt-8 bg-white/50 backdrop-blur-lg border border-white/40 shadow-lg rounded-2xl py-8 px-4 sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
@@ -263,20 +264,10 @@ export default function SignUpPage() {
             <div>
               <button
                 type="submit"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-lg text-base font-bold text-white bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 transition disabled:opacity-60 disabled:cursor-not-allowed"
                 disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
-                {loading ? (
-                  <div className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Creating account...
-                  </div>
-                ) : (
-                  'Create Account'
-                )}
+                {loading ? 'Creating Account...' : 'Sign Up'}
               </button>
             </div>
           </form>
