@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 // Client-side file validation configuration (matches server-side)
@@ -55,32 +55,7 @@ export default function UploadPage() {
       router.push('/login');
       return;
     }
-
-    const checkAdminStatus = async () => {
-      try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        
-        if (!userDoc.exists()) {
-          setError('User profile not found');
-          return;
-        }
-
-        const userData = userDoc.data();
-        const isAdmin = userData.role === 'admin';
-        
-        if (!isAdmin) {
-          router.push('/');
-          return;
-        }
-        
-        setLoading(false);
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        setError('Failed to verify admin status');
-      }
-    };
-
-    checkAdminStatus();
+    setLoading(false);
   }, [user, router]);
 
   // Client-side file validation

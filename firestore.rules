@@ -23,10 +23,8 @@ service cloud.firestore {
 
     // Materials collection rules
     match /materials/{materialId} {
-      // Allow authenticated users to read all materials
-      allow read: if isAuthenticated();
-      // Allow only admins to write materials
-      allow write: if isAdmin();
+      // Allow authenticated users to read and write materials
+      allow read, write: if isAuthenticated();
     }
 
     // Default deny all other access
