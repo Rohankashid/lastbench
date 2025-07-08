@@ -3,8 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { collection, addDoc, } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+
 
 // Client-side file validation configuration (matches server-side)
 const CLIENT_VALIDATION = {

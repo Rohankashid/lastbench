@@ -14,14 +14,13 @@ const CONFIG = {
     pyqs: '/Users/rohan/Documents/pyqs'    // Folder for previous year questions
   },
   
-  // Application settings
-  baseUrl: 'https://lastbench.vercel.app/', // Change to your app URL in production
+  baseUrl: 'https://lastbench.vercel.app/', 
   uploadEndpoint: '/api/upload',
   
   // File settings
   allowedExtensions: ['.pdf', '.docx', '.doc', '.pptx', '.ppt', '.xlsx', '.xls', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.webp'],
-  maxFileSize: 100 * 1024 * 1024, // 100MB
-  // filePattern: /^auto_/i, // (Removed) Only upload files starting with 'auto_'
+  maxFileSize: 100 * 1024 * 1024, 
+  
   
   // Material metadata (fallback values if filename parsing fails)
   defaultMetadata: {
