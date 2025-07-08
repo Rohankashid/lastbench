@@ -122,7 +122,7 @@ const validateFile = (file: File) => {
 
 ```typescript
 export const STUDY_MATERIAL_VALIDATION: FileValidationConfig = {
-  maxSizeBytes: 10 * 1024 * 1024, // 10MB
+  maxSizeBytes: 100 * 1024 * 1024, // 10MB
   allowedMimeTypes: [
     'application/pdf',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

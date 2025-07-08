@@ -1,0 +1,516 @@
+[2025-07-07T18:57:24.376Z] 🚀 Starting auto-upload process for all folders...
+[2025-07-07T18:57:24.382Z] 📚 Processing Notes folder...
+[2025-07-07T18:57:24.382Z] Processing note folder: /Users/rohan/Documents/notes
+[2025-07-07T18:57:24.383Z] Found 4 valid files in note folder
+[2025-07-07T18:57:24.385Z] Uploading NOTE: FY_BEEE_SPPU_university_sem2_Unit_1.docx.pdf
+[2025-07-07T18:57:24.385Z] 📋 Parsed metadata: {
+  "name": "FY BEEE SPPU university sem2 Unit 1.docx",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T18:57:24.385Z] 🔑 File hash: a362a8e453140dbd2347d2268d1fb4e68d3bfc886f2c1160942f08698762eda0
+[2025-07-07T18:57:28.823Z] ✅ Successfully uploaded NOTE: FY_BEEE_SPPU_university_sem2_Unit_1.docx.pdf
+[2025-07-07T18:57:29.667Z] Uploading NOTE: FY_BEEE_SPPU_university_sem2_Unit_1SAT.pdf
+[2025-07-07T18:57:29.669Z] 📋 Parsed metadata: {
+  "name": "FY BEEE SPPU university sem2 Unit 1SAT",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T18:57:29.669Z] 🔑 File hash: 570ae25e1be614d6a913827c4c9c74b13259c3d0a65f8b3b6f7e9841b76c5542
+[2025-07-07T18:57:31.605Z] ✅ Successfully uploaded NOTE: FY_BEEE_SPPU_university_sem2_Unit_1SAT.pdf
+[2025-07-07T18:57:31.620Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf
+[2025-07-07T18:57:31.620Z] 📋 Parsed metadata: {
+  "name": "FY EnggChem SPPU university sem2 Unit 3B",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T18:57:31.620Z] 🔑 File hash: 95e5bbf5c4069563f2a5f08ddad70358b56bcc95dd8afea8268c509298ed29ce
+[2025-07-07T19:02:09.517Z] 🚀 Starting auto-upload process for all folders...
+[2025-07-07T19:02:09.523Z] 📚 Processing Notes folder...
+[2025-07-07T19:02:09.523Z] Processing note folder: /Users/rohan/Documents/notes
+[2025-07-07T19:02:09.524Z] Found 2 valid files in note folder
+[2025-07-07T19:02:09.530Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf
+[2025-07-07T19:02:09.530Z] 📋 Parsed metadata: {
+  "name": "FY EnggChem SPPU university sem2 Unit 3B",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:02:09.531Z] 🔑 File hash: 95e5bbf5c4069563f2a5f08ddad70358b56bcc95dd8afea8268c509298ed29ce
+[2025-07-07T19:02:11.312Z] ❌ Error uploading FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf (note): Request failed with status code 409
+[2025-07-07T19:02:11.315Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf
+[2025-07-07T19:02:11.316Z] 📋 Parsed metadata: {
+  "name": "FY EnggChem SPPU university sem2 Unit 4QA",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:02:11.316Z] 🔑 File hash: c184ad8c7d746a54884323f14f55d41850b4f65ab61ce6864b7c9c525501ce8b
+[2025-07-07T19:02:14.399Z] ✅ Successfully uploaded NOTE: FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf
+[2025-07-07T19:02:14.400Z] NOTE upload completed. 1/2 files uploaded successfully
+[2025-07-07T19:02:14.401Z] 📝 Processing PYQs folder...
+[2025-07-07T19:02:14.401Z] Processing pyq folder: /Users/rohan/Documents/pyqs
+[2025-07-07T19:02:14.401Z] No valid files found in pyq folder
+[2025-07-07T19:02:14.401Z] 📊 Upload Summary:
+[2025-07-07T19:02:14.402Z]    Notes: 1/2 uploaded
+[2025-07-07T19:02:14.402Z]    PYQs: 0/0 uploaded
+[2025-07-07T19:02:14.402Z]    Total: 1/2 files uploaded successfully
+[2025-07-07T19:02:14.402Z] ✅ Auto-upload process finished.
+[2025-07-07T19:04:03.326Z] 🚀 Starting auto-upload process for all folders...
+[2025-07-07T19:04:03.330Z] 📚 Processing Notes folder...
+[2025-07-07T19:04:03.330Z] Processing note folder: /Users/rohan/Documents/notes
+[2025-07-07T19:04:03.331Z] Found 2 valid files in note folder
+[2025-07-07T19:04:03.337Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf
+[2025-07-07T19:04:03.337Z] 📋 Parsed metadata: {
+  "name": "FY EnggChem SPPU university sem2 Unit 3B",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:04:03.337Z] 🔑 File hash: 95e5bbf5c4069563f2a5f08ddad70358b56bcc95dd8afea8268c509298ed29ce
+[2025-07-07T19:04:03.743Z] ❌ Error uploading FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf (note): Request failed with status code 409
+[2025-07-07T19:04:03.746Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf
+[2025-07-07T19:04:03.746Z] 📋 Parsed metadata: {
+  "name": "FY EnggChem SPPU university sem2 Unit 4QA",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:04:03.747Z] 🔑 File hash: c184ad8c7d746a54884323f14f55d41850b4f65ab61ce6864b7c9c525501ce8b
+[2025-07-07T19:04:05.016Z] ❌ Error uploading FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf (note): Request failed with status code 409
+[2025-07-07T19:04:05.017Z] NOTE upload completed. 0/2 files uploaded successfully
+[2025-07-07T19:04:05.017Z] 📝 Processing PYQs folder...
+[2025-07-07T19:04:05.017Z] Processing pyq folder: /Users/rohan/Documents/pyqs
+[2025-07-07T19:04:05.018Z] No valid files found in pyq folder
+[2025-07-07T19:04:05.018Z] 📊 Upload Summary:
+[2025-07-07T19:04:05.018Z]    Notes: 0/2 uploaded
+[2025-07-07T19:04:05.018Z]    PYQs: 0/0 uploaded
+[2025-07-07T19:04:05.018Z]    Total: 0/2 files uploaded successfully
+[2025-07-07T19:04:05.018Z] ✅ Auto-upload process finished.
+[2025-07-07T19:05:45.818Z] 🚀 Starting auto-upload process for all folders...
+[2025-07-07T19:05:45.822Z] 📚 Processing Notes folder...
+[2025-07-07T19:05:45.822Z] Processing note folder: /Users/rohan/Documents/notes
+[2025-07-07T19:05:45.822Z] Found 2 valid files in note folder
+[2025-07-07T19:05:45.829Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf
+[2025-07-07T19:05:45.829Z] 📋 Parsed metadata: {
+  "name": "FY EnggChem SPPU university sem2 Unit 3B",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:05:45.829Z] 🔑 File hash: 95e5bbf5c4069563f2a5f08ddad70358b56bcc95dd8afea8268c509298ed29ce
+[2025-07-07T19:05:46.482Z] ❌ Error uploading FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf (note): Request failed with status code 409
+[2025-07-07T19:05:46.485Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf
+[2025-07-07T19:05:46.485Z] 📋 Parsed metadata: {
+  "name": "FY EnggChem SPPU university sem2 Unit 4QA",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:05:46.486Z] 🔑 File hash: c184ad8c7d746a54884323f14f55d41850b4f65ab61ce6864b7c9c525501ce8b
+[2025-07-07T19:05:47.533Z] ❌ Error uploading FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf (note): Request failed with status code 409
+[2025-07-07T19:05:47.533Z] NOTE upload completed. 0/2 files uploaded successfully
+[2025-07-07T19:05:47.533Z] 📝 Processing PYQs folder...
+[2025-07-07T19:05:47.534Z] Processing pyq folder: /Users/rohan/Documents/pyqs
+[2025-07-07T19:05:47.534Z] No valid files found in pyq folder
+[2025-07-07T19:05:47.534Z] 📊 Upload Summary:
+[2025-07-07T19:05:47.534Z]    Notes: 0/2 uploaded
+[2025-07-07T19:05:47.534Z]    PYQs: 0/0 uploaded
+[2025-07-07T19:05:47.534Z]    Total: 0/2 files uploaded successfully
+[2025-07-07T19:05:47.534Z] ✅ Auto-upload process finished.
+[2025-07-07T19:06:01.304Z] 🚀 Starting auto-upload process for all folders...
+[2025-07-07T19:06:01.307Z] 📚 Processing Notes folder...
+[2025-07-07T19:06:01.308Z] Processing note folder: /Users/rohan/Documents/notes
+[2025-07-07T19:06:01.308Z] Found 2 valid files in note folder
+[2025-07-07T19:06:01.314Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf
+[2025-07-07T19:06:01.314Z] 📋 Parsed metadata: {
+  "name": "FY EnggChem SPPU university sem2 Unit 3B",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:06:01.314Z] 🔑 File hash: 95e5bbf5c4069563f2a5f08ddad70358b56bcc95dd8afea8268c509298ed29ce
+[2025-07-07T19:06:01.684Z] ❌ Error uploading FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf (note): Request failed with status code 409
+[2025-07-07T19:06:01.687Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf
+[2025-07-07T19:06:01.687Z] 📋 Parsed metadata: {
+  "name": "FY EnggChem SPPU university sem2 Unit 4QA",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:06:01.687Z] 🔑 File hash: c184ad8c7d746a54884323f14f55d41850b4f65ab61ce6864b7c9c525501ce8b
+[2025-07-07T19:06:02.958Z] ❌ Error uploading FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf (note): Request failed with status code 409
+[2025-07-07T19:06:02.958Z] NOTE upload completed. 0/2 files uploaded successfully
+[2025-07-07T19:06:02.958Z] 📝 Processing PYQs folder...
+[2025-07-07T19:06:02.958Z] Processing pyq folder: /Users/rohan/Documents/pyqs
+[2025-07-07T19:06:02.959Z] No valid files found in pyq folder
+[2025-07-07T19:06:02.959Z] 📊 Upload Summary:
+[2025-07-07T19:06:02.959Z]    Notes: 0/2 uploaded
+[2025-07-07T19:06:02.959Z]    PYQs: 0/0 uploaded
+[2025-07-07T19:06:02.959Z]    Total: 0/2 files uploaded successfully
+[2025-07-07T19:06:02.959Z] ✅ Auto-upload process finished.
+[2025-07-07T19:07:24.418Z] 🚀 Starting auto-upload process for all folders...
+[2025-07-07T19:07:24.425Z] 📚 Processing Notes folder...
+[2025-07-07T19:07:24.425Z] Processing note folder: /Users/rohan/Documents/notes
+[2025-07-07T19:07:24.426Z] Found 2 valid files in note folder
+[2025-07-07T19:07:24.431Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf
+[2025-07-07T19:07:24.431Z] 📋 Parsed metadata: {
+  "name": "FY EnggChem SPPU university sem2 Unit 3B",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:07:24.431Z] 🔑 File hash: 95e5bbf5c4069563f2a5f08ddad70358b56bcc95dd8afea8268c509298ed29ce
+[2025-07-07T19:07:24.828Z] ❌ Error uploading FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf (note): Request failed with status code 409
+[2025-07-07T19:07:24.831Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf
+[2025-07-07T19:07:24.831Z] 📋 Parsed metadata: {
+  "name": "FY EnggChem SPPU university sem2 Unit 4QA",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:07:24.831Z] 🔑 File hash: c184ad8c7d746a54884323f14f55d41850b4f65ab61ce6864b7c9c525501ce8b
+[2025-07-07T19:07:26.113Z] ❌ Error uploading FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf (note): Request failed with status code 409
+[2025-07-07T19:07:26.114Z] NOTE upload completed. 0/2 files uploaded successfully
+[2025-07-07T19:07:26.114Z] 📝 Processing PYQs folder...
+[2025-07-07T19:07:26.114Z] Processing pyq folder: /Users/rohan/Documents/pyqs
+[2025-07-07T19:07:26.114Z] No valid files found in pyq folder
+[2025-07-07T19:07:26.115Z] 📊 Upload Summary:
+[2025-07-07T19:07:26.115Z]    Notes: 0/2 uploaded
+[2025-07-07T19:07:26.115Z]    PYQs: 0/0 uploaded
+[2025-07-07T19:07:26.115Z]    Total: 0/2 files uploaded successfully
+[2025-07-07T19:07:26.115Z] ✅ Auto-upload process finished.
+[2025-07-07T19:09:49.378Z] 🚀 Starting auto-upload process for all folders...
+[2025-07-07T19:09:49.384Z] 📚 Processing Notes folder...
+[2025-07-07T19:09:49.384Z] Processing note folder: /Users/rohan/Documents/notes
+[2025-07-07T19:09:49.384Z] Found 2 valid files in note folder
+[2025-07-07T19:09:49.391Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf
+[2025-07-07T19:09:49.391Z] 📋 Parsed metadata: {
+  "name": "FY EnggChem SPPU university sem2 Unit 3B",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:09:49.391Z] 🔑 File hash: 95e5bbf5c4069563f2a5f08ddad70358b56bcc95dd8afea8268c509298ed29ce
+[2025-07-07T19:09:49.818Z] ❌ Error uploading FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf (note): Request failed with status code 409
+[2025-07-07T19:09:49.821Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf
+[2025-07-07T19:09:49.821Z] 📋 Parsed metadata: {
+  "name": "FY EnggChem SPPU university sem2 Unit 4QA",
+  "branch": "",
+  "subject": "",
+  "university": "",
+  "semester": "",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:09:49.822Z] 🔑 File hash: c184ad8c7d746a54884323f14f55d41850b4f65ab61ce6864b7c9c525501ce8b
+[2025-07-07T19:09:51.100Z] ❌ Error uploading FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf (note): Request failed with status code 409
+[2025-07-07T19:09:51.101Z] NOTE upload completed. 0/2 files uploaded successfully
+[2025-07-07T19:09:51.102Z] 📝 Processing PYQs folder...
+[2025-07-07T19:09:51.102Z] Processing pyq folder: /Users/rohan/Documents/pyqs
+[2025-07-07T19:09:51.102Z] No valid files found in pyq folder
+[2025-07-07T19:09:51.102Z] 📊 Upload Summary:
+[2025-07-07T19:09:51.102Z]    Notes: 0/2 uploaded
+[2025-07-07T19:09:51.103Z]    PYQs: 0/0 uploaded
+[2025-07-07T19:09:51.103Z]    Total: 0/2 files uploaded successfully
+[2025-07-07T19:09:51.103Z] ✅ Auto-upload process finished.
+[2025-07-07T19:12:41.017Z] 🚀 Starting auto-upload process for all folders...
+[2025-07-07T19:12:41.023Z] 📚 Processing Notes folder...
+[2025-07-07T19:12:41.023Z] Processing note folder: /Users/rohan/Documents/notes
+[2025-07-07T19:12:41.024Z] Found 2 valid files in note folder
+[2025-07-07T19:12:41.030Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf
+[2025-07-07T19:12:41.030Z] 📋 Parsed metadata: {
+  "name": "Unit 3B",
+  "branch": "FY",
+  "subject": "EnggChem",
+  "university": "SPPU_university",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:12:41.030Z] 🔑 File hash: 95e5bbf5c4069563f2a5f08ddad70358b56bcc95dd8afea8268c509298ed29ce
+[2025-07-07T19:12:41.489Z] ❌ Error uploading FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf (note): Request failed with status code 409
+[2025-07-07T19:12:41.493Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf
+[2025-07-07T19:12:41.494Z] 📋 Parsed metadata: {
+  "name": "Unit 4QA",
+  "branch": "FY",
+  "subject": "EnggChem",
+  "university": "SPPU_university",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:12:41.494Z] 🔑 File hash: c184ad8c7d746a54884323f14f55d41850b4f65ab61ce6864b7c9c525501ce8b
+[2025-07-07T19:12:42.741Z] ❌ Error uploading FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf (note): Request failed with status code 409
+[2025-07-07T19:12:42.742Z] NOTE upload completed. 0/2 files uploaded successfully
+[2025-07-07T19:12:42.742Z] 📝 Processing PYQs folder...
+[2025-07-07T19:12:42.742Z] Processing pyq folder: /Users/rohan/Documents/pyqs
+[2025-07-07T19:12:42.743Z] No valid files found in pyq folder
+[2025-07-07T19:12:42.743Z] 📊 Upload Summary:
+[2025-07-07T19:12:42.743Z]    Note: 0/2 uploaded
+[2025-07-07T19:12:42.743Z]    PYQs: 0/0 uploaded
+[2025-07-07T19:12:42.743Z]    Total: 0/2 files uploaded successfully
+[2025-07-07T19:12:42.743Z] ✅ Auto-upload process finished.
+[2025-07-07T19:13:32.345Z] 🚀 Starting auto-upload process for all folders...
+[2025-07-07T19:13:32.351Z] 📚 Processing Notes folder...
+[2025-07-07T19:13:32.351Z] Processing note folder: /Users/rohan/Documents/notes
+[2025-07-07T19:13:32.352Z] Found 2 valid files in note folder
+[2025-07-07T19:13:32.358Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf
+[2025-07-07T19:13:32.358Z] 📋 Parsed metadata: {
+  "name": "Unit 3B",
+  "branch": "FY",
+  "subject": "EnggChem",
+  "university": "SPPU_university",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:13:32.358Z] 🔑 File hash: 95e5bbf5c4069563f2a5f08ddad70358b56bcc95dd8afea8268c509298ed29ce
+[2025-07-07T19:13:35.621Z] ✅ Successfully uploaded NOTE: FY_EnggChem_SPPU_university_sem2_Unit_3B.pdf
+[2025-07-07T19:13:35.625Z] Uploading NOTE: FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf
+[2025-07-07T19:13:35.625Z] 📋 Parsed metadata: {
+  "name": "Unit 4QA",
+  "branch": "FY",
+  "subject": "EnggChem",
+  "university": "SPPU_university",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:13:35.625Z] 🔑 File hash: c184ad8c7d746a54884323f14f55d41850b4f65ab61ce6864b7c9c525501ce8b
+[2025-07-07T19:13:38.824Z] ✅ Successfully uploaded NOTE: FY_EnggChem_SPPU_university_sem2_Unit_4QA.pdf
+[2025-07-07T19:13:38.825Z] NOTE upload completed. 2/2 files uploaded successfully
+[2025-07-07T19:13:38.825Z] 📝 Processing PYQs folder...
+[2025-07-07T19:13:38.825Z] Processing pyq folder: /Users/rohan/Documents/pyqs
+[2025-07-07T19:13:38.825Z] No valid files found in pyq folder
+[2025-07-07T19:13:38.825Z] 📊 Upload Summary:
+[2025-07-07T19:13:38.825Z]    Note: 2/2 uploaded
+[2025-07-07T19:13:38.825Z]    PYQs: 0/0 uploaded
+[2025-07-07T19:13:38.826Z]    Total: 2/2 files uploaded successfully
+[2025-07-07T19:13:38.826Z] ✅ Auto-upload process finished.
+[2025-07-07T19:14:55.606Z] 🚀 Starting auto-upload process for all folders...
+[2025-07-07T19:14:55.610Z] 📚 Processing Notes folder...
+[2025-07-07T19:14:55.610Z] Processing note folder: /Users/rohan/Documents/notes
+[2025-07-07T19:14:55.610Z] Found 14 valid files in note folder
+[2025-07-07T19:14:55.613Z] Uploading NOTE: FY_BEEE_SPPU_University_Sem2_Unit_1AherSir.pdf
+[2025-07-07T19:14:55.613Z] 📋 Parsed metadata: {
+  "name": "Unit 1AherSir",
+  "branch": "FY",
+  "subject": "BEEE",
+  "university": "SPPU_University",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:14:55.613Z] 🔑 File hash: ab770d5c884ecc5e26d91e209233b35d0541cce1865223ef2855d2aa728ed6fe
+[2025-07-07T19:14:58.251Z] ✅ Successfully uploaded NOTE: FY_BEEE_SPPU_University_Sem2_Unit_1AherSir.pdf
+[2025-07-07T19:14:58.261Z] Uploading NOTE: FY_BEEE_SPPU_University_Sem2_Unit_1Chap1.2.pdf
+[2025-07-07T19:14:58.262Z] 📋 Parsed metadata: {
+  "name": "Unit 1Chap1.2",
+  "branch": "FY",
+  "subject": "BEEE",
+  "university": "SPPU_University",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:14:58.262Z] 🔑 File hash: 91270b751ef8e406600844f6457cf381f7effe61c1ee273c21f766bf8c94df84
+[2025-07-07T19:15:01.620Z] ✅ Successfully uploaded NOTE: FY_BEEE_SPPU_University_Sem2_Unit_1Chap1.2.pdf
+[2025-07-07T19:15:01.623Z] Uploading NOTE: FY_BEEE_SPPU_University_Sem2_Unit_2.pdf
+[2025-07-07T19:15:01.624Z] 📋 Parsed metadata: {
+  "name": "Unit 2",
+  "branch": "FY",
+  "subject": "BEEE",
+  "university": "SPPU_University",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:15:01.624Z] 🔑 File hash: c10c2f097b6871cc3e7ebdb72f9da3b77edd6d38d960c9534b35408b74c718d0
+[2025-07-07T19:15:05.121Z] ✅ Successfully uploaded NOTE: FY_BEEE_SPPU_University_Sem2_Unit_2.pdf
+[2025-07-07T19:15:05.124Z] Uploading NOTE: FY_BEEE_SPPU_University_Sem2_Unit_2Numericals.docx.pdf
+[2025-07-07T19:15:05.124Z] 📋 Parsed metadata: {
+  "name": "Unit 2Numericals.docx",
+  "branch": "FY",
+  "subject": "BEEE",
+  "university": "SPPU_University",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:15:05.124Z] 🔑 File hash: 21aa91ee89b50eb42cba8dec0ac1c80716b70bbbb47e6042adbfed69d3ef6418
+[2025-07-07T19:15:08.181Z] ✅ Successfully uploaded NOTE: FY_BEEE_SPPU_University_Sem2_Unit_2Numericals.docx.pdf
+[2025-07-07T19:15:08.182Z] Uploading NOTE: FY_BEEE_SPPU_University_Sem2_Unit_2SAT.pdf
+[2025-07-07T19:15:08.182Z] 📋 Parsed metadata: {
+  "name": "Unit 2SAT",
+  "branch": "FY",
+  "subject": "BEEE",
+  "university": "SPPU_University",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:15:08.183Z] 🔑 File hash: 01cd1380cd8722732513e0d47dc70ce80ead262851ec011f2a742505b708cc0d
+[2025-07-07T19:15:11.039Z] ✅ Successfully uploaded NOTE: FY_BEEE_SPPU_University_Sem2_Unit_2SAT.pdf
+[2025-07-07T19:15:11.041Z] Uploading NOTE: FY_BEEE_SPPU_University_Sem2_Unit_3SAT.pdf
+[2025-07-07T19:15:11.041Z] 📋 Parsed metadata: {
+  "name": "Unit 3SAT",
+  "branch": "FY",
+  "subject": "BEEE",
+  "university": "SPPU_University",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:15:11.041Z] 🔑 File hash: df63f18d131b16b98a98c5f1b74b8e8d667a17f920c8d5c6477571dbeb64a1ce
+[2025-07-07T19:15:13.878Z] ✅ Successfully uploaded NOTE: FY_BEEE_SPPU_University_Sem2_Unit_3SAT.pdf
+[2025-07-07T19:15:13.881Z] Uploading NOTE: FY_BEEE_SPPU_University_Sem2_Unit_4.pdf
+[2025-07-07T19:15:13.881Z] 📋 Parsed metadata: {
+  "name": "Unit 4",
+  "branch": "FY",
+  "subject": "BEEE",
+  "university": "SPPU_University",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:15:13.881Z] 🔑 File hash: 7a7011a6b1dbb4284b3408226392f76b424904bcfa0b9a24c43d935a74ed3f39
+[2025-07-07T19:15:17.163Z] ✅ Successfully uploaded NOTE: FY_BEEE_SPPU_University_Sem2_Unit_4.pdf
+[2025-07-07T19:15:17.166Z] Uploading NOTE: FY_BEEE_SPPU_University_Sem2_Unit_4Chap1.pdf
+[2025-07-07T19:15:17.167Z] 📋 Parsed metadata: {
+  "name": "Unit 4Chap1",
+  "branch": "FY",
+  "subject": "BEEE",
+  "university": "SPPU_University",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:15:17.167Z] 🔑 File hash: bfe5ae5a78e76989db8edd7360173293ff624624e1b6854a48093cece51956ae
+[2025-07-07T19:15:20.481Z] ✅ Successfully uploaded NOTE: FY_BEEE_SPPU_University_Sem2_Unit_4Chap1.pdf
+[2025-07-07T19:15:20.485Z] Uploading NOTE: FY_BEEE_SPPU_University_Sem2_Unit_4SAT.pdf
+[2025-07-07T19:15:20.486Z] 📋 Parsed metadata: {
+  "name": "Unit 4SAT",
+  "branch": "FY",
+  "subject": "BEEE",
+  "university": "SPPU_University",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:15:20.486Z] 🔑 File hash: ca3f2286fa24cfcefb997f9b766a31cc03d76f0cdca8be231650623761bb54cc
+[2025-07-07T19:15:23.406Z] ✅ Successfully uploaded NOTE: FY_BEEE_SPPU_University_Sem2_Unit_4SAT.pdf
+[2025-07-07T19:15:24.033Z] Uploading NOTE: FY_BEEE_SPPU_University_Sem2_Unit_5SAT.pdf
+[2025-07-07T19:15:24.034Z] 📋 Parsed metadata: {
+  "name": "Unit 5SAT",
+  "branch": "FY",
+  "subject": "BEEE",
+  "university": "SPPU_University",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:15:24.034Z] 🔑 File hash: d02f899b15039b55162f15041f511ffb0b48b3d5b0444bfc3c7ed41293a70fff
+[2025-07-07T19:15:25.984Z] ✅ Successfully uploaded NOTE: FY_BEEE_SPPU_University_Sem2_Unit_5SAT.pdf
+[2025-07-07T19:15:25.988Z] Uploading NOTE: FY_PPS_SPPU_University_Sem2_Unit_1.docx.pdf
+[2025-07-07T19:15:25.989Z] 📋 Parsed metadata: {
+  "name": "Unit 1.docx",
+  "branch": "FY",
+  "subject": "PPS",
+  "university": "SPPU_University",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:15:25.989Z] 🔑 File hash: 184a1b598b0581538c24d4deb2708d8d48f3a2f58b251eb3f214a155a0a2cb87
+[2025-07-07T19:15:26.013Z] ❌ Error uploading FY_PPS_SPPU_University_Sem2_Unit_1.docx.pdf (note): Request failed with status code 429
+[2025-07-07T19:15:26.014Z] Uploading NOTE: FY_PPS_SPPU_University_Sem2_Unit_2.pdf
+[2025-07-07T19:15:26.014Z] 📋 Parsed metadata: {
+  "name": "Unit 2",
+  "branch": "FY",
+  "subject": "PPS",
+  "university": "SPPU_University",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:15:26.014Z] 🔑 File hash: 9a3a5c4e0de1805e95961d7e254f76de6ce6934c3ff4dc1df029478c6257e601
+[2025-07-07T19:15:26.032Z] ❌ Error uploading FY_PPS_SPPU_University_Sem2_Unit_2.pdf (note): Request failed with status code 429
+[2025-07-07T19:15:27.264Z] Uploading NOTE: FY_PPS_SPPU_University_Sem2_Unit_3.pdf
+[2025-07-07T19:15:27.264Z] 📋 Parsed metadata: {
+  "name": "Unit 3",
+  "branch": "FY",
+  "subject": "PPS",
+  "university": "SPPU_University",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:15:27.264Z] 🔑 File hash: 203c293c3c9802c1ea95f822abc85ed020eb5a8b29f18432b2f7b055da7d44e4
+[2025-07-07T19:15:27.285Z] ❌ Error uploading FY_PPS_SPPU_University_Sem2_Unit_3.pdf (note): Request failed with status code 429
+[2025-07-07T19:15:28.712Z] Uploading NOTE: FY_PPS_SPPU_University_Sem2_Unit_4.pdf
+[2025-07-07T19:15:28.713Z] 📋 Parsed metadata: {
+  "name": "Unit 4",
+  "branch": "FY",
+  "subject": "PPS",
+  "university": "SPPU_University",
+  "semester": "2",
+  "year": null,
+  "category": "note"
+}
+[2025-07-07T19:15:28.714Z] 🔑 File hash: 373665a6af5bfecdefc90864368891575fdd8dfda0f1b95736f8d58f7611e7b5
+[2025-07-07T19:15:28.754Z] ❌ Error uploading FY_PPS_SPPU_University_Sem2_Unit_4.pdf (note): Request failed with status code 429
+[2025-07-07T19:15:28.754Z] NOTE upload completed. 10/14 files uploaded successfully
+[2025-07-07T19:15:28.754Z] 📝 Processing PYQs folder...
+[2025-07-07T19:15:28.754Z] Processing pyq folder: /Users/rohan/Documents/pyqs
+[2025-07-07T19:15:28.754Z] No valid files found in pyq folder
+[2025-07-07T19:15:28.755Z] 📊 Upload Summary:
+[2025-07-07T19:15:28.755Z]    Note: 10/14 uploaded
+[2025-07-07T19:15:28.755Z]    PYQs: 0/0 uploaded
+[2025-07-07T19:15:28.755Z]    Total: 10/14 files uploaded successfully
+[2025-07-07T19:15:28.755Z] ✅ Auto-upload process finished.

@@ -11,6 +11,7 @@ import SkeletonCard from '@/components/SkeletonCard';
 interface Note {
   id: string;
   title: string;
+  name: string; // Material name
   description: string;
   subject: string;
   semester: string;
@@ -350,20 +351,23 @@ export default function NotesPage() {
                     >
                       <div className="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow duration-300">
                         <div className="p-4">
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between mb-2">
                             <h3
-                              className="text-base font-semibold text-blue-700 hover:underline underline-offset-4 transition-all duration-200 cursor-pointer"
+                              className="text-lg font-semibold text-gray-900 hover:text-blue-700 transition-all duration-200 cursor-pointer"
                               onClick={e => { e.stopPropagation(); router.push(`/notes/${note.id}`); }}
                               tabIndex={0}
                               role="button"
                               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); router.push(`/notes/${note.id}`); } }}
                             >
-                              {note.title}
+                              {note.name}
                             </h3>
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                               {note.subject}
                             </span>
                           </div>
+                          <p className="text-sm text-gray-600 mb-2 font-medium">
+                            Subject: {note.subject}
+                          </p>
                           <p className="mt-2 text-sm text-gray-500 line-clamp-2">{note.description}</p>
                           <div className="mt-4 space-y-2">
                             <div className="flex items-center text-sm text-gray-500">

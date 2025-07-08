@@ -8,7 +8,7 @@ export interface FileValidationConfig {
 }
 
 export const STUDY_MATERIAL_VALIDATION: FileValidationConfig = {
-  maxSizeBytes: 10 * 1024 * 1024, 
+  maxSizeBytes: 100 * 1024 * 1024, 
   allowedMimeTypes: [
     'application/pdf',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 

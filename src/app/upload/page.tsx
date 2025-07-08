@@ -8,7 +8,7 @@ import { db } from '@/lib/firebase';
 
 // Client-side file validation configuration (matches server-side)
 const CLIENT_VALIDATION = {
-  maxSizeBytes: 10 * 1024 * 1024, // 10MB
+  maxSizeBytes: 100 * 1024 * 1024, // 10MB
   allowedExtensions: ['.pdf', '.docx', '.doc', '.pptx', '.ppt', '.xlsx', '.xls', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.webp'],
   allowedMimeTypes: [
     'application/pdf',
@@ -40,6 +40,7 @@ export default function UploadPage() {
     subject: '',
     category: 'note', 
     branch: '',
+    year: '',
     file: null as File | null,
   });
   const [fileValidation, setFileValidation] = useState<{
@@ -128,6 +129,13 @@ export default function UploadPage() {
       // 1. Upload file to S3 via API route
       const uploadData = new FormData();
       uploadData.append('file', formData.file);
+      uploadData.append('name', formData.name);
+      uploadData.append('university', formData.university);
+      uploadData.append('semester', formData.semester);
+      uploadData.append('subject', formData.subject);
+      uploadData.append('category', formData.category);
+      uploadData.append('branch', formData.branch);
+      uploadData.append('year', formData.year);
 
       const res = await fetch('/api/upload', {
         method: 'POST',
@@ -144,22 +152,8 @@ export default function UploadPage() {
         throw new Error('Failed to upload to S3');
       }
 
-      // 2. Add document to Firestore with S3 URL
-      await addDoc(collection(db, 'materials'), {
-        name: formData.name,
-        university: formData.university,
-        semester: formData.semester,
-        subject: formData.subject,
-        category: formData.category,
-        branch: formData.branch,
-        fileUrl: data.url, // S3 URL
-        filename: data.filename, // Secure filename
-        originalName: data.originalName, // Original filename
-        fileSize: data.size,
-        fileType: data.type,
-        uploadedBy: user?.email,
-        uploadedAt: new Date().toISOString(),
-      });
+      // 2. (REMOVED) Add document to Firestore with S3 URL
+      // await addDoc(collection(db, 'materials'), { ... });
 
       // Reset form
       setFormData({
@@ -169,6 +163,7 @@ export default function UploadPage() {
         subject: '',
         category: 'note',
         branch: '',
+        year: '',
         file: null,
       });
       setFileValidation({ isValid: false });
@@ -361,6 +356,34 @@ export default function UploadPage() {
                   </div>
                 </div>
 
+                {formData.category === 'pyq' && (
+                  <div>
+                    <label htmlFor="year" className="block text-sm font-medium text-gray-700">
+                      Year
+                    </label>
+                    <div className="mt-1">
+                      <select
+                        id="year"
+                        name="year"
+                        value={formData.year}
+                        onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        required={formData.category === 'pyq'}
+                      >
+                        <option value="">Select Year</option>
+                        {Array.from({ length: 6 }, (_, i) => {
+                          const year = new Date().getFullYear() - i;
+                          return (
+                            <option key={year} value={year.toString()}>
+                              {year}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
                 <div className="sm:col-span-2">
   <label className="block text-sm font-medium text-gray-700">
     File
@@ -406,7 +429,7 @@ export default function UploadPage() {
       <p className="text-xs text-gray-500">
         Allowed: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, Images (JPG, PNG, GIF, WebP)
       </p>
-      <p className="text-xs text-gray-500">Maximum size: 10MB</p>
+      <p className="text-xs text-gray-500">Maximum size: 100MB</p>
     </div>
   </div>
   

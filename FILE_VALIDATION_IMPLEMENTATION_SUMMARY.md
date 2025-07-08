@@ -71,7 +71,7 @@ Users can upload any file type/size, which can lead to security risks (malware, 
 #### 6. **Validation Configuration**
 ```typescript
 STUDY_MATERIAL_VALIDATION = {
-  maxSizeBytes: 10 * 1024 * 1024, // 10MB
+  maxSizeBytes: 100 * 1024 * 1024, // 10MB
   allowedMimeTypes: [
     'application/pdf',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
