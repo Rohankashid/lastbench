@@ -27,7 +27,8 @@ interface PYQ {
 export default function PYQsPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [pyqs, setPYQs] = useState<PYQ[]>([]);
+  const [allPYQs, setAllPYQs] = useState<PYQ[]>([]);
+  const [filteredPYQs, setFilteredPYQs] = useState<PYQ[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
@@ -77,26 +78,31 @@ export default function PYQsPage() {
       if (filters.branch) {
         q = query(q, where('branch', '==', filters.branch));
       }
-      // Do NOT filter university in Firestore
       const querySnapshot = await getDocs(q);
-      let pyqsData = querySnapshot.docs.map(doc => ({
+      const pyqsData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as PYQ[];
-      // Client-side, case-insensitive, partial match for university
-      if (debouncedUniversity) {
-        pyqsData = pyqsData.filter(pyq =>
-          pyq.university && pyq.university.toLowerCase().includes(debouncedUniversity.toLowerCase())
-        );
-      }
-      setPYQs(pyqsData);
+      setAllPYQs(pyqsData);
     } catch (error) {
       console.error('Error fetching PYQs:', error);
       setError('Failed to fetch previous year questions. Please try again later.');
     } finally {
       setLoading(false);
     }
-  }, [filters.semester, filters.branch, debouncedUniversity]);
+  }, [filters.semester, filters.branch]);
+
+  useEffect(() => {
+    let filtered = allPYQs;
+    
+    if (debouncedUniversity) {
+      filtered = filtered.filter(pyq =>
+        pyq.university && pyq.university.toLowerCase().includes(debouncedUniversity.toLowerCase())
+      );
+    }
+    
+    setFilteredPYQs(filtered);
+  }, [allPYQs, debouncedUniversity]);
 
   useEffect(() => {
     if (!user) {
@@ -191,7 +197,7 @@ export default function PYQsPage() {
       console.log('Firestore document deleted successfully');
       
       // Update local state
-      setPYQs(pyqs.filter(p => p.id !== pyq.id));
+      setAllPYQs(prevPYQs => prevPYQs.filter(p => p.id !== pyq.id));
     } catch (error) {
       console.error('Error deleting PYQ:', error);
       setError('Failed to delete PYQ: ' + (error instanceof Error ? error.message : 'Unknown error'));
@@ -225,7 +231,7 @@ export default function PYQsPage() {
         {/* Filters */}
         <div className="mt-12 bg-white shadow-xl rounded-lg overflow-hidden">
           <div className="px-6 py-8 sm:p-8">
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 <div>
                   <label htmlFor="semester" className="block text-sm font-medium text-gray-700 mb-1">
@@ -317,7 +323,7 @@ export default function PYQsPage() {
                 </div>
               </div>
             </div>
-          ) : pyqs.length === 0 ? (
+          ) : filteredPYQs.length === 0 ? (
             <div className="text-center py-12">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -329,7 +335,7 @@ export default function PYQsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               {loading
                 ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
-                : pyqs.map((pyq) => (
+                : filteredPYQs.map((pyq) => (
                     <div
                       key={pyq.id}
                       className="block"

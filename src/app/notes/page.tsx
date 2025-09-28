@@ -26,7 +26,8 @@ interface Note {
 export default function NotesPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [allNotes, setAllNotes] = useState<Note[]>([]);
+  const [filteredNotes, setFilteredNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
@@ -76,26 +77,31 @@ export default function NotesPage() {
       if (filters.branch) {
         q = query(q, where('branch', '==', filters.branch));
       }
-      // Do NOT filter university in Firestore
       const querySnapshot = await getDocs(q);
-      let notesData = querySnapshot.docs.map(doc => ({
+      const notesData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Note[];
-      // Client-side, case-insensitive, partial match for university
-      if (debouncedUniversity) {
-        notesData = notesData.filter(note =>
-          note.university && note.university.toLowerCase().includes(debouncedUniversity.toLowerCase())
-        );
-      }
-      setNotes(notesData);
+      setAllNotes(notesData);
     } catch (error) {
       console.error('Error fetching notes:', error);
       setError('Failed to fetch notes. Please try again later.');
     } finally {
       setLoading(false);
     }
-  }, [filters.semester, filters.branch, debouncedUniversity]);
+  }, [filters.semester, filters.branch]);
+
+  useEffect(() => {
+    let filtered = allNotes;
+    
+    if (debouncedUniversity) {
+      filtered = filtered.filter(note =>
+        note.university && note.university.toLowerCase().includes(debouncedUniversity.toLowerCase())
+      );
+    }
+    
+    setFilteredNotes(filtered);
+  }, [allNotes, debouncedUniversity]);
 
   useEffect(() => {
     if (!user) {
@@ -196,8 +202,7 @@ export default function NotesPage() {
         throw new Error('Failed to delete Firestore document');
       }
       
-      // Update local state
-      setNotes(prevNotes => {
+      setAllNotes(prevNotes => {
         const updatedNotes = prevNotes.filter(n => n.id !== note.id);
         console.log('Updated notes state after deletion:', updatedNotes);
         return updatedNotes;
@@ -236,7 +241,7 @@ export default function NotesPage() {
         {/* Filters */}
         <div className="mt-12 bg-white shadow-xl rounded-lg overflow-hidden">
           <div className="px-4 py-5 sm:p-6">
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                 <div>
                   <label htmlFor="semester" className="block text-sm font-medium text-gray-700">
@@ -332,7 +337,7 @@ export default function NotesPage() {
                 </div>
               </div>
             </div>
-          ) : notes.length === 0 ? (
+          ) : filteredNotes.length === 0 ? (
             <div className="text-center py-12">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -344,7 +349,7 @@ export default function NotesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               {loading
                 ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
-                : notes.map((note) => (
+                : filteredNotes.map((note) => (
                     <div
                       key={note.id}
                       className="block"
