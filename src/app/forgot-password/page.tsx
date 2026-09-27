@@ -1,82 +1,38 @@
 'use client';
 
-import React ,{useState} from 'react';
-import { sendPasswordResetEmail } from 'firebase/auth';
-import {auth} from '@/lib/firebase';
-import Link from 'next/link';
+import { useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function ForgotPasswordPage(){
-    const [email,setEmail] = useState('');
-    const [error , setError] = useState('');
-    const [message , setMessage] = useState('');
-    const [loading,setLoading] = useState(false);
+function ForgotPasswordRedirect() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-    const handleSubmit = async (e: React.FormEvent)=>{
-        e.preventDefault();
-        setMessage('');
-        setError('');
-        setLoading(true);
-        
-        try{
-            await sendPasswordResetEmail(auth, email);
-            setMessage('Password reset email sent! Please check your inbox.');
-        } catch (err: unknown) {
-            type FirebaseError = { code: string };
-            let errorCode = '';
-            if (err && typeof err === 'object' && 'code' in err && typeof (err as FirebaseError).code === 'string') {
-                errorCode = (err as FirebaseError).code;
-            }
-            let friendlyMessage = 'Failed to send password reset email.';
-            switch (errorCode) {
-                case 'auth/user-not-found':
-                    friendlyMessage = 'No account found with this email.';
-                    break;
-                case 'auth/invalid-email':
-                    friendlyMessage = 'Please enter a valid email address.';
-                    break;
-                case 'auth/too-many-requests':
-                    friendlyMessage = 'Too many requests. Please try again later.';
-                    break;
-                default:
-                    if (errorCode) {
-                        friendlyMessage = 'Something went wrong. Please try again.';
-                    }
-            }
-            setError(friendlyMessage);
-        } finally {
-            setLoading(false);
-        }
-    }
+  useEffect(() => {
+    const redirectParam = searchParams.get('redirect');
+    const target = redirectParam
+      ? `/?auth=forgot-password&redirect=${encodeURIComponent(redirectParam)}`
+      : '/?auth=forgot-password';
+    router.replace(target);
+  }, [router, searchParams]);
 
-    return (
-        <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
-            <h2 className="text-2xl font-bold mb-4">Forgot Password</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                    <label htmlFor="email" className="block mb-1 font-medium">Email</label>
-                    <input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        required
-                        className="w-full px-3 py-2 border rounded"
-                        disabled={loading}
-                    />
-                </div>
-                {error && <div className="text-red-600 text-sm">{error}</div>}
-                {message && <div className="text-green-600 text-sm">{message}</div>}
-                <button
-                    type="submit"
-                    className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-                    disabled={loading}
-                >
-                    {loading ? 'Sending...' : 'Send Reset Email'}
-                </button>
-            </form>
-            <div className="mt-4 text-center">
-                <Link href="/login" className="text-blue-600 hover:underline">Back to Login</Link>
-            </div>
+  return (
+    <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3">
+      <div className="animate-spin rounded-full h-8 w-8 border-2 border-zinc-200 border-t-zinc-950" />
+      <p className="text-xs text-zinc-500 font-mono">Opening password recovery...</p>
+    </div>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[70vh] flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-zinc-300 border-t-zinc-950 rounded-full animate-spin" />
         </div>
-    );
+      }
+    >
+      <ForgotPasswordRedirect />
+    </Suspense>
+  );
 }

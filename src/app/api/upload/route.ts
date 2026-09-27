@@ -24,6 +24,7 @@ async function uploadHandler(req: NextRequest) {
       category: formData.get('category') as string || 'note',
       branch: formData.get('branch') as string || '',
       year: formData.get('year') as string || '',
+      uploadedBy: (formData.get('uploadedBy') as string) || 'student',
       // fileHash is ignored from client, always recompute below
     };
 
@@ -108,7 +109,7 @@ async function uploadHandler(req: NextRequest) {
       Key: secureFilename,
       Body: buffer,
       ContentType: file.type,
-      ContentDisposition: 'attachment',
+      ContentDisposition: 'inline',
       Metadata: {
         'original-filename': sanitizedFilename,
         'upload-timestamp': new Date().toISOString(),
@@ -136,7 +137,7 @@ async function uploadHandler(req: NextRequest) {
           originalName: sanitizedFilename,
           fileSize: file.size,
           fileType: file.type,
-          uploadedBy: 'auto-upload-script',
+          uploadedBy: metadata.uploadedBy || 'student',
           uploadedAt: new Date().toISOString(),
           fileHash, // Always store the hash
         };

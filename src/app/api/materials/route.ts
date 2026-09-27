@@ -66,12 +66,14 @@ export async function GET(req: NextRequest) {
     }
     // Pagination
     const pagedDocs = docs.slice(offsetVal, offsetVal + limitVal);
-    // Add downloadCount and uploaderInfo
-    const result = pagedDocs.map((d: Material) => ({
-      ...d,
-      downloadCount: d.downloadCount || 0,
-      uploaderInfo: d.uploaderInfo || d.uploadedBy || null,
-    }));
+    // Return public safe fields (never expose uploader identity to public API)
+    const result = pagedDocs.map((d: Material) => {
+      const { uploadedBy, uploaderInfo, ...safeDoc } = d;
+      return {
+        ...safeDoc,
+        downloadCount: d.downloadCount || 0,
+      };
+    });
     return NextResponse.json({ materials: result, total: docs.length });
   } catch (err) {
     return NextResponse.json({ error: 'Internal Server Error', details: String(err) }, { status: 500 });

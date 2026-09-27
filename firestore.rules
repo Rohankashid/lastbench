@@ -23,8 +23,24 @@ service cloud.firestore {
 
     // Materials collection rules
     match /materials/{materialId} {
-      // Allow authenticated users to read and write materials
-      allow read, write: if isAuthenticated();
+      // Allow anyone to read materials (public study archive)
+      allow read: if true;
+      // Allow authenticated users to upload materials
+      allow create: if isAuthenticated();
+      // Allow owner or admin to update/delete materials
+      allow update, delete: if isAuthenticated() && 
+        (resource.data.uploadedBy == request.auth.uid || isAdmin());
+
+      // Comments subcollection
+      match /comments/{commentId} {
+        // Allow anyone to read comments
+        allow read: if true;
+        // Allow authenticated users to post comments
+        allow create: if isAuthenticated();
+        // Allow author or admin to update/delete comments
+        allow update, delete: if isAuthenticated() && 
+          (resource.data.authorId == request.auth.uid || isAdmin());
+      }
     }
 
     // Default deny all other access

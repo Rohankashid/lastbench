@@ -3,11 +3,18 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import { ArrowUpTrayIcon, CheckCircleIcon, XCircleIcon, DocumentIcon } from '@heroicons/react/24/outline';
+import { motion, AnimatePresence } from 'framer-motion';
+import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { 
+  UNIVERSITY_SELECT_GROUPS, 
+  BRANCH_SELECT_GROUPS, 
+  SEMESTERS 
+} from '@/lib/constants/academic';
 
-
-// Client-side file validation configuration (matches server-side)
 const CLIENT_VALIDATION = {
-  maxSizeBytes: 100 * 1024 * 1024, // 10MB
+  maxSizeBytes: 100 * 1024 * 1024,
   allowedExtensions: ['.pdf', '.docx', '.doc', '.pptx', '.ppt', '.xlsx', '.xls', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.webp'],
   allowedMimeTypes: [
     'application/pdf',
@@ -32,6 +39,7 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     university: '',
@@ -49,41 +57,31 @@ export default function UploadPage() {
     type?: string;
   }>({ isValid: false });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   useEffect(() => {
     if (!user) {
-      router.push('/login');
+      router.replace('/?auth=login&redirect=%2Fupload');
       return;
     }
     setLoading(false);
   }, [user, router]);
 
-  // Client-side file validation
   const validateFile = (file: File) => {
     const errors: string[] = [];
-
-    // Check file size
     if (file.size > CLIENT_VALIDATION.maxSizeBytes) {
       errors.push(`File size (${(file.size / 1024 / 1024).toFixed(2)}MB) exceeds 10MB limit`);
     }
-
-    // Check file extension
     const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
     if (!CLIENT_VALIDATION.allowedExtensions.includes(ext)) {
-      errors.push(`File extension ${ext} not allowed. Allowed: ${CLIENT_VALIDATION.allowedExtensions.join(', ')}`);
+      errors.push(`File extension ${ext} not allowed.`);
     }
-
-    // Check MIME type
     if (!CLIENT_VALIDATION.allowedMimeTypes.includes(file.type)) {
       errors.push(`File type ${file.type} not allowed`);
     }
-
-    // Check filename length
     if (file.name.length > 255) {
       errors.push('Filename too long (max 255 characters)');
     }
-
-    // Check for suspicious filenames
     if (file.name.toLowerCase().includes('virus') || file.name.toLowerCase().includes('malware')) {
       errors.push('Suspicious filename detected');
     }
@@ -102,7 +100,6 @@ export default function UploadPage() {
       setFormData(prev => ({ ...prev, file: null }));
       return;
     }
-
     const validation = validateFile(file);
     setFileValidation(validation);
     setFormData(prev => ({ ...prev, file }));
@@ -110,12 +107,10 @@ export default function UploadPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.file) {
       setError('Please select a file');
       return;
     }
-
     if (!fileValidation.isValid) {
       setError(`File validation failed: ${fileValidation.error}`);
       return;
@@ -123,9 +118,9 @@ export default function UploadPage() {
 
     setUploading(true);
     setError('');
+    setSuccess(false);
 
     try {
-      // 1. Upload file to S3 via API route
       const uploadData = new FormData();
       uploadData.append('file', formData.file);
       uploadData.append('name', formData.name);
@@ -135,6 +130,9 @@ export default function UploadPage() {
       uploadData.append('category', formData.category);
       uploadData.append('branch', formData.branch);
       uploadData.append('year', formData.year);
+      if (user) {
+        uploadData.append('uploadedBy', user.email || user.uid);
+      }
 
       const res = await fetch('/api/upload', {
         method: 'POST',
@@ -142,32 +140,15 @@ export default function UploadPage() {
       });
 
       const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.details || data.error || 'Upload failed');
-      }
+      if (!res.ok) throw new Error(data.details || data.error || 'Upload failed');
+      if (!data.url) throw new Error('Failed to upload to S3');
 
-      if (!data.url) {
-        throw new Error('Failed to upload to S3');
-      }
-
-      // 2. (REMOVED) Add document to Firestore with S3 URL
-      // await addDoc(collection(db, 'materials'), { ... });
-
-      // Reset form
       setFormData({
-        name: '',
-        university: '',
-        semester: '',
-        subject: '',
-        category: 'note',
-        branch: '',
-        year: '',
-        file: null,
+        name: '', university: '', semester: '', subject: '', category: 'note', branch: '', year: '', file: null,
       });
       setFileValidation({ isValid: false });
-
-      alert('Material uploaded successfully!');
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
     } catch (error) {
       console.error('Error uploading material:', error);
       setError(error instanceof Error ? error.message : 'Failed to upload material');
@@ -176,317 +157,227 @@ export default function UploadPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-gray-900">Loading...</h2>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-red-600">{error}</h2>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        
-        <div className="text-center">
-          <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">
+    <div className="relative min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+      <BackgroundGrid variant="grid" />
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-8 border-b border-zinc-200 pb-5">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-zinc-900" />
+            <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500 font-medium">
+              MATERIAL UPLOAD
+            </span>
+          </div>
+          <h2 className="text-3xl font-semibold text-zinc-950 tracking-tight">
             Upload Study Material
           </h2>
-          <p className="mt-4 text-xl text-gray-600">
-            Share your study materials with other students
+          <p className="text-xs text-zinc-500 mt-1">
+            Share notes and previous year questions. Verified files are indexed instantly.
           </p>
         </div>
 
-        <div className="mt-12 bg-white shadow-xl rounded-lg overflow-hidden">
-          <div className="px-4 py-5 sm:p-6">
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {error && (
-                <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm text-red-700">{error}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
+        <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8 border border-zinc-200 relative">
+          <AnimatePresence>
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, y: -50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -50 }}
+                className="absolute top-0 left-0 right-0 bg-emerald-500 text-white p-4 flex items-center justify-center gap-2 shadow-md z-10 rounded-t-xl"
+              >
+                <CheckCircleIcon className="w-6 h-6" />
+                <span className="font-semibold">Upload successful!</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {error && (
+              <div className="bg-rose-50 text-rose-700 p-4 rounded-xl flex items-start gap-3 border border-rose-100">
+                <XCircleIcon className="w-6 h-6 flex-shrink-0" />
+                <p className="text-sm font-medium mt-0.5">{error}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Type</label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                    className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors sm:text-sm"
+                  >
+                    <option value="note">Study Note</option>
+                    <option value="pyq">Previous Year Question</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Material Name</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors sm:text-sm"
+                    placeholder="E.g., OS Chapter 1 Notes"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Engineering Branch</label>
+                  <SearchableSelect
+                    value={formData.branch}
+                    onChange={(val) => setFormData(prev => ({ ...prev, branch: val }))}
+                    groups={BRANCH_SELECT_GROUPS}
+                    placeholder="Select Engineering Branch"
+                    searchPlaceholder="Search branch (e.g. CSE, Mechanical, AI)..."
+                    buttonClassName="px-4 py-3 rounded-xl border-slate-200 bg-slate-50 focus:bg-white text-sm"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">University (Maharashtra)</label>
+                  <SearchableSelect
+                    value={formData.university}
+                    onChange={(val) => setFormData(prev => ({ ...prev, university: val }))}
+                    groups={UNIVERSITY_SELECT_GROUPS}
+                    placeholder="Select University"
+                    searchPlaceholder="Search university (e.g. SPPU, COEP, Mumbai)..."
+                    buttonClassName="px-4 py-3 rounded-xl border-slate-200 bg-slate-50 focus:bg-white text-sm"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-  <label htmlFor="branch" className="block text-sm font-medium text-gray-700">
-    Branch
-  </label>
-  <div className="mt-1">
-    <select
-      id="branch"
-      name="branch"
-      value={formData.branch}
-      onChange={e => setFormData(prev => ({ ...prev, branch: e.target.value }))}
-      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-      required
-    >
-      <option value="">Select Branch</option>
-      <option value="First Year">First Year</option>
-      <option value="Computer Engineering / Computer Science and Engineering (CSE)">Computer Engineering / Computer Science and Engineering (CSE)</option>
-      <option value="Information Technology (IT)">Information Technology (IT)</option>
-      <option value="Electronics and Telecommunication (ENTC / E&TC)">Electronics and Telecommunication (ENTC / E&TC)</option>
-      <option value="Mechanical Engineering">Mechanical Engineering</option>
-      <option value="Civil Engineering">Civil Engineering</option>
-      <option value="Electrical Engineering">Electrical Engineering</option>
-      <option value="Electronics Engineering">Electronics Engineering</option>
-    </select>
-  </div>
-</div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mt-2">
-                    Material Name
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="name"
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="Enter material name"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label htmlFor="university" className="block text-sm font-medium text-gray-700">
-                    University
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="university"
-                      id="university"
-                      value={formData.university}
-                      onChange={(e) => setFormData(prev => ({ ...prev, university: e.target.value }))}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="Enter university name"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="semester" className="block text-sm font-medium text-gray-700">
-                    Semester
-                  </label>
-                  <div className="mt-1">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Semester</label>
                     <select
-                      id="semester"
-                      name="semester"
                       value={formData.semester}
                       onChange={e => setFormData(prev => ({ ...prev, semester: e.target.value }))}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors sm:text-sm"
                       required
                     >
                       <option value="">Select Semester</option>
-                      <option value="1">Semester 1</option>
-                      <option value="2">Semester 2</option>
-                      <option value="3">Semester 3</option>
-                      <option value="4">Semester 4</option>
-                      <option value="5">Semester 5</option>
-                      <option value="6">Semester 6</option>
-                      <option value="7">Semester 7</option>
-                      <option value="8">Semester 8</option>
+                      {SEMESTERS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                     </select>
                   </div>
-                </div>
-
-                <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
-                    Subject
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="subject"
-                      id="subject"
-                      value={formData.subject}
-                      onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="Enter subject name"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                    Type
-                  </label>
-                  <div className="mt-1">
-                    <select
-                      id="category"
-                      name="category"
-                      value={formData.category}
-                      onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    >
-                      <option value="note">Study Note</option>
-                      <option value="pyq">Previous Year Question</option>
-                    </select>
-                  </div>
-                </div>
-
-                {formData.category === 'pyq' && (
-                  <div>
-                    <label htmlFor="year" className="block text-sm font-medium text-gray-700">
-                      Year
-                    </label>
-                    <div className="mt-1">
+                  {formData.category === 'pyq' && (
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Year</label>
                       <select
-                        id="year"
-                        name="year"
                         value={formData.year}
                         onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))}
-                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        required={formData.category === 'pyq'}
+                        className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors sm:text-sm"
+                        required
                       >
-                        <option value="">Select Year</option>
+                        <option value="">Select</option>
                         {Array.from({ length: 6 }, (_, i) => {
                           const year = new Date().getFullYear() - i;
-                          return (
-                            <option key={year} value={year.toString()}>
-                              {year}
-                            </option>
-                          );
+                          return <option key={year} value={year}>{year}</option>;
                         })}
                       </select>
                     </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Subject</label>
+                  <input
+                    type="text"
+                    value={formData.subject}
+                    onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                    className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors sm:text-sm"
+                    placeholder="E.g., Operating Systems"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">File Upload</label>
+              <div
+                className={`mt-1 flex flex-col items-center justify-center px-6 pt-8 pb-10 border-2 border-dashed rounded-2xl relative cursor-pointer transition-all ${
+                  isDragOver 
+                    ? 'border-indigo-500 bg-indigo-50' 
+                    : fileValidation.isValid 
+                      ? 'border-emerald-400 bg-emerald-50' 
+                      : formData.file 
+                        ? 'border-rose-400 bg-rose-50' 
+                        : 'border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-slate-400'
+                }`}
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
+                onDragLeave={() => setIsDragOver(false)}
+                onDrop={e => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                  if (e.dataTransfer.files[0]) handleFileChange(e.dataTransfer.files[0]);
+                }}
+              >
+                {formData.file ? (
+                  <div className="text-center">
+                    <DocumentIcon className={`mx-auto h-16 w-16 mb-4 ${fileValidation.isValid ? 'text-emerald-500' : 'text-rose-500'}`} />
+                    <p className="text-lg font-medium text-slate-900">{formData.file.name}</p>
+                    <p className="text-sm text-slate-500 mt-1">{fileValidation.size}</p>
+                    {fileValidation.error ? (
+                      <p className="text-sm font-medium text-rose-600 mt-3 bg-rose-100 px-3 py-1 rounded-full inline-block">❌ {fileValidation.error}</p>
+                    ) : (
+                      <p className="text-sm font-medium text-emerald-600 mt-3 bg-emerald-100 px-3 py-1 rounded-full inline-block">✅ File is ready</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm mb-4">
+                      <ArrowUpTrayIcon className="h-8 w-8 text-indigo-500" />
+                    </div>
+                    <div className="text-lg font-medium text-slate-900">Click to upload or drag and drop</div>
+                    <p className="text-sm text-slate-500 mt-2 max-w-xs mx-auto">
+                      PDF, DOCX, PPT, Excel, TXT or Images up to 100MB
+                    </p>
                   </div>
                 )}
-
-                <div className="sm:col-span-2">
-  <label className="block text-sm font-medium text-gray-700">
-    File
-  </label>
-  <div
-    className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md relative cursor-pointer ${
-      fileValidation.isValid 
-        ? 'border-green-300 bg-green-50' 
-        : formData.file 
-        ? 'border-red-300 bg-red-50' 
-        : 'border-gray-300'
-    }`}
-    onClick={() => fileInputRef.current?.click()}
-    onDrop={e => {
-      e.preventDefault();
-      if (e.dataTransfer.files[0]) {
-        handleFileChange(e.dataTransfer.files[0]);
-      }
-    }}
-    onDragOver={e => e.preventDefault()}
-  >
-    <div className="space-y-1 text-center">
-      <svg
-        className={`mx-auto h-12 w-12 ${
-          fileValidation.isValid ? 'text-green-400' : formData.file ? 'text-red-400' : 'text-gray-400'
-        }`}
-        stroke="currentColor"
-        fill="none"
-        viewBox="0 0 48 48"
-        aria-hidden="true"
-      >
-        <path
-          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      <div className="block w-full py-2 bg-white rounded-md font-medium text-blue-600 hover:text-blue-500">
-        Upload a file
-      </div>
-      <p className="pl-1">or drag and drop</p>
-      <p className="text-xs text-gray-500">
-        Allowed: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, Images (JPG, PNG, GIF, WebP)
-      </p>
-      <p className="text-xs text-gray-500">Maximum size: 100MB</p>
-    </div>
-  </div>
-  
-  <input
-    id="file-upload"
-    type="file"
-    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.webp"
-    ref={fileInputRef}
-    onChange={e => {
-      if (e.target.files && e.target.files[0]) {
-        handleFileChange(e.target.files[0]);
-      }
-    }}
-    className="sr-only"
-  />
-  
-  {formData.file && (
-    <div className="mt-2">
-      <p className={`text-sm ${fileValidation.isValid ? 'text-green-600' : 'text-red-600'}`}>
-        Selected: {formData.file.name}
-        {fileValidation.size && ` (${fileValidation.size})`}
-      </p>
-      {fileValidation.error && (
-        <p className="text-sm text-red-600 mt-1">
-          ❌ {fileValidation.error}
-        </p>
-      )}
-      {fileValidation.isValid && (
-        <p className="text-sm text-green-600 mt-1">
-          ✅ File validation passed
-        </p>
-      )}
-    </div>
-  )}
-</div>
               </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={e => {
+                  if (e.target.files?.[0]) handleFileChange(e.target.files[0]);
+                }}
+                className="sr-only"
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.webp"
+              />
+            </div>
 
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={uploading || !fileValidation.isValid}
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                >
-                  {uploading ? (
-                    <div className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Uploading...
-                    </div>
-                  ) : (
-                    'Upload Material'
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
+            <div className="pt-4 border-t border-slate-100">
+              <button
+                type="submit"
+                disabled={uploading || !fileValidation.isValid}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-zinc-950 text-white font-medium text-xs hover:bg-zinc-800 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ml-auto flex items-center justify-center gap-2"
+              >
+                {uploading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <span>Uploading...</span>
+                  </div>
+                ) : (
+                  'Confirm & Upload Material'
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

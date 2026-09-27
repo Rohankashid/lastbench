@@ -1,73 +1,112 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { collection, getDocs, addDoc, deleteDoc, doc, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { collection, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
+import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
+import { Modal } from '@/components/ui/Modal';
+import { useToast } from '@/components/ui/Toast';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { DocumentViewer } from '@/components/ui/DocumentViewer';
+import { 
+  UNIVERSITY_SELECT_GROUPS, 
+  BRANCH_SELECT_GROUPS, 
+  SEMESTERS 
+} from '@/lib/constants/academic';
+import { 
+  FileText, 
+  BookOpen, 
+  GraduationCap, 
+  Trash2, 
+  Eye, 
+  Download, 
+  Search, 
+  UploadCloud, 
+  MapPin, 
+  Library, 
+  RotateCcw,
+  CheckCircle,
+  Plus
+} from 'lucide-react';
 
 interface Material {
   id: string;
-  title: string;
-  description: string;
+  title?: string;
+  name?: string;
+  description?: string;
   category: string;
   fileUrl: string;
-  uploadedBy: string;
+  uploadedBy?: string;
   uploadedAt: string;
   semester?: string;
   subject?: string;
+  university?: string;
+  branch?: string;
   year?: string;
+  examYear?: string;
 }
 
 export default function AdminPanel() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const router = useRouter();
+
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<Material | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<{
+    title: string;
+    fileUrl: string;
+    metadata?: {
+      subject?: string;
+      semester?: string;
+      university?: string;
+      year?: string;
+    };
+  } | null>(null);
+
+  // Search & Filter state for materials list
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategoryTab, setSelectedCategoryTab] = useState<'all' | 'note' | 'pyq'>('all');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Quick upload form state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: 'note', // 'note' or 'pyq'
+    category: 'note',
+    university: '',
+    branch: '',
     semester: '',
     subject: '',
-    year: '', // for PYQs
+    year: '',
     file: null as File | null,
   });
 
   useEffect(() => {
-    // Check if user is admin
     if (!user) {
-      router.push('/login');
+      router.replace('/?auth=login&redirect=%2Fadmin');
       return;
     }
 
     const checkAdminStatus = async () => {
       try {
-        // Only read the current user's document
         const userDoc = await getDoc(doc(db, 'users', user.uid));
-        
-        if (!userDoc.exists()) {
-          setError('User profile not found');
-          return;
-        }
-
-        const userData = userDoc.data();
-        const isAdmin = userData.role === 'admin';
-        
-        if (!isAdmin) {
+        if (!userDoc.exists() || userDoc.data().role !== 'admin') {
           router.push('/');
           return;
         }
-        
-        // If admin, fetch materials
         fetchMaterials();
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        setError('Failed to verify admin status');
+      } catch (err) {
+        console.error('Error checking admin status:', err);
+        setError('Failed to verify admin authorization');
       }
     };
 
@@ -76,15 +115,16 @@ export default function AdminPanel() {
 
   const fetchMaterials = async () => {
     try {
+      setLoading(true);
       const materialsSnapshot = await getDocs(collection(db, 'materials'));
       const materialsList = materialsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Material[];
-      setMaterials(materialsList);
-    } catch (error) {
-      console.error('Error fetching materials:', error);
-      setError('Failed to fetch materials');
+      setMaterials(materialsList.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()));
+    } catch (err) {
+      console.error('Error fetching materials:', err);
+      setError('Failed to fetch materials repository');
     } finally {
       setLoading(false);
     }
@@ -102,7 +142,11 @@ export default function AdminPanel() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.file) {
-      setError('Please select a file');
+      toast.error('Please choose a file to upload');
+      return;
+    }
+    if (!formData.title.trim()) {
+      toast.error('Please provide a document title');
       return;
     }
 
@@ -110,402 +154,639 @@ export default function AdminPanel() {
     setError('');
 
     try {
-      // Upload file to Firebase Storage
-      const fileRef = ref(storage, `${formData.category}s/${formData.file.name}`);
-      await uploadBytes(fileRef, formData.file);
-      const downloadURL = await getDownloadURL(fileRef);
+      const uploadData = new FormData();
+      uploadData.append('file', formData.file);
+      uploadData.append('name', formData.title.trim());
+      uploadData.append('university', formData.university);
+      uploadData.append('branch', formData.branch);
+      uploadData.append('semester', formData.semester);
+      uploadData.append('subject', formData.subject.trim());
+      uploadData.append('category', formData.category);
+      uploadData.append('year', formData.category === 'pyq' ? formData.year : '');
+      uploadData.append('uploadedBy', user?.email || 'admin');
 
-      // Add document to Firestore
-      await addDoc(collection(db, 'materials'), {
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        semester: formData.semester,
-        subject: formData.subject,
-        year: formData.category === 'pyq' ? formData.year : null,
-        fileUrl: downloadURL,
-        uploadedBy: user?.email,
-        uploadedAt: new Date().toISOString(),
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadData,
       });
 
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.details || data.error || 'Upload failed');
+      if (!data.url) throw new Error('File upload was not acknowledged by storage');
+
+      toast.success('Document uploaded and indexed successfully!');
+      
       // Reset form
       setFormData({
         title: '',
         description: '',
         category: 'note',
+        university: '',
+        branch: '',
         semester: '',
         subject: '',
         year: '',
         file: null,
       });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
 
-      // Refresh materials list
       fetchMaterials();
-    } catch (error) {
-      console.error('Error uploading material:', error);
-      setError('Failed to upload material');
+    } catch (err) {
+      console.error('Error uploading material:', err);
+      const msg = err instanceof Error ? err.message : 'Failed to upload material';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this material? This action cannot be undone.')) {
-      return;
-    }
-
-    setDeleting(id);
+  const confirmDeleteMaterial = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
     setError('');
 
     try {
-      const material = materials.find(m => m.id === id);
-      if (!material) {
-        setError('Material not found');
-        return;
+      if (itemToDelete.fileUrl && (itemToDelete.fileUrl.includes('s3.amazonaws.com') || itemToDelete.fileUrl.includes('s3.'))) {
+        const response = await fetch('/api/delete', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileUrl: itemToDelete.fileUrl }),
+        });
+        if (!response.ok) throw new Error('Storage file deletion failed');
+      } else if (itemToDelete.fileUrl && itemToDelete.fileUrl.includes('firebasestorage.googleapis.com')) {
+        const firebaseUrl = new URL(itemToDelete.fileUrl);
+        const pathMatch = firebaseUrl.pathname.match(/\/o\/(.+?)\?/);
+        const filePath = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
+        if (filePath) {
+          await deleteObject(ref(storage, filePath));
+        }
       }
 
-      console.log('Deleting material:', material.title, 'URL:', material.fileUrl);
-
-      // Check if this is an S3 URL or Firebase Storage URL
-      if (material.fileUrl && (material.fileUrl.includes('s3.amazonaws.com') || material.fileUrl.includes('s3.'))) {
-        // This is an S3 URL - delete from S3
-        try {
-          console.log('S3 URL detected, deleting from S3');
-          const response = await fetch('/api/delete', {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ fileUrl: material.fileUrl }),
-          });
-          
-          const result = await response.json();
-          console.log('S3 deletion result:', result);
-          
-          if (!response.ok) {
-            console.error('S3 deletion failed:', result);
-            throw new Error('S3 deletion failed');
-          }
-          
-          console.log('S3 file deleted successfully');
-        } catch (s3Error) {
-          console.error('S3 delete failed:', s3Error);
-          throw new Error('Failed to delete file from S3');
-        }
-      } else if (material.fileUrl && material.fileUrl.includes('firebasestorage.googleapis.com')) {
-        // This is a Firebase Storage URL - delete from Firebase Storage
-        try {
-          console.log('Firebase Storage URL detected, deleting from Firebase Storage');
-          const firebaseUrl = new URL(material.fileUrl);
-          const pathMatch = firebaseUrl.pathname.match(/\/o\/(.+?)\?/);
-          const filePath = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
-          
-          if (filePath) {
-            console.log('Firebase Storage path:', filePath);
-            const fileRef = ref(storage, filePath);
-            await deleteObject(fileRef);
-            console.log('Firebase Storage file deleted successfully');
-          } else {
-            console.warn('Could not extract Firebase Storage path from URL');
-            throw new Error('Could not extract Firebase Storage path');
-          }
-        } catch (storageError) {
-          console.error('Firebase Storage delete failed:', storageError);
-          throw new Error('Failed to delete file from Firebase Storage');
-        }
-      } else {
-        console.warn('Unknown URL format, skipping file deletion');
-        console.log('URL that was not recognized:', material.fileUrl);
-      }
-
-      // Delete from Firestore
-      await deleteDoc(doc(db, 'materials', id));
-      console.log('Firestore document deleted successfully');
-      
-      setMaterials(materials.filter(material => material.id !== id));
-    } catch (error) {
-      console.error('Error deleting material:', error);
-      setError('Failed to delete material: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      await deleteDoc(doc(db, 'materials', itemToDelete.id));
+      setMaterials(prev => prev.filter(m => m.id !== itemToDelete.id));
+      toast.success('Material deleted permanently');
+      setItemToDelete(null);
+    } catch (err) {
+      console.error('Error deleting material:', err);
+      const errMsg = err instanceof Error ? err.message : 'Unknown error';
+      setError('Failed to delete material: ' + errMsg);
+      toast.error('Failed to delete material: ' + errMsg);
     } finally {
-      setDeleting(null);
+      setIsDeleting(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-gray-900">Loading...</h2>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Filtered materials based on search query & category tab
+  const filteredMaterials = useMemo(() => {
+    return materials.filter(item => {
+      // Category filter
+      if (selectedCategoryTab !== 'all' && item.category !== selectedCategoryTab) {
+        return false;
+      }
 
-  if (error) {
+      // Search query filter
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase().trim();
+      const title = (item.name || item.title || '').toLowerCase();
+      const subject = (item.subject || '').toLowerCase();
+      const university = (item.university || '').toLowerCase();
+      const branch = (item.branch || '').toLowerCase();
+      const uploader = (item.uploadedBy || '').toLowerCase();
+
+      return (
+        title.includes(q) ||
+        subject.includes(q) ||
+        university.includes(q) ||
+        branch.includes(q) ||
+        uploader.includes(q)
+      );
+    });
+  }, [materials, selectedCategoryTab, searchQuery]);
+
+  // Counts
+  const totalNotesCount = useMemo(() => materials.filter(m => m.category === 'note').length, [materials]);
+  const totalPyqsCount = useMemo(() => materials.filter(m => m.category === 'pyq').length, [materials]);
+
+  if (loading && materials.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-red-600">{error}</h2>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50">
+        <div className="w-8 h-8 border-2 border-zinc-200 border-t-zinc-950 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Admin Panel
-          </h2>
-          <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
-            Upload and manage study materials
-          </p>
+    <div className="relative min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+      <BackgroundGrid variant="grid" />
+      <div className="max-w-7xl mx-auto space-y-8">
+        
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-zinc-200 pb-5">
+          <div>
+            <h1 className="text-3xl font-semibold text-zinc-950 tracking-tight">
+              Admin Management
+            </h1>
+            <p className="text-xs text-zinc-500 mt-1">
+              Upload study materials, oversee repository assets, and manage student downloads.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchMaterials}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 transition-colors"
+              title="Refresh list"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-zinc-500" />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
 
-        {/* Upload Form */}
-        <div className="mt-12 max-w-3xl mx-auto">
-          <form onSubmit={handleSubmit} className="space-y-6 bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
-            <div className="md:grid md:grid-cols-3 md:gap-6">
-              <div className="md:col-span-1">
-                <h3 className="text-lg font-medium leading-6 text-gray-900">Upload Material</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Upload study notes or previous year questions.
-                </p>
+        {/* Overview Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-xs text-zinc-500 font-medium">Total Repository Items</p>
+              <p className="text-2xl font-bold text-zinc-950 mt-1">{materials.length}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-800">
+              <FileText className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-xs text-zinc-500 font-medium">Study Notes</p>
+              <p className="text-2xl font-bold text-zinc-950 mt-1">{totalNotesCount}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-800">
+              <BookOpen className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-xs text-zinc-500 font-medium">Question Papers (PYQs)</p>
+              <p className="text-2xl font-bold text-zinc-950 mt-1">{totalPyqsCount}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-800">
+              <GraduationCap className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-xs font-medium flex items-center justify-between">
+            <span>{error}</span>
+            <button onClick={() => setError('')} className="text-rose-500 hover:text-rose-700 font-bold ml-2">
+              &times;
+            </button>
+          </div>
+        )}
+
+        {/* Main Content Grid: Upload (5 cols) & Manage (7 cols) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Quick Upload Form */}
+          <div className="lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 lg:sticky lg:top-20">
+            <div className="flex items-center justify-between mb-5 pb-3 border-b border-zinc-100">
+              <div>
+                <h2 className="text-base font-semibold text-zinc-950">Quick Upload</h2>
+                <p className="text-[11px] text-zinc-500 mt-0.5">Upload verified notes and past question papers.</p>
               </div>
-              <div className="mt-5 md:mt-0 md:col-span-2">
-                <div className="grid grid-cols-6 gap-6">
-                  <div className="col-span-6 sm:col-span-3">
-                    <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                      Type
-                    </label>
-                    <select
-                      id="category"
-                      name="category"
-                      value={formData.category}
-                      onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    >
-                      <option value="note">Study Note</option>
-                      <option value="pyq">Previous Year Question</option>
-                    </select>
-                  </div>
+              <span className="p-2 rounded-lg bg-zinc-100 text-zinc-700">
+                <Plus className="w-4 h-4" />
+              </span>
+            </div>
 
-                  <div className="col-span-6">
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                      Title
-                    </label>
-                    <input
-                      type="text"
-                      name="title"
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      required
-                    />
-                  </div>
-
-                  <div className="col-span-6">
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                      Description
-                    </label>
-                    <textarea
-                      id="description"
-                      name="description"
-                      rows={3}
-                      value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      required
-                    />
-                  </div>
-
-                  <div className="col-span-6 sm:col-span-3">
-                    <label htmlFor="semester" className="block text-sm font-medium text-gray-700">
-                      Semester
-                    </label>
-                    <input
-                      type="text"
-                      name="semester"
-                      id="semester"
-                      value={formData.semester}
-                      onChange={(e) => setFormData(prev => ({ ...prev, semester: e.target.value }))}
-                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      required
-                    />
-                  </div>
-
-                  <div className="col-span-6 sm:col-span-3">
-                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
-                      Subject
-                    </label>
-                    <input
-                      type="text"
-                      name="subject"
-                      id="subject"
-                      value={formData.subject}
-                      onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      required
-                    />
-                  </div>
-
-                  {formData.category === 'pyq' && (
-                    <div className="col-span-6 sm:col-span-3">
-                      <label htmlFor="year" className="block text-sm font-medium text-gray-700">
-                        Year
-                      </label>
-                      <input
-                        type="text"
-                        name="year"
-                        id="year"
-                        value={formData.year}
-                        onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))}
-                        className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                        required
-                      />
-                    </div>
-                  )}
-
-                  <div className="col-span-6">
-                    <label htmlFor="file" className="block text-sm font-medium text-gray-700">
-                      File (PDF)
-                    </label>
-                    <input
-                      type="file"
-                      name="file"
-                      id="file"
-                      accept=".pdf"
-                      onChange={handleFileChange}
-                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300"
-                      required
-                    />
-                  </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Type Switcher */}
+              <div>
+                <label className="block text-xs font-medium text-zinc-700 mb-1.5">Document Type</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, category: 'note' }))}
+                    className={`py-2 px-3 text-xs font-medium rounded-lg border text-center transition-colors ${
+                      formData.category === 'note'
+                        ? 'border-zinc-900 bg-zinc-950 text-white'
+                        : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
+                    }`}
+                  >
+                    Study Note
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, category: 'pyq' }))}
+                    className={`py-2 px-3 text-xs font-medium rounded-lg border text-center transition-colors ${
+                      formData.category === 'pyq'
+                        ? 'border-zinc-900 bg-zinc-950 text-white'
+                        : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
+                    }`}
+                  >
+                    Question Paper (PYQ)
+                  </button>
                 </div>
               </div>
-            </div>
-            <div className="flex justify-end">
+
+              {/* Title / Name */}
+              <div>
+                <label className="block text-xs font-medium text-zinc-700 mb-1">
+                  Document Title <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Operating Systems Chapter 1 Notes"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 bg-white text-zinc-900 transition-colors"
+                />
+              </div>
+
+              {/* University Select */}
+              <div>
+                <label className="block text-xs font-medium text-zinc-700 mb-1">
+                  University (Maharashtra) <span className="text-rose-500">*</span>
+                </label>
+                <SearchableSelect
+                  required
+                  value={formData.university}
+                  onChange={(val) => setFormData(prev => ({ ...prev, university: val }))}
+                  groups={UNIVERSITY_SELECT_GROUPS}
+                  placeholder="Select University"
+                  searchPlaceholder="Search Maharashtra university or institute..."
+                />
+              </div>
+
+              {/* Engineering Branch Select */}
+              <div>
+                <label className="block text-xs font-medium text-zinc-700 mb-1">
+                  Engineering Branch <span className="text-rose-500">*</span>
+                </label>
+                <SearchableSelect
+                  required
+                  value={formData.branch}
+                  onChange={(val) => setFormData(prev => ({ ...prev, branch: val }))}
+                  groups={BRANCH_SELECT_GROUPS}
+                  placeholder="Select Engineering Branch"
+                  searchPlaceholder="Search branch (e.g. CSE, IT, Mechanical)..."
+                />
+              </div>
+
+              {/* Semester & Year */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-700 mb-1">
+                    Semester <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={formData.semester}
+                    onChange={(e) => setFormData(prev => ({ ...prev, semester: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors"
+                  >
+                    <option value="">Select Sem</option>
+                    {SEMESTERS.map(s => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {formData.category === 'pyq' ? (
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-700 mb-1">
+                      Exam Year <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      required
+                      value={formData.year}
+                      onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))}
+                      className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors"
+                    >
+                      <option value="">Select Year</option>
+                      {Array.from({ length: 6 }, (_, i) => {
+                        const yr = new Date().getFullYear() - i;
+                        return <option key={yr} value={yr}>{yr}</option>;
+                      })}
+                    </select>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-700 mb-1">Subject Code / Tag</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. CS301"
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Subject Name */}
+              <div>
+                <label className="block text-xs font-medium text-zinc-700 mb-1">
+                  Subject Name <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Operating Systems"
+                  value={formData.subject}
+                  onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors"
+                />
+              </div>
+
+              {/* File Upload Box */}
+              <div>
+                <label className="block text-xs font-medium text-zinc-700 mb-1">
+                  File (PDF / Document) <span className="text-rose-500">*</span>
+                </label>
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full p-4 border border-dashed border-zinc-300 hover:border-zinc-400 bg-zinc-50/70 hover:bg-zinc-50 rounded-xl cursor-pointer text-center transition-colors"
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.txt"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  {formData.file ? (
+                    <div className="flex items-center justify-between gap-2 text-left bg-white p-2.5 rounded-lg border border-zinc-200">
+                      <div className="flex items-center gap-2 truncate">
+                        <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span className="text-xs font-medium text-zinc-900 truncate">
+                          {formData.file.name}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-zinc-400 shrink-0 font-mono">
+                        {(formData.file.size / (1024 * 1024)).toFixed(1)} MB
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-1.5 py-1">
+                      <UploadCloud className="w-5 h-5 text-zinc-400" />
+                      <p className="text-xs font-medium text-zinc-800">
+                        Click to select document
+                      </p>
+                      <p className="text-[10px] text-zinc-400">
+                        PDF, DOCX, PPTX up to 100MB
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={uploading}
-                className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
+                className="w-full py-2.5 px-4 rounded-xl text-xs font-medium text-white bg-zinc-950 hover:bg-zinc-800 transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer mt-2"
               >
-                {uploading ? 'Uploading...' : 'Upload Material'}
+                {uploading ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Uploading Document...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    <span>Upload & Index Document</span>
+                  </>
+                )}
               </button>
-            </div>
-          </form>
-        </div>
+            </form>
+          </div>
 
-        {/* Materials List */}
-        <div className="mt-12">
-          <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Uploaded Materials</h3>
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              {materials.map((material) => (
-                <li key={material.id}>
-                  <div className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-between">
+          {/* Manage Materials List */}
+          <div className="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
+            {/* List Header & Controls */}
+            <div className="p-5 border-b border-zinc-100 bg-white space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-semibold text-zinc-950">Manage Materials</h2>
+                  <p className="text-[11px] text-zinc-500 mt-0.5">
+                    Showing {filteredMaterials.length} of {materials.length} uploaded files
+                  </p>
+                </div>
+
+                {/* Category Filter Pills */}
+                <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-lg text-xs font-medium text-zinc-600">
+                  <button
+                    onClick={() => setSelectedCategoryTab('all')}
+                    className={`px-2.5 py-1 rounded-md transition-colors ${
+                      selectedCategoryTab === 'all' ? 'bg-white text-zinc-950 shadow-xs' : 'hover:text-zinc-950'
+                    }`}
+                  >
+                    All ({materials.length})
+                  </button>
+                  <button
+                    onClick={() => setSelectedCategoryTab('note')}
+                    className={`px-2.5 py-1 rounded-md transition-colors ${
+                      selectedCategoryTab === 'note' ? 'bg-white text-zinc-950 shadow-xs' : 'hover:text-zinc-950'
+                    }`}
+                  >
+                    Notes ({totalNotesCount})
+                  </button>
+                  <button
+                    onClick={() => setSelectedCategoryTab('pyq')}
+                    className={`px-2.5 py-1 rounded-md transition-colors ${
+                      selectedCategoryTab === 'pyq' ? 'bg-white text-zinc-950 shadow-xs' : 'hover:text-zinc-950'
+                    }`}
+                  >
+                    PYQs ({totalPyqsCount})
+                  </button>
+                </div>
+              </div>
+
+              {/* Instant Search Bar */}
+              <div className="relative flex items-center">
+                <Search className="w-3.5 h-3.5 absolute left-3 text-zinc-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search by title, subject, university, branch, or uploader..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-8 py-2 text-xs bg-zinc-50 border border-zinc-200 rounded-lg text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 text-xs text-zinc-400 hover:text-zinc-600"
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* List Body */}
+            <div className="max-h-[720px] overflow-y-auto divide-y divide-zinc-100">
+              {filteredMaterials.length === 0 ? (
+                <div className="p-12 text-center text-zinc-400">
+                  <FileText className="w-8 h-8 mx-auto text-zinc-300 mb-2" />
+                  <p className="text-xs font-medium text-zinc-600">No materials match your criteria</p>
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="mt-2 text-xs text-zinc-900 font-medium underline"
+                    >
+                      Clear search filter
+                    </button>
+                  )}
+                </div>
+              ) : (
+                filteredMaterials.map((material) => {
+                  const displayTitle = material.name || material.title || 'Untitled Document';
+                  const isPyq = material.category === 'pyq';
+
+                  return (
+                    <div 
+                      key={material.id} 
+                      className="p-4 sm:p-5 hover:bg-zinc-50/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    >
+                      {/* Left: Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-blue-600 truncate">
-                            {material.title}
-                          </p>
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 ml-2">
-                            {material.category === 'note' ? 'Study Note' : 'PYQ'}
+                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase font-mono ${
+                            isPyq ? 'bg-sky-50 text-sky-700 border border-sky-200/60' : 'bg-zinc-100 text-zinc-800 border border-zinc-200'
+                          }`}>
+                            {isPyq ? 'PYQ' : 'NOTE'}
                           </span>
-                        </div>
-                        <p className="mt-2 flex items-center text-sm text-gray-500">
-                          {material.description}
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-4">
-                          <div className="flex items-center text-sm text-gray-500">
-                            <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-                            </svg>
-                            {material.semester && `Semester ${material.semester}`}
-                          </div>
-                          {material.subject && (
-                            <div className="flex items-center text-sm text-gray-500">
-                              <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0h8v12H6V4z" clipRule="evenodd" />
-                              </svg>
-                              {material.subject}
-                            </div>
+
+                          {material.semester && (
+                            <span className="text-[10px] font-mono text-zinc-500 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-200/60">
+                              Sem {material.semester}
+                            </span>
                           )}
-                          {material.year && (
-                            <div className="flex items-center text-sm text-gray-500">
-                              <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                              </svg>
+
+                          {material.year && isPyq && (
+                            <span className="text-[10px] font-mono text-zinc-500 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-200/60">
                               Year {material.year}
-                            </div>
+                            </span>
                           )}
-                          <div className="flex items-center text-sm text-gray-500">
-                            <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                            </svg>
-                            {material.uploadedBy}
-                          </div>
+
+                          {material.branch && (
+                            <span className="text-[10px] text-zinc-500 truncate max-w-[200px]" title={material.branch}>
+                              &bull; {material.branch}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Title */}
+                        <h3 className="text-sm font-semibold text-zinc-950 truncate mb-1" title={displayTitle}>
+                          {displayTitle}
+                        </h3>
+
+                        {/* Subject & University Metadata */}
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
+                          {material.subject && (
+                            <span className="font-medium text-zinc-700">
+                              {material.subject}
+                            </span>
+                          )}
+                          {material.university && (
+                            <span className="flex items-center gap-1 text-[11px] truncate max-w-[240px]" title={material.university}>
+                              <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
+                              <span className="truncate">{material.university}</span>
+                            </span>
+                          )}
+                          {material.uploadedBy && (
+                            <span className="text-[11px] text-zinc-400 truncate max-w-[180px]" title={material.uploadedBy}>
+                              By {material.uploadedBy.split('@')[0]}
+                            </span>
+                          )}
                         </div>
                       </div>
-                      <div className="ml-4 flex-shrink-0 flex items-center space-x-2">
+
+                      {/* Right: Actions */}
+                      <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                        <button
+                          onClick={() => {
+                            setPreviewDoc({
+                              title: displayTitle,
+                              fileUrl: material.fileUrl,
+                              metadata: {
+                                subject: material.subject,
+                                semester: material.semester,
+                                university: material.university,
+                                year: material.year,
+                              },
+                            });
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 transition-colors shadow-2xs"
+                          title="Preview Document"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-zinc-500" />
+                          <span className="hidden md:inline">Preview</span>
+                        </button>
+
                         <a
                           href={material.fileUrl}
                           download
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          className="p-1.5 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 rounded-lg transition-colors border border-transparent hover:border-zinc-200"
+                          title="Download File"
                         >
-                          <svg className="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                          Download
+                          <Download className="w-4 h-4" />
                         </a>
+
                         <button
-                          onClick={() => handleDelete(material.id)}
-                          disabled={deleting === material.id}
-                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-red-400"
+                          onClick={() => setItemToDelete(material)}
+                          className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Delete Material"
                         >
-                          {deleting === material.id ? (
-                            <>
-                              <svg className="animate-spin -ml-0.5 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              Deleting...
-                            </>
-                          ) : (
-                            <>
-                              <svg className="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                              </svg>
-                              Delete
-                            </>
-                          )}
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            {materials.length === 0 && (
-              <div className="text-center py-12">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No materials uploaded</h3>
-                <p className="mt-1 text-sm text-gray-500">Get started by uploading a new study material.</p>
-              </div>
-            )}
+                  );
+                })
+              )}
+            </div>
           </div>
+
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={Boolean(itemToDelete)}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={confirmDeleteMaterial}
+        variant="danger"
+        title="Delete Material"
+        confirmText={isDeleting ? 'Deleting...' : 'Delete Material'}
+        cancelText="Cancel"
+      >
+        <p className="text-zinc-700 text-sm">
+          Are you sure you want to permanently delete{' '}
+          <strong className="text-zinc-950 font-semibold">
+            &ldquo;{itemToDelete?.name || itemToDelete?.title || 'this item'}&rdquo;
+          </strong>?
+        </p>
+        <p className="mt-2 text-zinc-500 text-xs">
+          This material will be permanently removed from cloud storage and the platform index. This action cannot be reversed.
+        </p>
+      </Modal>
+
+      {/* In-App Preview Modal */}
+      <DocumentViewer
+        isOpen={Boolean(previewDoc)}
+        onClose={() => setPreviewDoc(null)}
+        title={previewDoc?.title || ''}
+        fileUrl={previewDoc?.fileUrl || ''}
+        metadata={previewDoc?.metadata}
+      />
     </div>
   );
-} 
+}

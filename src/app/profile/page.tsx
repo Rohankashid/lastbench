@@ -6,12 +6,21 @@ import { useRouter } from 'next/navigation';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CheckCircleIcon, PencilIcon, XCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
+import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { 
+  UNIVERSITY_SELECT_GROUPS, 
+  BRANCH_SELECT_GROUPS, 
+  ACADEMIC_YEARS 
+} from '@/lib/constants/academic';
 
 interface ProfileData {
   name: string;
   email: string;
   college: string;
   university: string;
+  branch: string;
   studyingYear: string;
   role: string;
 }
@@ -27,6 +36,7 @@ export default function ProfilePage() {
     email: '',
     college: '',
     university: '',
+    branch: '',
     studyingYear: '',
     role: '',
   });
@@ -46,6 +56,7 @@ export default function ProfilePage() {
         email: data.email || '',
         college: data.college || '',
         university: data.university || '',
+        branch: data.branch || '',
         studyingYear: data.studyingYear || '',
         role: data.role || 'student',
       });
@@ -59,20 +70,17 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) {
-      router.push('/login');
+      router.replace('/?auth=login&redirect=%2Fprofile');
       return;
     }
-
     fetchProfile();
   }, [user, router, fetchProfile]);
 
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
+  const handleEdit = () => setIsEditing(true);
 
   const handleCancel = () => {
     setIsEditing(false);
-    fetchProfile(); // Reset form data
+    fetchProfile();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,6 +93,7 @@ export default function ProfilePage() {
         name: profileData.name,
         college: profileData.college,
         university: profileData.university,
+        branch: profileData.branch,
         studyingYear: profileData.studyingYear,
         updatedAt: new Date().toISOString(),
       });
@@ -101,7 +110,7 @@ export default function ProfilePage() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.push('/login');
+      router.push('/');
     } catch {
       setError('Failed to sign out');
     }
@@ -109,216 +118,209 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center">
-            <div className="flex justify-center">
-              <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </div>
-            <h2 className="mt-4 text-2xl font-semibold text-gray-900">Loading your profile please wait...</h2>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3">
+        <div className="w-8 h-8 border-2 border-zinc-200 border-t-zinc-950 rounded-full animate-spin" />
+        <p className="text-xs text-zinc-500 font-mono">Loading student profile...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white shadow-2xl rounded-2xl p-8 sm:p-10 flex flex-col items-center relative">
-          {/* Back Button */}
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="relative min-h-[calc(100vh-64px)] py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center"
+    >
+      <BackgroundGrid variant="grid" />
+      <div className="w-full max-w-xl relative z-10">
+        <motion.div 
+          initial={{ y: 12, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="bg-white rounded-2xl border border-zinc-200/90 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.03)] relative overflow-hidden"
+        >
+          {error && (
+            <div className="mb-6 bg-rose-50 border border-rose-200/80 p-3 rounded-lg text-xs text-rose-700 font-medium">
+              {error}
+            </div>
+          )}
+
           <button
             onClick={() => router.push('/')}
-            className="absolute top-4 left-4 p-2 rounded-full hover:bg-gray-100 focus:outline-none"
+            className="absolute top-6 left-6 p-2 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors focus:outline-none"
             aria-label="Back to Home"
           >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-500" />
+            <ArrowLeftIcon className="h-4 w-4" />
           </button>
-          {/* Avatar and Basic Info */}
-          <div className="flex flex-col items-center w-full mb-8">
-            <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center text-4xl font-bold text-blue-600 mb-4">
+          
+          <div className="flex flex-col items-center w-full mb-8 mt-2">
+            <div className="w-20 h-20 rounded-full bg-zinc-950 text-white font-mono text-xl font-bold flex items-center justify-center shadow-sm mb-4">
               {profileData.name ? profileData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2) : '?'}
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">{profileData.name}</h2>
-            <div className="text-gray-500 text-sm mb-1">{profileData.email}</div>
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 mb-2">
-              {profileData.role === 'admin' ? 'Admin' : 'Student'}
+            <h2 className="text-2xl font-semibold text-zinc-950 tracking-tight mb-0.5">{profileData.name}</h2>
+            <div className="text-xs text-zinc-500 font-mono mb-3">{profileData.email}</div>
+            
+            <span className="mono-chip mb-4">
+              {profileData.role === 'admin' ? 'SYSTEM ADMINISTRATOR' : 'VERIFIED STUDENT'}
             </span>
+            
             {!isEditing && (
               <button
                 onClick={handleEdit}
-                className="mt-2 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex items-center gap-1.5 px-4 py-2 bg-zinc-950 text-white rounded-lg hover:bg-zinc-800 transition-colors text-xs font-medium shadow-sm"
               >
-                <PencilIcon className="h-5 w-5" /> Edit Profile
+                <PencilIcon className="h-3.5 w-3.5" /> Edit Profile
               </button>
             )}
           </div>
 
-          {/* Profile Form */}
           <div className="w-full">
             {isEditing ? (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6 bg-white/50 p-6 rounded-2xl border border-white/60 shadow-sm">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
                     <input
                       type="text"
-                      name="name"
-                      id="name"
                       value={profileData.name}
                       onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
                     <input
                       type="email"
-                      name="email"
-                      id="email"
                       value={profileData.email}
                       disabled
-                      className="block w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-500 sm:text-sm"
+                      className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-100 text-slate-500 cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    <label htmlFor="college" className="block text-sm font-medium text-gray-700 mb-1">College</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">College</label>
                     <input
                       type="text"
-                      name="college"
-                      id="college"
                       value={profileData.college}
                       onChange={(e) => setProfileData(prev => ({ ...prev, college: e.target.value }))}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="university" className="block text-sm font-medium text-gray-700 mb-1">University</label>
-                    <input
-                      type="text"
-                      name="university"
-                      id="university"
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">University</label>
+                    <SearchableSelect
                       value={profileData.university}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, university: e.target.value }))}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      onChange={(val) => setProfileData(prev => ({ ...prev, university: val }))}
+                      groups={UNIVERSITY_SELECT_GROUPS}
+                      placeholder="Select University"
+                      searchPlaceholder="Search university or institute..."
+                      buttonClassName="px-4 py-3 rounded-xl border-slate-200 bg-white text-sm"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="studyingYear" className="block text-sm font-medium text-gray-700 mb-1">Studying Year</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Engineering Branch</label>
+                    <SearchableSelect
+                      value={profileData.branch}
+                      onChange={(val) => setProfileData(prev => ({ ...prev, branch: val }))}
+                      groups={BRANCH_SELECT_GROUPS}
+                      placeholder="Select Engineering Branch"
+                      searchPlaceholder="Search branch..."
+                      buttonClassName="px-4 py-3 rounded-xl border-slate-200 bg-white text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Studying Year</label>
                     <select
-                      id="studyingYear"
-                      name="studyingYear"
                       value={profileData.studyingYear}
                       onChange={(e) => setProfileData(prev => ({ ...prev, studyingYear: e.target.value }))}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-sm"
                       required
                     >
                       <option value="">Select Year</option>
-                      <option value="1">First Year</option>
-                      <option value="2">Second Year</option>
-                      <option value="3">Third Year</option>
-                      <option value="4">Fourth Year</option>
+                      {ACADEMIC_YEARS.map((yr) => (
+                        <option key={yr.value} value={yr.value}>{yr.label}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Role</label>
                     <input
                       type="text"
-                      name="role"
-                      id="role"
                       value={profileData.role}
                       disabled
-                      className="block w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-500 sm:text-sm"
+                      className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-100 text-slate-500 cursor-not-allowed capitalize"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 pt-2">
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-200/60 mt-6">
                   <button
                     type="button"
                     onClick={handleCancel}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                    className="inline-flex items-center px-6 py-2.5 font-semibold rounded-xl text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors"
                   >
-                    <XCircleIcon className="h-5 w-5 mr-2 text-gray-500" /> Cancel
+                    <XCircleIcon className="h-5 w-5 mr-2" /> Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300 transition-colors duration-200"
+                    className="inline-flex items-center px-6 py-2.5 font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-md transition-colors disabled:opacity-50"
                   >
                     {loading ? (
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                       <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                     </svg>
                     ) : (
-                      <CheckCircleIcon className="h-5 w-5 mr-2 text-white" />
+                      <CheckCircleIcon className="h-5 w-5 mr-2" />
                     )}
                     Save Changes
                   </button>
                 </div>
               </form>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 bg-white/40 rounded-2xl p-8 border border-white/60 shadow-sm">
                 <div>
-                  <div className="text-sm font-medium text-gray-700 mb-1">Full Name</div>
-                  <div className="text-lg text-gray-900 font-semibold mb-4">{profileData.name}</div>
-                  <div className="text-sm font-medium text-gray-700 mb-1">College</div>
-                  <div className="text-gray-900 mb-4">{profileData.college}</div>
-                  <div className="text-sm font-medium text-gray-700 mb-1">Studying Year</div>
-                  <div className="text-gray-900 mb-4">
-                    {profileData.studyingYear ? `${profileData.studyingYear} Year` : '-'}
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Full Name</div>
+                  <div className="text-lg text-slate-900 font-semibold mb-6">{profileData.name}</div>
+                  
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">College</div>
+                  <div className="text-lg text-slate-900 font-medium mb-6">{profileData.college || '-'}</div>
+                  
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Studying Year</div>
+                  <div className="text-lg text-slate-900 font-medium mb-6">
+                    {profileData.studyingYear ? (ACADEMIC_YEARS.find(y => y.value === profileData.studyingYear)?.label || `Year ${profileData.studyingYear}`) : '-'}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-gray-700 mb-1">Email Address</div>
-                  <div className="text-gray-900 mb-4">{profileData.email}</div>
-                  <div className="text-sm font-medium text-gray-700 mb-1">University</div>
-                  <div className="text-gray-900 mb-4">{profileData.university}</div>
-                  <div className="text-sm font-medium text-gray-700 mb-1">Role</div>
-                  <div className="text-gray-900 mb-4 capitalize">{profileData.role}</div>
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Email Address</div>
+                  <div className="text-lg text-slate-900 font-medium mb-6">{profileData.email}</div>
+                  
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">University</div>
+                  <div className="text-lg text-slate-900 font-medium mb-6">{profileData.university || '-'}</div>
+
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Engineering Branch</div>
+                  <div className="text-lg text-slate-900 font-medium mb-6">{profileData.branch || '-'}</div>
+                  
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Role</div>
+                  <div className="text-lg text-slate-900 font-medium mb-6 capitalize">{profileData.role}</div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Add Sign Out button at the bottom of the profile card */}
-          <div className="w-full flex justify-end mt-8">
+          <div className="w-full flex justify-end mt-8 pt-6 border-t border-zinc-100">
             <button
               onClick={handleSignOut}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+              className="px-4 py-2 text-xs font-medium rounded-lg text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-colors"
             >
-              Sign Out
+              Sign Out Account
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
-} 
+}

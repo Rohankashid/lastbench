@@ -10,21 +10,13 @@ async function deleteHandler(req: NextRequest) {
       return NextResponse.json({ error: 'File URL is required' }, { status: 400 });
     }
 
-    console.log('Attempting to delete file:', fileUrl);
-
     if (fileUrl.includes('s3.amazonaws.com') || fileUrl.includes('s3.')) {
       const url = new URL(fileUrl);
       const key = decodeURIComponent(url.pathname.substring(1)); // Remove leading slash and decode URL
-      
-      console.log('S3 URL detected, key:', key);
-      console.log('S3 URL hostname:', url.hostname);
-      console.log('S3 URL pathname:', url.pathname);
-      console.log('Decoded key:', key);
 
       // Extract bucket name from hostname
       const hostnameParts = url.hostname.split('.');
       const extractedBucketName = hostnameParts[0];
-      console.log('Extracted bucket name from URL:', extractedBucketName);
 
       const s3 = new S3Client({
         region: process.env.AWS_REGION!,
@@ -41,14 +33,12 @@ async function deleteHandler(req: NextRequest) {
       };
 
       try {
-        console.log('Checking if file exists before deletion...');
         const headCommand = new HeadObjectCommand({
           Bucket: bucketName,
           Key: key,
         });
         
-        const headResult = await s3.send(headCommand);
-        console.log('File exists, size:', headResult.ContentLength, 'bytes');
+        await s3.send(headCommand);
       } catch (headError) {
         console.error('File does not exist or cannot be accessed:', headError);
         return NextResponse.json({ 
@@ -59,12 +49,9 @@ async function deleteHandler(req: NextRequest) {
       }
 
       try {
-        console.log('Attempting to delete file...');
         const result = await s3.send(new DeleteObjectCommand(deleteParams));
-        console.log('S3 delete command result:', result);
         
         try {
-          console.log('Verifying deletion...');
           const verifyHeadCommand = new HeadObjectCommand({
             Bucket: bucketName,
             Key: key,
@@ -78,10 +65,8 @@ async function deleteHandler(req: NextRequest) {
             params: deleteParams
           }, { status: 500 });
         } catch {
-          console.log('File successfully deleted (verification passed)');
+          // File was deleted successfully, verifyHeadCommand throws 404/NotFound as expected
         }
-        
-        console.log('S3 file deleted successfully');
         
         return NextResponse.json({ 
           success: true, 
@@ -101,7 +86,6 @@ async function deleteHandler(req: NextRequest) {
         }, { status: 500 });
       }
     } else {
-      console.log('Not an S3 URL, skipping S3 deletion');
       return NextResponse.json({ 
         success: true, 
         message: 'Not an S3 URL, skipping S3 deletion',
