@@ -17,7 +17,7 @@ const Footer = () => {
               </span>
             </div>
             <p className="text-xs text-zinc-500 max-w-sm leading-relaxed">
-              Curated open-access academic repository for engineering students. High-yield lecture notes, previous year exam papers, and collaborative syllabus discussions.
+              Community-driven academic study pool for engineering students. Open peer-shared lecture digests, university previous year question papers, and syllabus reference aids.
             </p>
             <div className="flex items-center gap-2 pt-1">
               <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
@@ -40,7 +40,7 @@ const Footer = () => {
                 Previous Year Papers
               </Link>
               <Link href="/upload" className="text-zinc-500 hover:text-zinc-950 transition-colors">
-                Upload Material
+                Share Material
               </Link>
             </nav>
           </div>
@@ -73,10 +73,15 @@ const Footer = () => {
 
         </div>
 
+        {/* Fair Use / Educational Disclaimer Notice */}
+        <div className="py-4 my-6 border-y border-zinc-100 text-[11px] text-zinc-400 leading-relaxed">
+          <strong className="text-zinc-600 font-medium">Educational Disclaimer:</strong> LastBench is a student peer-exchange platform. All lecture summaries, university question papers, and study aids are contributed by students for non-commercial educational study, reference, and exam preparation.
+        </div>
+
         {/* Bottom Bar */}
-        <div className="pt-6 border-t border-zinc-100 flex flex-col sm:flex-row justify-between items-center gap-2">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
           <p className="font-mono text-[11px] text-zinc-400">
-            &copy; {new Date().getFullYear()} LastBench Academic. All rights reserved.
+            &copy; {new Date().getFullYear()} LastBench &bull; Open Academic Study Companion
           </p>
           <div className="flex items-center gap-4 font-mono text-[11px] text-zinc-400">
             <span>Engineering Streams: CSE &bull; IT &bull; ENTC &bull; MECH &bull; CIVIL</span>

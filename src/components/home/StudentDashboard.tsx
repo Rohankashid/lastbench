@@ -65,6 +65,7 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
   }, [searchParams]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [trendingTopics, setTrendingTopics] = useState<{ label: string; query: string }[]>([]);
   const [userProfile, setUserProfile] = useState<{
     university?: string;
     branch?: string;
@@ -93,7 +94,7 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
         const q = query(
           collection(db, 'materials'),
           orderBy('uploadedAt', 'desc'),
-          limit(9)
+          limit(40)
         );
         const snapshot = await getDocs(q);
         const items = snapshot.docs.map(doc => {
@@ -104,7 +105,21 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
             ...safeData
           };
         }) as Material[];
-        setRecentMaterials(items);
+        setRecentMaterials(items.slice(0, 9));
+
+        // Dynamically compute trending topics based on real uploaded materials in Firestore
+        const subjectCounts = new Map<string, number>();
+        items.forEach(item => {
+          const sub = (item.subject || '').trim();
+          if (sub) {
+            subjectCounts.set(sub, (subjectCounts.get(sub) || 0) + 1);
+          }
+        });
+        const dynamicTrending = Array.from(subjectCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 6)
+          .map(([subj]) => ({ label: subj, query: subj }));
+        setTrendingTopics(dynamicTrending);
 
         // Fetch user academic profile
         if (user.uid) {
@@ -133,15 +148,6 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
     if (!searchQuery.trim()) return;
     router.push(`/notes?search=${encodeURIComponent(searchQuery.trim())}`);
   };
-
-  const trendingTopics = [
-    { label: 'Data Structures', query: 'Data Structures' },
-    { label: 'Operating Systems', query: 'Operating Systems' },
-    { label: 'Engineering Maths', query: 'Mathematics' },
-    { label: 'DBMS', query: 'Database' },
-    { label: 'Computer Networks', query: 'Networks' },
-    { label: 'TOC / Automata', query: 'Theory of Computation' },
-  ];
 
   const displayName = user.displayName || user.email?.split('@')[0] || 'Student';
 
@@ -232,7 +238,7 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-950 text-white text-xs font-medium hover:bg-zinc-800 transition-colors shadow-sm"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Upload Material</span>
+                <span>Share Material</span>
               </Link>
               <Link
                 href="/profile"
@@ -306,22 +312,24 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
             </div>
           </form>
 
-          {/* Trending Subject Chips */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-            <span className="inline-flex items-center gap-1 text-[11px] text-zinc-600 font-medium">
-              <Flame className="w-3.5 h-3.5 text-amber-500" />
-              <span>Trending:</span>
-            </span>
-            {trendingTopics.map((topic) => (
-              <Link
-                key={topic.label}
-                href={`/notes?search=${encodeURIComponent(topic.query)}`}
-                className="px-2.5 py-1 rounded-lg border border-zinc-200/80 bg-white hover:bg-zinc-100 text-zinc-700 text-[11px] font-medium transition-colors"
-              >
-                {topic.label}
-              </Link>
-            ))}
-          </div>
+          {/* Dynamic Trending Subject Chips */}
+          {trendingTopics.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-600 font-medium">
+                <Flame className="w-3.5 h-3.5 text-amber-500" />
+                <span>Trending:</span>
+              </span>
+              {trendingTopics.map((topic) => (
+                <Link
+                  key={topic.label}
+                  href={`/notes?search=${encodeURIComponent(topic.query)}`}
+                  className="px-2.5 py-1 rounded-lg border border-zinc-200/80 bg-white hover:bg-zinc-100 text-zinc-700 text-[11px] font-medium transition-colors"
+                >
+                  {topic.label}
+                </Link>
+              ))}
+            </div>
+          )}
 
           {/* Quick Semester Navigation Pills (with direct semester filter routing) */}
           <div className="flex items-center gap-2 pt-1 overflow-x-auto pb-1 scrollbar-none">
@@ -456,11 +464,11 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
               <div className="flex items-center gap-2 mb-1">
                 <Sparkles className="w-3.5 h-3.5 text-zinc-500" />
                 <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500 font-medium">
-                  LIVE COMMUNITY FEED
+                  COMMUNITY STUDY POOL
                 </span>
               </div>
               <h2 className="text-xl font-semibold text-zinc-950 tracking-tight">
-                Latest Additions
+                Latest Shared Materials
               </h2>
             </div>
 

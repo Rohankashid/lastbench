@@ -279,7 +279,7 @@ function NotesContent() {
               Study Notes
             </h1>
             <p className="text-xs text-zinc-500 mt-1">
-              Browse and download verified lecture notes across universities and branches.
+              Open-access lecture digests, unit summaries, and student study aids across universities and branches.
             </p>
           </div>
           <p className="text-xs text-zinc-500 font-medium shrink-0">

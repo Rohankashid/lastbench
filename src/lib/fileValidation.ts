@@ -301,7 +301,5 @@ export function logFileValidation(
 
   if (!isValid) {
     console.warn('File validation failed:', logEntry);
-  } else {
-    console.log('File validation passed:', logEntry);
   }
 } 

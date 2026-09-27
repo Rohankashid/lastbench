@@ -150,13 +150,6 @@ async function uploadHandler(req: NextRequest) {
         });
 
         await db.collection('materials').add(firestoreData);
-        
-        console.log('✅ File uploaded to S3 and metadata saved to Firestore:', {
-          filename: secureFilename,
-          category: metadata.category,
-          name: firestoreData.name
-        });
-        
       } catch (firestoreError) {
         console.error('❌ Firestore save error:', firestoreError);
         return NextResponse.json({ 

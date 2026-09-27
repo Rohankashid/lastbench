@@ -282,7 +282,7 @@ function PYQsContent() {
               Previous Year Questions
             </h1>
             <p className="text-xs text-zinc-500 mt-1">
-              Access university question papers to prepare for upcoming exams.
+              Community archive of university question papers shared for exam practice and revision.
             </p>
           </div>
           <p className="text-xs text-zinc-500 font-medium shrink-0">

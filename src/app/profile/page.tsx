@@ -3,17 +3,39 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { CheckCircleIcon, PencilIcon, XCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { useBookmarks } from '@/context/BookmarkContext';
 import { 
   UNIVERSITY_SELECT_GROUPS, 
   BRANCH_SELECT_GROUPS, 
   ACADEMIC_YEARS 
 } from '@/lib/constants/academic';
+import {
+  User,
+  Mail,
+  Building2,
+  GraduationCap,
+  School,
+  Calendar,
+  Shield,
+  Bookmark,
+  Pencil,
+  ArrowLeft,
+  ArrowUpRight,
+  CheckCircle2,
+  X,
+  LogOut,
+  Upload,
+  BookOpen,
+  FileText,
+  Loader2,
+  Sparkles
+} from 'lucide-react';
 
 interface ProfileData {
   name: string;
@@ -27,10 +49,15 @@ interface ProfileData {
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
+  const { bookmarks } = useBookmarks();
   const router = useRouter();
+
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  
   const [profileData, setProfileData] = useState<ProfileData>({
     name: '',
     email: '',
@@ -46,23 +73,23 @@ export default function ProfilePage() {
       const userDoc = await getDoc(doc(db, 'users', user!.uid));
       
       if (!userDoc.exists()) {
-        setError('Profile not found');
+        setError('Profile record not found in system.');
         return;
       }
 
       const data = userDoc.data();
       setProfileData({
         name: data.name || '',
-        email: data.email || '',
+        email: data.email || user?.email || '',
         college: data.college || '',
         university: data.university || '',
         branch: data.branch || '',
         studyingYear: data.studyingYear || '',
         role: data.role || 'student',
       });
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      setError('Failed to fetch profile');
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError('Failed to load profile details.');
     } finally {
       setLoading(false);
     }
@@ -76,22 +103,28 @@ export default function ProfilePage() {
     fetchProfile();
   }, [user, router, fetchProfile]);
 
-  const handleEdit = () => setIsEditing(true);
+  const handleEdit = () => {
+    setError('');
+    setSuccessMessage('');
+    setIsEditing(true);
+  };
 
   const handleCancel = () => {
     setIsEditing(false);
+    setError('');
     fetchProfile();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
     setError('');
+    setSuccessMessage('');
 
     try {
       await updateDoc(doc(db, 'users', user!.uid), {
-        name: profileData.name,
-        college: profileData.college,
+        name: profileData.name.trim(),
+        college: profileData.college.trim(),
         university: profileData.university,
         branch: profileData.branch,
         studyingYear: profileData.studyingYear,
@@ -99,11 +132,13 @@ export default function ProfilePage() {
       });
 
       setIsEditing(false);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      setError('Failed to update profile');
+      setSuccessMessage('Profile details updated successfully.');
+      setTimeout(() => setSuccessMessage(''), 4000);
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      setError('Failed to save profile changes. Please try again.');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -116,211 +151,563 @@ export default function ProfilePage() {
     }
   };
 
+  const initials = profileData.name.trim()
+    ? profileData.name
+        .trim()
+        .split(/\s+/)
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : (user?.email ? user.email.slice(0, 2).toUpperCase() : 'ST');
+
+  const currentYearObj = ACADEMIC_YEARS.find((y) => y.value === profileData.studyingYear);
+  const formattedYear = currentYearObj ? currentYearObj.label : profileData.studyingYear ? `Year ${profileData.studyingYear}` : 'Not set';
+
   if (loading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3">
+      <div className="min-h-[75vh] flex flex-col items-center justify-center gap-3">
         <div className="w-8 h-8 border-2 border-zinc-200 border-t-zinc-950 rounded-full animate-spin" />
-        <p className="text-xs text-zinc-500 font-mono">Loading student profile...</p>
+        <p className="text-xs text-zinc-500 font-mono tracking-wide">Loading student profile...</p>
       </div>
     );
   }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="relative min-h-[calc(100vh-64px)] py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center"
-    >
+    <div className="relative min-h-[calc(100vh-64px)] pb-16">
       <BackgroundGrid variant="grid" />
-      <div className="w-full max-w-xl relative z-10">
-        <motion.div 
-          initial={{ y: 12, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="bg-white rounded-2xl border border-zinc-200/90 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.03)] relative overflow-hidden"
-        >
-          {error && (
-            <div className="mb-6 bg-rose-50 border border-rose-200/80 p-3 rounded-lg text-xs text-rose-700 font-medium">
-              {error}
-            </div>
-          )}
 
-          <button
-            onClick={() => router.push('/')}
-            className="absolute top-6 left-6 p-2 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors focus:outline-none"
-            aria-label="Back to Home"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-          </button>
-          
-          <div className="flex flex-col items-center w-full mb-8 mt-2">
-            <div className="w-20 h-20 rounded-full bg-zinc-950 text-white font-mono text-xl font-bold flex items-center justify-center shadow-sm mb-4">
-              {profileData.name ? profileData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2) : '?'}
-            </div>
-            <h2 className="text-2xl font-semibold text-zinc-950 tracking-tight mb-0.5">{profileData.name}</h2>
-            <div className="text-xs text-zinc-500 font-mono mb-3">{profileData.email}</div>
-            
-            <span className="mono-chip mb-4">
-              {profileData.role === 'admin' ? 'SYSTEM ADMINISTRATOR' : 'VERIFIED STUDENT'}
-            </span>
-            
-            {!isEditing && (
-              <button
-                onClick={handleEdit}
-                className="flex items-center gap-1.5 px-4 py-2 bg-zinc-950 text-white rounded-lg hover:bg-zinc-800 transition-colors text-xs font-medium shadow-sm"
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+        {/* Navigation Breadcrumb & Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-200">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-mono text-zinc-500">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1 hover:text-zinc-950 transition-colors"
               >
-                <PencilIcon className="h-3.5 w-3.5" /> Edit Profile
-              </button>
-            )}
+                <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
+              </Link>
+              <span>/</span>
+              <span className="text-zinc-900 font-medium">Profile & Settings</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950">
+              Student Profile & Curriculum
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-500 max-w-2xl leading-relaxed">
+              Manage your academic affiliation, engineering branch, and curriculum preferences to personalize study material feeds.
+            </p>
           </div>
 
-          <div className="w-full">
-            {isEditing ? (
-              <form onSubmit={handleSubmit} className="space-y-6 bg-white/50 p-6 rounded-2xl border border-white/60 shadow-sm">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
-                    <input
-                      type="text"
-                      value={profileData.name}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                      className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
-                    <input
-                      type="email"
-                      value={profileData.email}
-                      disabled
-                      className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-100 text-slate-500 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">College</label>
-                    <input
-                      type="text"
-                      value={profileData.college}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, college: e.target.value }))}
-                      className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">University</label>
-                    <SearchableSelect
-                      value={profileData.university}
-                      onChange={(val) => setProfileData(prev => ({ ...prev, university: val }))}
-                      groups={UNIVERSITY_SELECT_GROUPS}
-                      placeholder="Select University"
-                      searchPlaceholder="Search university or institute..."
-                      buttonClassName="px-4 py-3 rounded-xl border-slate-200 bg-white text-sm"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Engineering Branch</label>
-                    <SearchableSelect
-                      value={profileData.branch}
-                      onChange={(val) => setProfileData(prev => ({ ...prev, branch: val }))}
-                      groups={BRANCH_SELECT_GROUPS}
-                      placeholder="Select Engineering Branch"
-                      searchPlaceholder="Search branch..."
-                      buttonClassName="px-4 py-3 rounded-xl border-slate-200 bg-white text-sm"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Studying Year</label>
-                    <select
-                      value={profileData.studyingYear}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, studyingYear: e.target.value }))}
-                      className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow text-sm"
-                      required
-                    >
-                      <option value="">Select Year</option>
-                      {ACADEMIC_YEARS.map((yr) => (
-                        <option key={yr.value} value={yr.value}>{yr.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Role</label>
-                    <input
-                      type="text"
-                      value={profileData.role}
-                      disabled
-                      className="block w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-100 text-slate-500 cursor-not-allowed capitalize"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-slate-200/60 mt-6">
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    className="inline-flex items-center px-6 py-2.5 font-semibold rounded-xl text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors"
-                  >
-                    <XCircleIcon className="h-5 w-5 mr-2" /> Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="inline-flex items-center px-6 py-2.5 font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-md transition-colors disabled:opacity-50"
-                  >
-                    {loading ? (
-                       <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                     </svg>
-                    ) : (
-                      <CheckCircleIcon className="h-5 w-5 mr-2" />
-                    )}
-                    Save Changes
-                  </button>
-                </div>
-              </form>
+          <div className="flex items-center gap-2.5">
+            {!isEditing ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleEdit}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg text-xs font-medium transition-colors shadow-2xs cursor-pointer"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Edit Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-zinc-50 text-zinc-700 hover:text-rose-600 border border-zinc-200 rounded-lg text-xs font-medium transition-colors shadow-2xs cursor-pointer"
+                  title="Sign out of your session"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Sign Out
+                </button>
+              </>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 bg-white/40 rounded-2xl p-8 border border-white/60 shadow-sm">
-                <div>
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Full Name</div>
-                  <div className="text-lg text-slate-900 font-semibold mb-6">{profileData.name}</div>
-                  
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">College</div>
-                  <div className="text-lg text-slate-900 font-medium mb-6">{profileData.college || '-'}</div>
-                  
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Studying Year</div>
-                  <div className="text-lg text-slate-900 font-medium mb-6">
-                    {profileData.studyingYear ? (ACADEMIC_YEARS.find(y => y.value === profileData.studyingYear)?.label || `Year ${profileData.studyingYear}`) : '-'}
+              <>
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={saving}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 rounded-lg text-xs font-medium transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const form = document.getElementById('profile-edit-form') as HTMLFormElement;
+                    if (form) form.requestSubmit();
+                  }}
+                  disabled={saving}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg text-xs font-medium transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Save Changes
+                    </>
+                  )}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Status Alerts */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2.5 p-3.5 rounded-lg bg-rose-50 border border-rose-200/80 text-xs font-medium text-rose-800"
+          >
+            <X className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{error}</span>
+          </motion.div>
+        )}
+
+        {successMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2.5 p-3.5 rounded-lg bg-emerald-50 border border-emerald-200/80 text-xs font-medium text-emerald-800"
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{successMessage}</span>
+          </motion.div>
+        )}
+
+        {/* Dashboard 2-Column Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: Identity, Quick Metrics & Quick Actions (4 Cols) */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* Identity Card */}
+            <div className="bg-white rounded-xl border border-zinc-200/90 shadow-2xs overflow-hidden">
+              <div className="h-16 bg-gradient-to-r from-zinc-100 via-zinc-200/60 to-zinc-100 border-b border-zinc-200/70" />
+              <div className="px-5 pb-5 -mt-8">
+                <div className="w-16 h-16 rounded-2xl bg-zinc-950 text-white font-mono text-xl font-bold flex items-center justify-center border-2 border-white shadow-xs mb-3">
+                  {initials}
+                </div>
+
+                <div className="space-y-1">
+                  <h2 className="text-lg font-bold text-zinc-950 tracking-tight leading-snug">
+                    {profileData.name || 'Anonymous Student'}
+                  </h2>
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-mono break-all">
+                    <Mail className="w-3 h-3 text-zinc-400 shrink-0" />
+                    <span>{profileData.email}</span>
                   </div>
                 </div>
-                <div>
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Email Address</div>
-                  <div className="text-lg text-slate-900 font-medium mb-6">{profileData.email}</div>
-                  
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">University</div>
-                  <div className="text-lg text-slate-900 font-medium mb-6">{profileData.university || '-'}</div>
 
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Engineering Branch</div>
-                  <div className="text-lg text-slate-900 font-medium mb-6">{profileData.branch || '-'}</div>
-                  
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Role</div>
-                  <div className="text-lg text-slate-900 font-medium mb-6 capitalize">{profileData.role}</div>
+                <div className="flex flex-wrap items-center gap-1.5 mt-3.5">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-mono uppercase font-semibold bg-zinc-100 text-zinc-800 border border-zinc-200/80">
+                    <Shield className="w-3 h-3 text-zinc-700" />
+                    {profileData.role === 'admin' ? 'System Administrator' : 'Engineering Student'}
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono uppercase font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    Active Account
+                  </span>
+                </div>
+
+                <div className="mt-5 pt-4 border-t border-zinc-100 space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-500 font-medium">University</span>
+                    <span className="text-zinc-900 font-semibold text-right max-w-[180px] truncate" title={profileData.university}>
+                      {profileData.university || 'Not set'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-500 font-medium">Branch</span>
+                    <span className="text-zinc-900 font-semibold text-right max-w-[180px] truncate" title={profileData.branch}>
+                      {profileData.branch || 'Not set'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-500 font-medium">Year</span>
+                    <span className="text-zinc-900 font-semibold text-right">
+                      {formattedYear}
+                    </span>
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
+
+            {/* Saved Materials Quick Stat Card */}
+            <div className="bg-white rounded-xl border border-zinc-200/90 shadow-2xs p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 font-semibold">
+                    Saved Materials
+                  </span>
+                  <div className="text-2xl font-bold tracking-tight text-zinc-950 font-mono">
+                    {bookmarks.length}
+                  </div>
+                  <p className="text-[11px] text-zinc-500">
+                    Course documents bookmarked for quick revision.
+                  </p>
+                </div>
+                <div className="w-9 h-9 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-700 shrink-0 border border-zinc-200/80">
+                  <Bookmark className="w-4 h-4" />
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3.5 border-t border-zinc-100">
+                <Link
+                  href="/?tab=saved"
+                  className="inline-flex items-center justify-between w-full text-xs font-medium text-zinc-900 hover:text-zinc-600 transition-colors group"
+                >
+                  <span>Open Saved Documents in Dashboard</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Quick Desk Links */}
+            <div className="bg-white rounded-xl border border-zinc-200/90 shadow-2xs p-5 space-y-3">
+              <h3 className="text-xs font-mono uppercase font-semibold text-zinc-500 tracking-wider">
+                Quick Shortcuts
+              </h3>
+              <div className="space-y-1.5">
+                <Link
+                  href="/upload"
+                  className="flex items-center justify-between p-2.5 rounded-lg border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/80 transition-colors text-xs font-medium text-zinc-800 group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Upload className="w-4 h-4 text-zinc-500 group-hover:text-zinc-950" />
+                    <span>Upload & Share Study Material</span>
+                  </div>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-700" />
+                </Link>
+
+                <Link
+                  href="/notes"
+                  className="flex items-center justify-between p-2.5 rounded-lg border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/80 transition-colors text-xs font-medium text-zinc-800 group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <BookOpen className="w-4 h-4 text-zinc-500 group-hover:text-zinc-950" />
+                    <span>Browse Engineering Notes</span>
+                  </div>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-700" />
+                </Link>
+
+                <Link
+                  href="/pyqs"
+                  className="flex items-center justify-between p-2.5 rounded-lg border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/80 transition-colors text-xs font-medium text-zinc-800 group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <FileText className="w-4 h-4 text-zinc-500 group-hover:text-zinc-950" />
+                    <span>Past Question Papers (PYQs)</span>
+                  </div>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-700" />
+                </Link>
+              </div>
+            </div>
           </div>
 
-          <div className="w-full flex justify-end mt-8 pt-6 border-t border-zinc-100">
-            <button
-              onClick={handleSignOut}
-              className="px-4 py-2 text-xs font-medium rounded-lg text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition-colors"
-            >
-              Sign Out Account
-            </button>
+          {/* Right Column: Academic Affiliations & Curriculum Details (8 Cols) */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Main Academic Affiliation Card */}
+            <div className="bg-white rounded-xl border border-zinc-200/90 shadow-2xs overflow-hidden">
+              <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-zinc-950 flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-zinc-900" />
+                    Academic Affiliation & Details
+                  </h2>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    Your university and branch are automatically used to prioritize syllabus-specific notes and past papers.
+                  </p>
+                </div>
+                {!isEditing && (
+                  <button
+                    type="button"
+                    onClick={handleEdit}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:text-zinc-950 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> Edit
+                  </button>
+                )}
+              </div>
+
+              <div className="p-6">
+                {isEditing ? (
+                  <form id="profile-edit-form" onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      {/* Full Name */}
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-zinc-700">
+                          Full Name <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={profileData.name}
+                            onChange={(e) =>
+                              setProfileData((prev) => ({ ...prev, name: e.target.value }))
+                            }
+                            placeholder="e.g. Rohan Kashid"
+                            required
+                            className="w-full px-3.5 py-2.5 bg-white border border-zinc-200 rounded-lg text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 transition-colors shadow-2xs font-sans"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Email Address (Read-only) */}
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-zinc-700">
+                          Account Email
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="email"
+                            value={profileData.email}
+                            disabled
+                            className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-xs text-zinc-500 font-mono cursor-not-allowed shadow-2xs"
+                          />
+                        </div>
+                        <span className="text-[10px] text-zinc-400">
+                          Linked with your authenticated login account.
+                        </span>
+                      </div>
+
+                      {/* University Selection */}
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-zinc-700">
+                          University / Institute Board <span className="text-rose-500">*</span>
+                        </label>
+                        <SearchableSelect
+                          value={profileData.university}
+                          onChange={(val) =>
+                            setProfileData((prev) => ({ ...prev, university: val }))
+                          }
+                          groups={UNIVERSITY_SELECT_GROUPS}
+                          placeholder="Select your university"
+                          searchPlaceholder="Search university or board..."
+                          buttonClassName="px-3.5 py-2.5 rounded-lg border-zinc-200 bg-white text-xs font-sans shadow-2xs"
+                          required
+                        />
+                      </div>
+
+                      {/* Engineering Branch */}
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-zinc-700">
+                          Engineering Branch / Discipline <span className="text-rose-500">*</span>
+                        </label>
+                        <SearchableSelect
+                          value={profileData.branch}
+                          onChange={(val) =>
+                            setProfileData((prev) => ({ ...prev, branch: val }))
+                          }
+                          groups={BRANCH_SELECT_GROUPS}
+                          placeholder="Select your engineering branch"
+                          searchPlaceholder="Search branch or department..."
+                          buttonClassName="px-3.5 py-2.5 rounded-lg border-zinc-200 bg-white text-xs font-sans shadow-2xs"
+                          required
+                        />
+                      </div>
+
+                      {/* College / Institution Name */}
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-zinc-700">
+                          College / Campus Name
+                        </label>
+                        <input
+                          type="text"
+                          value={profileData.college}
+                          onChange={(e) =>
+                            setProfileData((prev) => ({ ...prev, college: e.target.value }))
+                          }
+                          placeholder="e.g. Pune Institute of Computer Technology (PICT)"
+                          className="w-full px-3.5 py-2.5 bg-white border border-zinc-200 rounded-lg text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 transition-colors shadow-2xs font-sans"
+                        />
+                      </div>
+
+                      {/* Studying Year */}
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-zinc-700">
+                          Current Academic Year <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          value={profileData.studyingYear}
+                          onChange={(e) =>
+                            setProfileData((prev) => ({ ...prev, studyingYear: e.target.value }))
+                          }
+                          required
+                          className="w-full px-3.5 py-2.5 bg-white border border-zinc-200 rounded-lg text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 transition-colors shadow-2xs font-sans cursor-pointer"
+                        >
+                          <option value="">Select studying year</option>
+                          {ACADEMIC_YEARS.map((yr) => (
+                            <option key={yr.value} value={yr.value}>
+                              {yr.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3 pt-5 border-t border-zinc-100">
+                      <button
+                        type="button"
+                        onClick={handleCancel}
+                        disabled={saving}
+                        className="px-4 py-2 text-xs font-medium text-zinc-700 hover:text-zinc-900 bg-white hover:bg-zinc-50 border border-zinc-200 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={saving}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg text-xs font-medium transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+                      >
+                        {saving ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Saving...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Save Profile</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Tile 1: Full Name */}
+                    <div className="p-4 rounded-xl border border-zinc-200/80 bg-zinc-50/50 space-y-1">
+                      <div className="flex items-center gap-2 text-zinc-500 text-xs font-medium">
+                        <User className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>Full Name</span>
+                      </div>
+                      <p className="text-sm font-semibold text-zinc-950 pt-0.5">
+                        {profileData.name || 'Not provided'}
+                      </p>
+                    </div>
+
+                    {/* Tile 2: Account Email */}
+                    <div className="p-4 rounded-xl border border-zinc-200/80 bg-zinc-50/50 space-y-1">
+                      <div className="flex items-center justify-between text-zinc-500 text-xs font-medium">
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-3.5 h-3.5 text-zinc-400" />
+                          <span>Account Email</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60 font-semibold">
+                          VERIFIED
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium font-mono text-zinc-900 pt-0.5 truncate" title={profileData.email}>
+                        {profileData.email || 'Not connected'}
+                      </p>
+                    </div>
+
+                    {/* Tile 3: University */}
+                    <div className="p-4 rounded-xl border border-zinc-200/80 bg-zinc-50/50 space-y-1">
+                      <div className="flex items-center justify-between text-zinc-500 text-xs font-medium">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-3.5 h-3.5 text-zinc-400" />
+                          <span>University / Board</span>
+                        </div>
+                        {profileData.university && (
+                          <span className="text-[10px] font-mono text-zinc-600 bg-zinc-100 px-1.5 py-0.5 rounded border border-zinc-200/60">
+                            AFFILIATED
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-semibold text-zinc-950 pt-0.5">
+                        {profileData.university || (
+                          <span className="text-zinc-400 font-normal">Not configured</span>
+                        )}
+                      </p>
+                    </div>
+
+                    {/* Tile 4: Engineering Branch */}
+                    <div className="p-4 rounded-xl border border-zinc-200/80 bg-zinc-50/50 space-y-1">
+                      <div className="flex items-center justify-between text-zinc-500 text-xs font-medium">
+                        <div className="flex items-center gap-2">
+                          <GraduationCap className="w-3.5 h-3.5 text-zinc-400" />
+                          <span>Engineering Branch</span>
+                        </div>
+                        {profileData.branch && (
+                          <span className="text-[10px] font-mono text-zinc-600 bg-zinc-100 px-1.5 py-0.5 rounded border border-zinc-200/60">
+                            SYLLABUS
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-semibold text-zinc-950 pt-0.5">
+                        {profileData.branch || (
+                          <span className="text-zinc-400 font-normal">Not configured</span>
+                        )}
+                      </p>
+                    </div>
+
+                    {/* Tile 5: College / Campus */}
+                    <div className="p-4 rounded-xl border border-zinc-200/80 bg-zinc-50/50 space-y-1">
+                      <div className="flex items-center gap-2 text-zinc-500 text-xs font-medium">
+                        <School className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>College / Institution</span>
+                      </div>
+                      <p className="text-sm font-medium text-zinc-900 pt-0.5">
+                        {profileData.college || (
+                          <span className="text-zinc-400 font-normal">Not specified</span>
+                        )}
+                      </p>
+                    </div>
+
+                    {/* Tile 6: Academic Year */}
+                    <div className="p-4 rounded-xl border border-zinc-200/80 bg-zinc-50/50 space-y-1">
+                      <div className="flex items-center gap-2 text-zinc-500 text-xs font-medium">
+                        <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>Studying Year</span>
+                      </div>
+                      <p className="text-sm font-semibold text-zinc-950 pt-0.5">
+                        {formattedYear}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Smart Syllabus Synchronization Banner */}
+            {/* <div className="p-5 rounded-xl border border-zinc-200/80 bg-gradient-to-br from-zinc-50 via-white to-zinc-50/50 shadow-2xs space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-zinc-950 text-white flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-xs font-bold text-zinc-950">
+                    Smart Study Desk Personalization
+                  </h3>
+                  <p className="text-xs text-zinc-600 leading-relaxed">
+                    Your university and branch act as your primary syllabus anchor across LastBench. When you visit the dashboard or browse past examination papers, materials matching your university and branch are automatically pre-filtered to save you time.
+                  </p>
+                </div>
+              </div>
+            </div> */}
+
+            {/* Educational Material Exchange Disclaimer & Privacy Card */}
+            <div className="p-5 rounded-xl border border-zinc-200 bg-white shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-mono uppercase font-semibold text-zinc-500 tracking-wider">
+                  Open Educational Exchange Guidelines
+                </h3>
+                <span className="text-[10px] font-mono text-zinc-400 uppercase">
+                  Community Policy
+                </span>
+              </div>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                LastBench operates as a peer-to-peer open academic study repository. All notes, presentations, and past exam question papers shared on this platform are user-contributed study aids intended solely for non-commercial educational reference under fair use guidelines.
+              </p>
+            </div>
           </div>
-        </motion.div>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

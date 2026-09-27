@@ -20,8 +20,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LastBench - Engineering Study Materials",
-  description: "Your ultimate engineering study companion. Access and share high-quality study materials, lecture notes, and previous year question papers (PYQs) with ease.",
+  title: "LastBench - Community Engineering Notes & Exam Papers",
+  description: "Open-access peer study archive for engineering students. Find and share university past question papers (PYQs), lecture digests, and syllabus notes with 100% free reading.",
 };
 
 export default function RootLayout({
