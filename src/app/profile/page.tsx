@@ -33,8 +33,7 @@ import {
   Upload,
   BookOpen,
   FileText,
-  Loader2,
-  Sparkles
+  Loader2
 } from 'lucide-react';
 
 interface ProfileData {
@@ -673,23 +672,6 @@ export default function ProfilePage() {
                 )}
               </div>
             </div>
-
-            {/* Smart Syllabus Synchronization Banner */}
-            {/* <div className="p-5 rounded-xl border border-zinc-200/80 bg-gradient-to-br from-zinc-50 via-white to-zinc-50/50 shadow-2xs space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-zinc-950 text-white flex items-center justify-center shrink-0">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-xs font-bold text-zinc-950">
-                    Smart Study Desk Personalization
-                  </h3>
-                  <p className="text-xs text-zinc-600 leading-relaxed">
-                    Your university and branch act as your primary syllabus anchor across LastBench. When you visit the dashboard or browse past examination papers, materials matching your university and branch are automatically pre-filtered to save you time.
-                  </p>
-                </div>
-              </div>
-            </div> */}
 
             {/* Educational Material Exchange Disclaimer & Privacy Card */}
             <div className="p-5 rounded-xl border border-zinc-200 bg-white shadow-2xs space-y-3">
