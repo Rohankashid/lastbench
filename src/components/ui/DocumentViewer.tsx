@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, Download, Loader2 } from 'lucide-react';
+import { X, ExternalLink, Download } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { SignInModal } from '@/components/ui/SignInModal';
 import { BookmarkButton } from '@/components/ui/BookmarkButton';

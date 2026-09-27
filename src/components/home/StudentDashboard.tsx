@@ -24,7 +24,6 @@ import {
   Calendar,
   Sparkles,
   Flame,
-  Layers,
   ArrowUpRight,
   School,
   Bookmark
@@ -98,8 +97,8 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
         );
         const snapshot = await getDocs(q);
         const items = snapshot.docs.map(doc => {
-          const data = doc.data();
-          const { uploadedBy, ...safeData } = data;
+          const safeData = { ...doc.data() };
+          delete safeData.uploadedBy;
           return {
             id: doc.id,
             ...safeData
@@ -165,7 +164,8 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
             try {
               const snap = await getDoc(doc(db, 'materials', id));
               if (!snap.exists()) return null;
-              const { uploadedBy, ...safeData } = snap.data();
+              const safeData = { ...snap.data() };
+              delete safeData.uploadedBy;
               return { id: snap.id, ...safeData } as Material;
             } catch {
               return null;

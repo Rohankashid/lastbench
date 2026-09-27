@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 
 export type AuthMode = 'signin' | 'signup' | 'forgot-password';
@@ -27,10 +27,8 @@ const AuthModalContext = createContext<AuthModalContextType | undefined>(undefin
 
 function AuthModalWatcher({
   openAuthModal,
-  isOpen,
 }: {
   openAuthModal: (mode?: AuthMode, options?: OpenAuthModalOptions) => void;
-  isOpen: boolean;
 }) {
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -90,7 +88,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       <Suspense fallback={null}>
-        <AuthModalWatcher openAuthModal={openAuthModal} isOpen={isOpen} />
+        <AuthModalWatcher openAuthModal={openAuthModal} />
       </Suspense>
       {children}
     </AuthModalContext.Provider>

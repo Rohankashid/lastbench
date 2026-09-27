@@ -212,7 +212,7 @@ export function matchesUniversity(documentUniversity: string | undefined, filter
     wce: ['wce', 'walchand'],
   };
 
-  for (const [key, aliases] of Object.entries(acronyms)) {
+  for (const aliases of Object.values(acronyms)) {
     const docMatchesKey = aliases.some(alias => doc.includes(alias));
     const filterMatchesKey = aliases.some(alias => filter.includes(alias));
     if (docMatchesKey && filterMatchesKey) return true;

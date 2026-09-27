@@ -69,8 +69,8 @@ export default function PYQDetailPage() {
       try {
         const pyqDoc = await getDoc(doc(db, "materials", id as string));
         if (pyqDoc.exists()) {
-          const data = pyqDoc.data();
-          const { uploadedBy, ...safeData } = data;
+          const safeData = { ...pyqDoc.data() };
+          delete safeData.uploadedBy;
           setPYQ({ id: pyqDoc.id, ...safeData } as PYQ);
         } else {
           setError("PYQ not found");

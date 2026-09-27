@@ -350,19 +350,19 @@ export function GuestLanding() {
 
           {/* Interactive Branch Switcher Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {[
-              { id: 'comp', label: 'Computer Engineering' },
-              { id: 'it', label: 'Information Tech' },
-              { id: 'aids', label: 'AI & Data Science' },
-              { id: 'entc', label: 'Electronics & Telecom' },
-              { id: 'mech', label: 'Mechanical' },
-              { id: 'fe', label: 'First Year (FE)' },
-            ].map((tab) => {
+            {([
+              { id: 'comp' as const, label: 'Computer Engineering' },
+              { id: 'it' as const, label: 'Information Tech' },
+              { id: 'aids' as const, label: 'AI & Data Science' },
+              { id: 'entc' as const, label: 'Electronics & Telecom' },
+              { id: 'mech' as const, label: 'Mechanical' },
+              { id: 'fe' as const, label: 'First Year (FE)' },
+            ]).map((tab) => {
               const active = activeBranchTab === tab.id;
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveBranchTab(tab.id as any)}
+                  onClick={() => setActiveBranchTab(tab.id)}
                   className={`relative px-4 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap ${
                     active
                       ? 'bg-zinc-950 text-white shadow-sm'

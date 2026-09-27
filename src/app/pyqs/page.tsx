@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useCallback, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { collection, query, where, getDocs, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore';
@@ -132,8 +132,8 @@ function PYQsContent() {
       );
       const querySnapshot = await getDocs(q);
       const pyqsData = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        const { uploadedBy, ...safeData } = data;
+        const safeData = { ...doc.data() };
+        delete safeData.uploadedBy;
         return {
           id: doc.id,
           ...safeData

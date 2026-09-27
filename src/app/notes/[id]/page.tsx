@@ -68,8 +68,8 @@ export default function NoteDetailPage() {
       try {
         const noteDoc = await getDoc(doc(db, "materials", id as string));
         if (noteDoc.exists()) {
-          const data = noteDoc.data();
-          const { uploadedBy, ...safeData } = data;
+          const safeData = { ...noteDoc.data() };
+          delete safeData.uploadedBy;
           setNote({ id: noteDoc.id, ...safeData } as Note);
         } else {
           setError("Note not found");

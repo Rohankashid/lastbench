@@ -68,7 +68,9 @@ export async function GET(req: NextRequest) {
     const pagedDocs = docs.slice(offsetVal, offsetVal + limitVal);
     // Return public safe fields (never expose uploader identity to public API)
     const result = pagedDocs.map((d: Material) => {
-      const { uploadedBy, uploaderInfo, ...safeDoc } = d;
+      const safeDoc = { ...d } as Partial<Material> & { uploaderInfo?: unknown };
+      delete safeDoc.uploadedBy;
+      delete safeDoc.uploaderInfo;
       return {
         ...safeDoc,
         downloadCount: d.downloadCount || 0,
