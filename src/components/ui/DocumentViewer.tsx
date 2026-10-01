@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, Download } from 'lucide-react';
+import { X, ExternalLink, Download, Share2, Check } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { SignInModal } from '@/components/ui/SignInModal';
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
@@ -32,6 +32,7 @@ export function DocumentViewer({
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [showSignInModal, setShowSignInModal] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   // Reset loading state whenever a new document is opened
   useEffect(() => {
@@ -138,6 +139,21 @@ export function DocumentViewer({
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 shrink-0">
+
+                  <button
+                    onClick={() => {
+                      const shareUrl = `${window.location.origin}${window.location.pathname}?v=${materialId}`;
+                      navigator.clipboard.writeText(shareUrl);
+                      setIsCopied(true);
+                      setTimeout(() => setIsCopied(false), 2000);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 text-xs font-medium transition-colors cursor-pointer"
+                    title="Copy Share Link"
+                  >
+                    {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5 text-zinc-500" />}
+                    <span className="hidden sm:inline">{isCopied ? 'Copied!' : 'Share'}</span>
+                  </button>
+
                   <a
                     href={proxyUrl}
                     target="_blank"

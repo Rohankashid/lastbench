@@ -1,7 +1,8 @@
+
 'use client';
 
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Bookmark } from 'lucide-react';
 import { useBookmarks } from '@/context/BookmarkContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,11 +10,8 @@ import { useAuthModal } from '@/context/AuthModalContext';
 
 interface BookmarkButtonProps {
   materialId?: string;
-  /** 'icon' = compact icon-only button, 'pill' = icon + label */
   variant?: 'icon' | 'pill';
-  /** Additional className override */
   className?: string;
-  /** Size variant */
   size?: 'sm' | 'md';
 }
 
@@ -50,63 +48,64 @@ export function BookmarkButton({
 
   if (variant === 'pill') {
     return (
-      <button
+      <motion.button
         type="button"
         onClick={handleClick}
-        className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer ${
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.92 }}
+        className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
           bookmarked
             ? 'bg-zinc-950 text-white hover:bg-zinc-800'
             : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300'
         } ${className}`}
         title={bookmarked ? 'Remove bookmark' : 'Bookmark this material'}
-        aria-label={bookmarked ? 'Remove bookmark' : 'Add bookmark'}
       >
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={bookmarked ? 'filled' : 'outline'}
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.5, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-          >
-            <Bookmark
-              className={`w-3.5 h-3.5 ${bookmarked ? 'fill-white text-white' : 'text-zinc-500'}`}
-            />
-          </motion.div>
-        </AnimatePresence>
+        <motion.div
+          animate={ bookmarked ? { scale: [1, 1.3, 1] } : { scale: 1 } }
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+        >
+          <Bookmark
+            className={`w-3.5 h-3.5 ${bookmarked ? 'fill-white text-white' : 'text-zinc-500'}`}
+          />
+        </motion.div>
         <span>{bookmarked ? 'Saved' : 'Save'}</span>
-      </button>
+      </motion.button>
     );
   }
 
-  // Default: compact icon button
   return (
-    <button
+    <motion.button
       type="button"
       onClick={handleClick}
-      className={`${buttonPadding} rounded-lg transition-all duration-200 cursor-pointer group ${
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.85 }}
+      className={`${buttonPadding} rounded-lg transition-colors cursor-pointer group relative overflow-hidden ${
         bookmarked
           ? 'text-zinc-950 bg-zinc-100 hover:bg-zinc-200'
           : 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100'
       } ${className}`}
       title={bookmarked ? 'Remove bookmark' : 'Bookmark this material'}
-      aria-label={bookmarked ? 'Remove bookmark' : 'Add bookmark'}
     >
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={bookmarked ? 'filled' : 'outline'}
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.5, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-        >
-          <Bookmark
-            className={`${iconSize} transition-colors ${
-              bookmarked ? 'fill-zinc-950 text-zinc-950' : 'group-hover:text-zinc-700'
-            }`}
-          />
-        </motion.div>
-      </AnimatePresence>
-    </button>
+      <motion.div
+        animate={ bookmarked ? { scale: [1, 1.4, 1] } : { scale: 1 } }
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+      >
+        <Bookmark
+          className={`${iconSize} transition-colors ${
+            bookmarked ? 'fill-zinc-950 text-zinc-950' : 'group-hover:text-zinc-700'
+          }`}
+        />
+      </motion.div>
+      
+      {/* Sparkle burst effect on bookmark true */}
+      {bookmarked && (
+        <motion.div 
+           initial={{ opacity: 1, scale: 0 }}
+           animate={{ opacity: 0, scale: 2 }}
+           transition={{ duration: 0.4, ease: "easeOut" }}
+           className="absolute inset-0 bg-zinc-950 rounded-full mix-blend-overlay"
+        />
+      )}
+    </motion.button>
   );
 }
