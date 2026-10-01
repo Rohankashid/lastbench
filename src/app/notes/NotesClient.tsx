@@ -90,6 +90,7 @@ function NotesContent() {
         setPreviewTarget(target);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, allNotes]);
 
   const [filters, setFilters] = useState({

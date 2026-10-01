@@ -1,4 +1,4 @@
-import type { Metadata, ResolvingMetadata } from 'next';
+import type { Metadata } from 'next';
 import NotesClient from './NotesClient';
 
 type Props = {
@@ -6,8 +6,7 @@ type Props = {
 };
 
 export async function generateMetadata(
-  props: Props,
-  parent: ResolvingMetadata
+  props: Props
 ): Promise<Metadata> {
   const searchParams = await props.searchParams;
   const v = searchParams.v;

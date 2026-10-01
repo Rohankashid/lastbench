@@ -92,6 +92,7 @@ function PYQsContent() {
         setPreviewTarget(target);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, allPYQs]);
 
   const [filters, setFilters] = useState({
