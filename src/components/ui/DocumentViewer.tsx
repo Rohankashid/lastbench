@@ -68,7 +68,15 @@ export function DocumentViewer({
     };
   }, [isOpen, onClose]);
 
-  const previewUrl = fileUrl ? `/api/preview?url=${encodeURIComponent(fileUrl)}` : '';
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+  }, []);
+
+  const proxyUrl = fileUrl ? `/api/preview?url=${encodeURIComponent(fileUrl)}` : '';
+  const previewUrl = isMobile 
+    ? `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true` 
+    : proxyUrl;
 
   return (
     <>
@@ -131,7 +139,7 @@ export function DocumentViewer({
                 {/* Actions */}
                 <div className="flex items-center gap-2 shrink-0">
                   <a
-                    href={previewUrl}
+                    href={proxyUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 text-xs font-medium transition-colors"

@@ -54,6 +54,7 @@ export default function Navbar() {
     { name: 'Home', path: '/' },
     { name: 'Notes', path: '/notes' },
     { name: 'PYQs', path: '/pyqs' },
+    { name: 'Community', path: '/community' },
     ...(user ? [{ name: 'Upload', path: '/upload' }] : []),
   ];
 

@@ -14,6 +14,7 @@ import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { SignInModal } from '@/components/ui/SignInModal';
+import { DocumentViewer } from '@/components/ui/DocumentViewer';
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
 import { 
   UNIVERSITY_SELECT_GROUPS, 
@@ -76,6 +77,7 @@ function NotesContent() {
   const [loading, setLoading] = useState(true);
   const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [previewTarget, setPreviewTarget] = useState<Note | null>(null);
   const [downloadTarget, setDownloadTarget] = useState<Note | null>(null);
   const [error, setError] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
@@ -469,10 +471,10 @@ function NotesContent() {
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <h3
                         className="text-base font-semibold text-zinc-950 hover:text-blue-600 transition-colors cursor-pointer line-clamp-2 leading-snug"
-                        onClick={() => router.push(`/notes/${note.id}`)}
+                        onClick={() => setPreviewTarget(note)}
                         tabIndex={0}
                         role="button"
-                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/notes/${note.id}`); } }}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPreviewTarget(note); } }}
                       >
                         {note.name || note.title}
                       </h3>
@@ -513,7 +515,7 @@ function NotesContent() {
 
                   <div className="p-3 bg-zinc-50/80 border-t border-zinc-100 flex items-center gap-2">
                     <button
-                      onClick={(e) => { e.stopPropagation(); router.push(`/notes/${note.id}`); }}
+                      onClick={(e) => { e.stopPropagation(); setPreviewTarget(note); }}
                       className="flex-1 inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 text-xs font-medium rounded-lg transition-colors"
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -572,7 +574,25 @@ function NotesContent() {
         </p>
       </Modal>
 
+      
+      {/* Interactive In-App Document Viewer */}
+      {previewTarget && (
+        <DocumentViewer
+          isOpen={!!previewTarget}
+          onClose={() => setPreviewTarget(null)}
+          title={previewTarget.name || previewTarget.title}
+          fileUrl={previewTarget.fileUrl || previewTarget.downloadUrl}
+          materialId={previewTarget.id}
+          metadata={{
+            subject: previewTarget.subject,
+            semester: previewTarget.semester,
+            university: previewTarget.university,
+          }}
+        />
+      )}
+
       {/* Sign In Required Modal for Guests */}
+
       <SignInModal
         isOpen={Boolean(downloadTarget)}
         onClose={() => setDownloadTarget(null)}

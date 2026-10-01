@@ -32,6 +32,32 @@ interface SubjectPill {
   topics: string;
 }
 
+
+const UniversityLogo = ({ uni }: { uni: { name: string, src: string, invert?: boolean } }) => {
+  const [error, setError] = React.useState(false);
+  return (
+    <div 
+      className="flex items-center justify-center opacity-40 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 cursor-pointer hover:scale-110"
+      title={uni.name}
+    >
+      <div className="relative h-16 w-16 sm:h-24 sm:w-24 flex items-center justify-center shrink-0">
+        {!error ? (
+          <img 
+            src={uni.src}
+            alt={uni.name} 
+            className={`object-contain max-w-full max-h-full drop-shadow-sm ${uni.invert ? 'invert' : ''}`}
+            onError={() => setError(true)}
+          />
+        ) : (
+          <div className="h-full w-full rounded-full bg-zinc-100 border-2 border-zinc-200 flex items-center justify-center text-zinc-400 font-black text-2xl">
+            {uni.name[0]}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export function GuestLanding() {
   const router = useRouter();
   const { openAuthModal } = useAuthModal();
@@ -277,6 +303,46 @@ export function GuestLanding() {
               </Link>
             </div>
           </motion.div>
+        </section>
+
+
+        {/* ========================================================================= */}
+        {/* 1.5. UNIVERSITY MARQUEE HOOK (Added per request)                          */}
+        {/* ========================================================================= */}
+        <section className="w-full overflow-hidden py-4 sm:py-8 relative border-t border-b border-zinc-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.01)] my-8">
+          <div className="absolute inset-y-0 left-0 w-16 sm:w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-16 sm:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+          
+          <div className="flex w-max animate-marquee items-center">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="flex gap-12 sm:gap-20 items-center px-6 sm:px-10">
+                {[
+                  { name: 'Pune University (SPPU)', src: '/logos/Pune.png' },
+                  { name: 'Mumbai University', src: '/logos/Mumbai.png', invert: true },
+                  { name: 'Shivaji University', src: '/logos/Shivaji.jpg' },
+                  { name: 'DBATU', src: '/logos/DBATU.png' },
+                  { name: 'Nagpur University', src: '/logos/Nagpur.png' },
+                  { name: 'Amravati University', src: '/logos/Amravati.jpg' },
+                  { name: 'BAMU', src: '/logos/BAMU.png' },
+                ].map((uni, j) => (
+                  <UniversityLogo key={`${i}-${j}`} uni={uni} />
+                ))}
+              </div>
+            ))}
+          </div>
+          
+          <style jsx>{`
+            @keyframes marquee {
+              0% { transform: translateX(0%); }
+              100% { transform: translateX(-50%); }
+            }
+            .animate-marquee {
+              animation: marquee 35s linear infinite;
+            }
+            .animate-marquee:hover {
+              animation-play-state: paused;
+            }
+          `}</style>
         </section>
 
         {/* ========================================================================= */}
