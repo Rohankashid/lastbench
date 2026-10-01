@@ -21,7 +21,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   icon, 
   title, 
   description, 
-  action 
+  action,
+  secondaryAction
 }) => {
   const defaultIcon = (
     <svg className="w-12 h-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
