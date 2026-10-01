@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { collection, query, where, getDocs, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
@@ -72,7 +72,6 @@ const itemVariants = {
 function PYQsContent() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [allPYQs, setAllPYQs] = useState<PYQ[]>([]);
   const [filteredPYQs, setFilteredPYQs] = useState<PYQ[]>([]);

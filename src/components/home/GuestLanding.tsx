@@ -42,6 +42,7 @@ const UniversityLogo = ({ uni }: { uni: { name: string, src: string, invert?: bo
     >
       <div className="relative h-16 w-16 sm:h-24 sm:w-24 flex items-center justify-center shrink-0">
         {!error ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img 
             src={uni.src}
             alt={uni.name} 
