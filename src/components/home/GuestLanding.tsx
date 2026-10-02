@@ -37,7 +37,7 @@ const UniversityLogo = ({ uni }: { uni: { name: string, src: string, invert?: bo
   const [error, setError] = React.useState(false);
   return (
     <div 
-      className="flex items-center justify-center opacity-40 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 cursor-pointer hover:scale-110"
+      className="flex items-center justify-center opacity-40 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 cursor-pointer hover:scale-110 shrink-0"
       title={uni.name}
     >
       <div className="relative h-16 w-16 sm:h-24 sm:w-24 flex items-center justify-center shrink-0">
@@ -316,7 +316,7 @@ export function GuestLanding() {
           
           <div className="flex w-max animate-marquee items-center">
             {[...Array(2)].map((_, i) => (
-              <div key={i} className="flex gap-12 sm:gap-20 items-center px-6 sm:px-10">
+              <div key={i} className="flex gap-12 sm:gap-20 items-center px-6 sm:px-10 shrink-0">
                 {[
                   { name: 'Pune University (SPPU)', src: '/logos/Pune.png' },
                   { name: 'Mumbai University', src: '/logos/Mumbai.png', invert: true },
