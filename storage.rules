@@ -1,1 +1,24 @@
- 
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper function
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    match /{allPaths=**} {
+      // Anyone can read files
+      allow read: if true;
+      // Only authenticated users can upload
+      // Limit file size to 20MB (20 * 1024 * 1024)
+      // Only allow PDF or images
+      allow create: if isAuthenticated() 
+                    && request.resource.size < 20 * 1024 * 1024
+                    && request.resource.contentType.matches('application/pdf|image/.*');
+      
+      // Only uploader can delete their own files
+      // (Requires the file metadata to store the uploader's uid)
+      allow delete: if isAuthenticated() && resource.metadata.uploaderId == request.auth.uid;
+    }
+  }
+}

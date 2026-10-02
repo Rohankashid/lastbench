@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/rateLimit';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-export async function GET(req: NextRequest) {
+async function previewHandler(req: NextRequest) {
   const urlParam = req.nextUrl.searchParams.get('url');
 
   if (!urlParam) {
@@ -9,7 +11,31 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+
     const decodedUrl = decodeURIComponent(urlParam);
+
+    // SECURITY: Domain Whitelisting to prevent SSRF and bandwidth abuse
+    try {
+      const parsedUrl = new URL(decodedUrl);
+      const allowedDomains = [
+        'firebasestorage.googleapis.com',
+        's3.amazonaws.com',
+        process.env.S3_BUCKET_NAME ? `${process.env.S3_BUCKET_NAME}.s3.amazonaws.com` : null,
+        process.env.S3_BUCKET_NAME ? `${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION || 'ap-south-1'}.amazonaws.com` : null
+      ].filter(Boolean);
+
+      const isAllowed = allowedDomains.some(domain => 
+        domain && (parsedUrl.hostname === domain || parsedUrl.hostname.endsWith('.' + domain))
+      );
+
+      if (!isAllowed) {
+        console.error('Blocked attempt to proxy unauthorized domain:', parsedUrl.hostname);
+        return new NextResponse('Unauthorized storage domain', { status: 403 });
+      }
+    } catch (e) {
+      return new NextResponse('Invalid URL provided', { status: 400 });
+    }
+
 
     // If it's an S3 URL and AWS credentials are configured, use S3 Client
     if (
@@ -82,3 +108,6 @@ export async function GET(req: NextRequest) {
     return new NextResponse('Internal error loading preview', { status: 500 });
   }
 }
+
+
+export const GET = withRateLimit(previewHandler, RATE_LIMIT_CONFIGS.general);
