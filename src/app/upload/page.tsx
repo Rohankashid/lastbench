@@ -256,7 +256,7 @@ export default function UploadPage() {
         body: file,
         headers: {
           'Content-Type': file.type,
-          'Content-Disposition': 'inline'
+          'Content-Disposition': presignData.contentDisposition
         }
       });
 

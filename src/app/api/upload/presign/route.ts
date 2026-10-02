@@ -14,6 +14,7 @@ async function presignHandler(req: NextRequest) {
 
     const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
     const secureFilename = generateSecureFilename(sanitizedFilename);
+    const contentDisposition = `inline; filename="${filename.replace(/[^a-zA-Z0-9.\-_ ]/g, '')}"`;
 
     const s3 = new S3Client({
       region: process.env.AWS_REGION!,
@@ -27,7 +28,7 @@ async function presignHandler(req: NextRequest) {
       Bucket: process.env.S3_BUCKET_NAME!,
       Key: secureFilename,
       ContentType: contentType,
-      ContentDisposition: 'inline',
+      ContentDisposition: contentDisposition,
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,7 +39,8 @@ async function presignHandler(req: NextRequest) {
       presignedUrl,
       secureFilename,
       fileUrl,
-      sanitizedFilename
+      sanitizedFilename,
+      contentDisposition
     });
   } catch (error) {
     console.error('Presign error:', error);
