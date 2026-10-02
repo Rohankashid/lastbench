@@ -54,16 +54,15 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
     return [];
   }, [options, groups]);
 
-  const selectedOption = useMemo(() => {
-    return allFlattenedOptions.find((opt) => value.includes(opt.value));
-  }, [allFlattenedOptions, value]);
-
   // Display text in button
   const displayLabel = useMemo(() => {
-    if (!value) return placeholder;
-    if (selectedOption) return selectedOption.label;
-    return value; // fallback if existing value doesn't match predefined list
-  }, [value, selectedOption, placeholder]);
+    if (!value || value.length === 0) return placeholder;
+    if (value.length === 1) {
+      const found = allFlattenedOptions.find((opt) => opt.value === value[0]);
+      return found ? found.label : value[0];
+    }
+    return `${value.length} branches selected`;
+  }, [value, allFlattenedOptions, placeholder]);
 
   // Filter groups / options based on search query
   const filteredGroups = useMemo(() => {
@@ -135,9 +134,18 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
   }, [isOpen]);
 
   const handleSelect = (val: string) => {
-    onChange([val]);
-    setIsOpen(false);
-    setSearchQuery('');
+    if (val === '') {
+      onChange([]);
+      setIsOpen(false);
+      setSearchQuery('');
+      return;
+    }
+    // Toggle: if already selected, remove it; otherwise add it
+    const newValue = value.includes(val)
+      ? value.filter((v) => v !== val)
+      : [...value, val];
+    onChange(newValue);
+    // Keep dropdown open so user can pick more
   };
 
   const handleClear = (e: React.MouseEvent) => {
@@ -168,7 +176,7 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
         onClick={() => setIsOpen((prev) => !prev)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        title={typeof displayLabel === "string" ? displayLabel : displayLabel.join(", ")}
+        title={displayLabel}
         className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-xs rounded-lg border text-left transition-colors bg-white ${
           isOpen ? 'border-zinc-900 ring-1 ring-zinc-900' : 'border-zinc-200 hover:border-zinc-300'
         } ${disabled ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed' : 'text-zinc-900'} ${buttonClassName}`}

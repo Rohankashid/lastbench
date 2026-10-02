@@ -51,8 +51,6 @@ const CLIENT_VALIDATION = {
 
 const SEMESTER_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
-const RECENT_YEARS = Array.from({ length: 6 }, (_, i) => String(new Date().getFullYear() - i));
-
 export default function UploadPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -72,7 +70,6 @@ export default function UploadPage() {
   const [customTitle, setCustomTitle] = useState('');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [semester, setSemester] = useState('');
-  const [year, setYear] = useState(RECENT_YEARS[0]);
   const [university, setUniversity] = useState('');
   const [branch, setBranch] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
@@ -134,17 +131,16 @@ export default function UploadPage() {
     if (!cleanSub) return '';
 
     if (category === 'pyq') {
-      const yearPart = year ? `(${year})` : '';
       return cleanTopic 
-        ? `${cleanSub}: ${cleanTopic} Paper ${yearPart}`.trim()
-        : `${cleanSub} Question Paper ${yearPart}`.trim();
+        ? `${cleanSub}: ${cleanTopic} Paper`.trim()
+        : `${cleanSub} Question Paper`.trim();
     }
 
     // Category === 'note'
     return cleanTopic 
       ? `${cleanSub}: ${cleanTopic}`.trim()
       : `${cleanSub} Comprehensive Notes`;
-  }, [isEditingTitle, customTitle, subject, topic, category, year]);
+  }, [isEditingTitle, customTitle, subject, topic, category]);
 
   const validateFile = (targetFile: File) => {
     const errors: string[] = [];
@@ -278,7 +274,6 @@ export default function UploadPage() {
             semester,
             university,
             branch: branch.join(', '),
-            year: category === 'pyq' ? year : '',
             uploadedBy: user ? (user.email || user.uid) : 'student'
           },
           fileDetails: {
@@ -614,37 +609,6 @@ export default function UploadPage() {
                 </div>
               </div>
 
-              {category === 'pyq' && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="space-y-2 pt-2 border-t border-zinc-100"
-                >
-                  <label className="block text-xs font-semibold text-zinc-900">
-                    Exam Year <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                    {RECENT_YEARS.map((yr) => {
-                      const active = year === yr;
-                      return (
-                        <button
-                          key={yr}
-                          type="button"
-                          onClick={() => setYear(yr)}
-                          className={`py-2 px-2 text-center rounded-xl border text-xs font-mono font-medium transition-all cursor-pointer ${
-                            active
-                              ? 'bg-zinc-950 text-white border-zinc-950 shadow-sm'
-                              : 'bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-white hover:border-zinc-300'
-                          }`}
-                        >
-                          {yr}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
             </div>
 
             {/* ========================================================================= */}
