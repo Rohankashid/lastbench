@@ -66,6 +66,7 @@ async function previewHandler(req: NextRequest) {
         // Instead of downloading to Vercel and buffering in memory, 
         // generate a presigned URL and redirect the client directly to S3.
         // This cuts Vercel bandwidth costs to ZERO and speeds up loading.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const signedUrl = await getSignedUrl(s3 as any, command, { expiresIn: 3600 });
         
         return NextResponse.redirect(signedUrl, {
