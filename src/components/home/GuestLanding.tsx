@@ -37,24 +37,24 @@ const UniversityLogo = ({ uni }: { uni: { name: string, src: string, invert?: bo
   const [error, setError] = React.useState(false);
   return (
     <div 
-      className="flex items-center justify-center opacity-40 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 cursor-pointer hover:scale-110 shrink-0"
+      className="flex-none w-20 h-20 sm:w-32 sm:h-32 flex items-center justify-center opacity-50 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 cursor-pointer hover:scale-110 mx-4 sm:mx-8"
       title={uni.name}
+      style={{ minWidth: '80px', minHeight: '80px' }}
     >
-      <div className="relative h-16 w-16 sm:h-24 sm:w-24 flex items-center justify-center shrink-0">
-        {!error ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img 
-            src={uni.src}
-            alt={uni.name} 
-            className={`object-contain max-w-full max-h-full drop-shadow-sm ${uni.invert ? 'invert' : ''}`}
-            onError={() => setError(true)}
-          />
-        ) : (
-          <div className="h-full w-full rounded-full bg-zinc-100 border-2 border-zinc-200 flex items-center justify-center text-zinc-400 font-black text-2xl">
-            {uni.name[0]}
-          </div>
-        )}
-      </div>
+      {!error ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img 
+          src={uni.src}
+          alt={uni.name} 
+          style={{ width: '100%', height: '100%', objectFit: 'contain', flexShrink: 0 }}
+          className={uni.invert ? 'invert' : ''}
+          onError={() => setError(true)}
+        />
+      ) : (
+        <div className="w-full h-full rounded-full bg-zinc-100 border-2 border-zinc-200 flex items-center justify-center text-zinc-400 font-black text-2xl">
+          {uni.name[0]}
+        </div>
+      )}
     </div>
   );
 };
