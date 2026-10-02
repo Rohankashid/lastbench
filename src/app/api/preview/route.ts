@@ -32,7 +32,7 @@ async function previewHandler(req: NextRequest) {
         console.error('Blocked attempt to proxy unauthorized domain:', parsedUrl.hostname);
         return new NextResponse('Unauthorized storage domain', { status: 403 });
       }
-    } catch (e) {
+    } catch {
       return new NextResponse('Invalid URL provided', { status: 400 });
     }
 
@@ -63,21 +63,17 @@ async function previewHandler(req: NextRequest) {
           ResponseContentDisposition: 'inline',
         });
 
-        const s3Response = await s3.send(command);
-
-        if (s3Response.Body) {
-          const contentType = s3Response.ContentType || 'application/pdf';
-          const byteArray = await s3Response.Body.transformToByteArray();
-
-          return new NextResponse(byteArray as unknown as BodyInit, {
-            status: 200,
-            headers: {
-              'Content-Type': contentType,
-              'Content-Disposition': 'inline',
-              'Cache-Control': 'public, max-age=86400, stale-while-revalidate=43200',
-            },
-          });
-        }
+        // Instead of downloading to Vercel and buffering in memory, 
+        // generate a presigned URL and redirect the client directly to S3.
+        // This cuts Vercel bandwidth costs to ZERO and speeds up loading.
+        const signedUrl = await getSignedUrl(s3 as any, command, { expiresIn: 3600 });
+        
+        return NextResponse.redirect(signedUrl, {
+          status: 302,
+          headers: {
+            'Cache-Control': 'public, max-age=3600'
+          }
+        });
       } catch (s3Error) {
         console.warn('S3 client get failed, falling back to direct fetch:', s3Error);
       }
