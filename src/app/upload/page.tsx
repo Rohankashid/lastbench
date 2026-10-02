@@ -8,6 +8,7 @@ import { db } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { SearchableMultiSelect } from '@/components/ui/SearchableMultiSelect';
 import { useToast } from '@/components/ui/Toast';
 import { 
   UNIVERSITY_SELECT_GROUPS, 
@@ -73,7 +74,7 @@ export default function UploadPage() {
   const [semester, setSemester] = useState('');
   const [year, setYear] = useState(RECENT_YEARS[0]);
   const [university, setUniversity] = useState('');
-  const [branch, setBranch] = useState('');
+  const [branch, setBranch] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   
   // Controls expanding the University & Branch section
@@ -99,7 +100,7 @@ export default function UploadPage() {
         if (userSnap.exists()) {
           const data = userSnap.data();
           if (data.university) setUniversity(data.university);
-          if (data.branch) setBranch(data.branch);
+          if (data.branch) setBranch(data.branch.split(',').map((b: string) => b.trim()));
           if (data.semester) setSemester(String(data.semester));
           
           // If university and branch exist, keep audience collapsed to save space
@@ -189,7 +190,7 @@ export default function UploadPage() {
   };
 
   const handleSetCommonFirstYear = () => {
-    setBranch('First Year Engineering (Common)');
+    setBranch(['First Year Engineering (Common)']);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -227,7 +228,7 @@ export default function UploadPage() {
       return;
     }
 
-    if (!branch) {
+    if (!branch || branch.length === 0) {
       setIsAudienceExpanded(true);
       setError('Please select the Engineering Branch');
       toast.error('Please select a Branch');
@@ -239,28 +240,58 @@ export default function UploadPage() {
     setUploading(true);
 
     try {
-      const uploadData = new FormData();
-      uploadData.append('file', file);
-      uploadData.append('name', finalName);
-      uploadData.append('subject', subject.trim());
-      uploadData.append('category', category);
-      uploadData.append('semester', semester);
-      uploadData.append('university', university);
-      uploadData.append('branch', branch);
-      uploadData.append('year', category === 'pyq' ? year : '');
-
-      if (user) {
-        uploadData.append('uploadedBy', user.email || user.uid);
-      }
-
-      const res = await fetch('/api/upload', {
+      // 1. Get presigned URL
+      const presignRes = await fetch('/api/upload/presign', {
         method: 'POST',
-        body: uploadData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+          size: file.size
+        })
+      });
+      
+      const presignData = await presignRes.json();
+      if (!presignRes.ok) throw new Error(presignData.error || 'Failed to get upload URL');
+
+      // 2. Upload directly to S3 (Bypasses Vercel 4.5MB limit)
+      const uploadRes = await fetch(presignData.presignedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        }
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.details || data.error || 'Upload failed');
-      if (!data.url) throw new Error('File storage upload not acknowledged');
+      if (!uploadRes.ok) throw new Error('Failed to upload file to storage');
+
+      // 3. Confirm and save metadata
+      const confirmRes = await fetch('/api/upload/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metadata: {
+            name: finalName,
+            subject: subject.trim(),
+            category,
+            semester,
+            university,
+            branch: branch.join(', '),
+            year: category === 'pyq' ? year : '',
+            uploadedBy: user ? (user.email || user.uid) : 'student'
+          },
+          fileDetails: {
+            fileUrl: presignData.fileUrl,
+            filename: presignData.secureFilename,
+            originalName: presignData.sanitizedFilename,
+            size: file.size,
+            type: file.type
+          }
+        })
+      });
+
+      const confirmData = await confirmRes.json();
+      if (!confirmRes.ok) throw new Error(confirmData.error || 'Failed to save metadata');
 
       toast.success('Document uploaded and indexed successfully!');
       setSuccess(true);
@@ -651,12 +682,12 @@ export default function UploadPage() {
                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-100 border border-zinc-200/80 text-xs font-medium text-zinc-800">
                   <GraduationCap className="w-3.5 h-3.5 text-zinc-500" />
                   <span className="truncate max-w-[240px]">
-                    {branch || 'Select Branch'}
+                    {branch.length > 0 ? branch.join(', ') : 'Select Branch'}
                   </span>
                 </div>
 
                 {/* Quick 1-tap First Year Common Chip */}
-                {branch !== 'First Year Engineering (Common)' && (
+                {!branch.includes('First Year Engineering (Common)') && (
                   <button
                     type="button"
                     onClick={handleSetCommonFirstYear}
@@ -696,12 +727,12 @@ export default function UploadPage() {
                       <label className="block text-xs font-medium text-zinc-700 mb-1">
                         Engineering Branch <span className="text-rose-500">*</span>
                       </label>
-                      <SearchableSelect
+                      <SearchableMultiSelect
                         required
                         value={branch}
-                        onChange={(val) => setBranch(val)}
+                        onChange={(val: string[]) => setBranch(val)}
                         groups={BRANCH_SELECT_GROUPS}
-                        placeholder="Select Engineering Branch"
+                        placeholder="Select Engineering Branches"
                         searchPlaceholder="Search branch (CSE, IT, ENTC, etc.)..."
                         buttonClassName="py-2.5 bg-white text-xs border-zinc-200"
                       />
