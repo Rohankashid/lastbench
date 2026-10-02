@@ -6,7 +6,7 @@ import { withRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/rateLimit';
 
 async function presignHandler(req: NextRequest) {
   try {
-    const { filename, contentType, size } = await req.json();
+    const { filename, contentType } = await req.json();
 
     if (!filename || !contentType) {
       return NextResponse.json({ error: 'Filename and content type required' }, { status: 400 });
@@ -30,6 +30,7 @@ async function presignHandler(req: NextRequest) {
       ContentDisposition: 'inline',
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const presignedUrl = await getSignedUrl(s3 as any, command, { expiresIn: 3600 });
     const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${secureFilename}`;
 
