@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebaseAdmin';
+import { verifyAuth } from '@/lib/auth-server';
+import { withRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/rateLimit';
 
-export async function POST(req: NextRequest) {
+async function confirmHandler(req: NextRequest) {
   try {
+    // 1. Verify Authentication
+    const decodedToken = await verifyAuth(req);
+    if (!decodedToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const data = await req.json();
     const { metadata, fileDetails } = data;
-    
-    // Check for duplicates (simplified hash check skipped for client upload)
     
     const firestoreData = {
       name: metadata.name || fileDetails.originalName.replace(/\.[^/.]+$/, ""),
@@ -21,7 +27,7 @@ export async function POST(req: NextRequest) {
       originalName: fileDetails.originalName,
       fileSize: fileDetails.size,
       fileType: fileDetails.type,
-      uploadedBy: metadata.uploadedBy || 'student',
+      uploadedBy: decodedToken.uid, // Force uploadedBy to be the authenticated user
       uploadedAt: new Date().toISOString(),
     };
 
@@ -40,3 +46,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to save metadata' }, { status: 500 });
   }
 }
+
+// Wrap with rate limiting
+export const POST = withRateLimit(confirmHandler, RATE_LIMIT_CONFIGS.upload);

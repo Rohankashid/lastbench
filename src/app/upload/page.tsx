@@ -236,10 +236,17 @@ export default function UploadPage() {
     setUploading(true);
 
     try {
+      // 0. Get Auth Token
+      if (!user) throw new Error('You must be logged in to upload');
+      const idToken = await user.getIdToken();
+
       // 1. Get presigned URL
       const presignRes = await fetch('/api/upload/presign', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           filename: file.name,
           contentType: file.type,
@@ -250,14 +257,16 @@ export default function UploadPage() {
       const presignData = await presignRes.json();
       if (!presignRes.ok) throw new Error(presignData.error || 'Failed to get upload URL');
 
-      // 2. Upload directly to S3 (Bypasses Vercel 4.5MB limit)
-      const uploadRes = await fetch(presignData.presignedUrl, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-          'Content-Disposition': presignData.contentDisposition
-        }
+      // 2. Upload directly to S3 using Presigned POST (Enforces size limits)
+      const formData = new FormData();
+      Object.entries(presignData.fields).forEach(([key, value]) => {
+        formData.append(key, value as string);
+      });
+      formData.append('file', file); // MUST be the last field
+
+      const uploadRes = await fetch(presignData.url, {
+        method: 'POST',
+        body: formData,
       });
 
       if (!uploadRes.ok) throw new Error('Failed to upload file to storage');
@@ -265,7 +274,10 @@ export default function UploadPage() {
       // 3. Confirm and save metadata
       const confirmRes = await fetch('/api/upload/confirm', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           metadata: {
             name: finalName,
@@ -273,8 +285,7 @@ export default function UploadPage() {
             category,
             semester,
             university,
-            branch: branch.join(', '),
-            uploadedBy: user ? (user.email || user.uid) : 'student'
+            branch: branch.join(', ')
           },
           fileDetails: {
             fileUrl: presignData.fileUrl,
