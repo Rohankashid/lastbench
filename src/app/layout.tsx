@@ -20,8 +20,38 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LastBench - Community Engineering Notes & Exam Papers",
-  description: "Open-access peer study archive for engineering students. Find and share university past question papers (PYQs), lecture digests, and syllabus notes with 100% free reading.",
+  title: {
+    default: "LastBench | Engineering Notes & PYQs Community",
+    template: "%s | LastBench"
+  },
+  description: "Open-access peer study archive for engineering students across all universities. Find and share past question papers (PYQs), lecture digests, and syllabus notes for free.",
+  keywords: ["LastBench", "LastBench community", "engineering notes", "engineering PYQs", "university papers", "engineering study material", "Last Bench notes", "BTech notes"],
+  authors: [{ name: "LastBench" }],
+  openGraph: {
+    title: "LastBench | Engineering Notes & PYQs Community",
+    description: "Open-access peer study archive for engineering students. Find and share university past question papers (PYQs) and notes.",
+    url: "https://www.lastbench.online",
+    siteName: "LastBench",
+    images: [
+      {
+        url: "https://www.lastbench.online/icon.png", 
+        width: 800,
+        height: 600,
+        alt: "LastBench Logo",
+      }
+    ],
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LastBench | Engineering Notes & PYQs Community",
+    description: "Open-access peer study archive for engineering students.",
+    images: ["https://www.lastbench.online/icon.png"],
+  },
+  alternates: {
+    canonical: "https://www.lastbench.online",
+  },
 };
 
 export default function RootLayout({
