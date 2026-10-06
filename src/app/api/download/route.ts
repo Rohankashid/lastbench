@@ -103,4 +103,4 @@ async function downloadHandler(req: NextRequest) {
   }
 }
 
-export const GET = withRateLimit(downloadHandler, RATE_LIMIT_CONFIGS.standard);
+export const GET = withRateLimit(downloadHandler, RATE_LIMIT_CONFIGS.general);
