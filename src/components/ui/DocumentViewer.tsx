@@ -176,7 +176,7 @@ export function DocumentViewer({
                     </a>
 
                     <a
-                      href={user ? fileUrl : '#'}
+                      href={user ? `/api/download?url=${encodeURIComponent(fileUrl)}&filename=${encodeURIComponent((title || 'document') + '.pdf')}` : '#'}
                       download={user ? true : undefined}
                       onClick={(e) => {
                         if (!user) {
@@ -233,7 +233,7 @@ export function DocumentViewer({
               {/* Mobile Action Bar (Scrollable) */}
               <div className="flex sm:hidden items-center overflow-x-auto scrollbar-none gap-2 px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0">
                   <a
-                    href={user ? fileUrl : '#'}
+                    href={user ? `/api/download?url=${encodeURIComponent(fileUrl)}&filename=${encodeURIComponent((title || 'document') + '.pdf')}` : '#'}
                     download={user ? true : undefined}
                     onClick={(e) => {
                       if (!user) {

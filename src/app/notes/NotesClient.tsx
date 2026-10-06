@@ -542,7 +542,7 @@ function NotesContent() {
                       View
                     </button>
                     <a
-                      href={user ? (note.fileUrl || note.downloadUrl) : '#'}
+                      href={user ? `/api/download?url=${encodeURIComponent(note.fileUrl || note.downloadUrl)}&filename=${encodeURIComponent(note.name || note.title || 'document.pdf')}` : '#'}
                       download={user ? true : undefined}
                       rel="noopener noreferrer"
                       className="flex-1 inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-medium rounded-lg transition-colors shadow-sm cursor-pointer"

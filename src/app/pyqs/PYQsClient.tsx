@@ -551,7 +551,7 @@ function PYQsContent() {
                       View
                     </button>
                     <a
-                      href={user ? (pyq.fileUrl || pyq.downloadUrl) : '#'}
+                      href={user ? `/api/download?url=${encodeURIComponent(pyq.fileUrl || pyq.downloadUrl)}&filename=${encodeURIComponent(pyq.name || pyq.title || 'document.pdf')}` : '#'}
                       download={user ? true : undefined}
                       rel="noopener noreferrer"
                       className="flex-1 inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
@@ -578,7 +578,7 @@ function PYQsContent() {
                       <FaWhatsapp className="w-4 h-4" />
                     </a>
 
-                    <BookmarkButton materialId={pyq.id} />
+                    <BookmarkButton materialId={pyq.id} className="!p-2" />
                     
                     <a
                       href={`/takedown?id=${pyq.id}`}
