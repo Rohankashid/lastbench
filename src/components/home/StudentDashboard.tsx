@@ -204,7 +204,7 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
   return (
     <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-zinc-50/40">
       <BackgroundGrid variant="grid" />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20 space-y-10">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 xl:px-16 pt-10 pb-20 space-y-10">
         
         {/* ========================================================================= */}
         {/* Welcome Header + Academic Profile Badge                                   */}
@@ -250,7 +250,7 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
           </div>
 
           {/* Personalized Academic Banner (if profile has university or branch) */}
-          {userProfile && (userProfile.university || userProfile.branch) && (
+          {userProfile && (userProfile.university || userProfile.branch) ? (
             <div className="mt-6 p-4 rounded-2xl bg-white border border-zinc-200/90 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-800 shrink-0">
@@ -279,6 +279,29 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
                 )}
               </div>
             </div>
+          ) : (
+            !loading && (
+              <div className="mt-6 p-4 rounded-2xl bg-white border border-zinc-200/90 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div>
+                    <div className="text-xs font-semibold text-zinc-950 tracking-tight">
+                      Complete your academic profile
+                    </div>
+                    <div className="text-[11px] text-zinc-500 mt-0.5 max-w-lg leading-relaxed">
+                      Add your University and Branch to instantly filter PYQs and notes tailored perfectly to your curriculum.
+                    </div>
+                  </div>
+                </div>
+                
+                <Link
+                  href="/profile"
+                  className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-medium transition-colors shadow-sm"
+                >
+                  <span>Update Profile</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            )
           )}
         </motion.div>
 

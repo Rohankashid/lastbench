@@ -7,7 +7,9 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
@@ -15,6 +17,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<User>;
+  signInWithGoogle: () => Promise<User>;
   signUp: (email: string, password: string, name: string) => Promise<User>;
   signOut: () => Promise<void>;
 }
@@ -23,6 +26,9 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   signIn: async () => {
+    throw new Error('Auth context not initialized');
+  },
+  signInWithGoogle: async () => {
     throw new Error('Auth context not initialized');
   },
   signUp: async () => {
@@ -73,10 +79,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      return userCredential.user;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const value = {
     user,
     loading,
     signIn,
+    signInWithGoogle,
     signUp,
     signOut,
   };

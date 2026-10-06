@@ -206,7 +206,7 @@ export function GuestLanding() {
     <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-zinc-50/50">
       <BackgroundGrid variant="both" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-16 space-y-12 sm:space-y-16">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 xl:px-16 pt-6 sm:pt-8 pb-16 space-y-12 sm:space-y-16">
         
         {/* ========================================================================= */}
         {/* 1. HERO SECTION: Compact Headline, Search Bar, Trending Chips             */}

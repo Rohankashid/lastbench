@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, Download, Share2, Check } from 'lucide-react';
+import { X, ExternalLink, Download, Share2, Check, Flag } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import { SignInModal } from '@/components/ui/SignInModal';
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
+import Link from 'next/link';
 
 interface DocumentViewerProps {
   isOpen: boolean;
@@ -79,18 +81,21 @@ export function DocumentViewer({
     ? `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true` 
     : proxyUrl;
 
+  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?v=${materialId}` : '';
+  const waMessage = `📚 Check out this ${metadata?.subject || title} notes/PYQ — free preview, no login needed! ${shareUrl}`;
+
   return (
     <>
       <AnimatePresence>
         {isOpen && fileUrl && (
-          <div key="document-viewer-modal" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-hidden">
+          <div key="document-viewer-modal" className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-6 overflow-hidden">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10 hidden sm:block"
               onClick={onClose}
             />
 
@@ -100,18 +105,18 @@ export function DocumentViewer({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98, y: 6 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
-              className="w-full max-w-5xl h-[86vh] bg-white rounded-2xl shadow-2xl border border-zinc-200 flex flex-col overflow-hidden will-change-transform"
+              className="w-full h-[100dvh] sm:h-[90vh] max-w-5xl bg-white sm:rounded-2xl shadow-2xl border-0 sm:border border-zinc-200 flex flex-col overflow-hidden will-change-transform"
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-200 bg-white shrink-0">
-                <div className="flex items-center gap-3 overflow-hidden mr-4">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3.5 border-b border-zinc-200 bg-white shrink-0">
+                <div className="flex items-center min-w-0 pr-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 hidden sm:block mr-3" />
                   <div className="truncate">
                     <h3 className="text-sm font-semibold text-zinc-950 truncate">
                       {title || 'Document Preview'}
                     </h3>
                     {metadata && (
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex flex-wrap items-center gap-x-2 mt-0.5">
                         {metadata.subject && (
                           <span className="font-mono text-[10px] uppercase text-zinc-500">
                             {metadata.subject}
@@ -123,13 +128,8 @@ export function DocumentViewer({
                           </span>
                         )}
                         {metadata.university && (
-                          <span className="font-mono text-[10px] text-zinc-400">
+                          <span className="font-mono text-[10px] text-zinc-400 hidden sm:inline">
                             &bull; {metadata.university}
-                          </span>
-                        )}
-                        {metadata.year && (
-                          <span className="font-mono text-[10px] text-zinc-400">
-                            &bull; {metadata.year}
                           </span>
                         )}
                       </div>
@@ -137,34 +137,101 @@ export function DocumentViewer({
                   </div>
                 </div>
 
-                {/* Actions */}
                 <div className="flex items-center gap-2 shrink-0">
+                  {/* Desktop Actions */}
+                  <div className="hidden sm:flex items-center gap-2">
+                    <a
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(waMessage)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 text-xs font-medium transition-colors cursor-pointer"
+                      title="Share to WhatsApp"
+                    >
+                      <FaWhatsapp className="w-4 h-4" />
+                      <span>WhatsApp</span>
+                    </a>
 
-                  <button
-                    onClick={() => {
-                      const shareUrl = `${window.location.origin}${window.location.pathname}?v=${materialId}`;
-                      navigator.clipboard.writeText(shareUrl);
-                      setIsCopied(true);
-                      setTimeout(() => setIsCopied(false), 2000);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 text-xs font-medium transition-colors cursor-pointer"
-                    title="Copy Share Link"
-                  >
-                    {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5 text-zinc-500" />}
-                    <span className="hidden sm:inline">{isCopied ? 'Copied!' : 'Share'}</span>
-                  </button>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(shareUrl);
+                        setIsCopied(true);
+                        setTimeout(() => setIsCopied(false), 2000);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 text-xs font-medium transition-colors cursor-pointer"
+                      title="Copy Share Link"
+                    >
+                      {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5 text-zinc-500" />}
+                      <span>{isCopied ? 'Copied!' : 'Share'}</span>
+                    </button>
 
-                  <a
-                    href={proxyUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 text-xs font-medium transition-colors"
-                    title="Open in new window"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5 text-zinc-500" />
-                    <span className="hidden sm:inline">Open in Tab</span>
-                  </a>
+                    <a
+                      href={proxyUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 text-xs font-medium transition-colors"
+                      title="Open in new window"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Open in Tab</span>
+                    </a>
 
+                    <a
+                      href={user ? fileUrl : '#'}
+                      download={user ? true : undefined}
+                      onClick={(e) => {
+                        if (!user) {
+                          e.preventDefault();
+                          setShowSignInModal(true);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-950 text-white hover:bg-zinc-800 text-xs font-medium transition-colors shadow-sm cursor-pointer"
+                      title="Download File"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download</span>
+                    </a>
+
+                    {materialId && (
+                      <BookmarkButton materialId={materialId} variant="pill" className="shrink-0 border-zinc-200 shadow-none hover:shadow-none bg-white" />
+                    )}
+                    
+                    {materialId && (
+                       <Link href={`/takedown?id=${materialId}`} className="font-mono text-[10px] text-red-500 hover:underline inline-flex items-center gap-1 ml-1 px-2">
+                         <Flag className="w-3 h-3" /> Report
+                       </Link>
+                    )}
+
+                    <button
+                      onClick={onClose}
+                      className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors ml-1"
+                      aria-label="Close Preview"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Mobile Actions (essential only in header) */}
+                  <div className="flex sm:hidden items-center gap-1">
+                    <a
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(waMessage)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 rounded-lg bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors"
+                    >
+                      <FaWhatsapp className="w-4 h-4" />
+                    </a>
+                    <button
+                      onClick={onClose}
+                      className="p-2 rounded-lg text-zinc-400 hover:text-zinc-700 bg-zinc-100 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Action Bar (Scrollable) */}
+              <div className="flex sm:hidden items-center overflow-x-auto scrollbar-none gap-2 px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0">
                   <a
                     href={user ? fileUrl : '#'}
                     download={user ? true : undefined}
@@ -174,25 +241,43 @@ export function DocumentViewer({
                         setShowSignInModal(true);
                       }
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-950 text-white hover:bg-zinc-800 text-xs font-medium transition-colors shadow-sm cursor-pointer"
-                    title="Download File"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-950 text-white hover:bg-zinc-800 text-xs font-medium transition-colors shadow-sm whitespace-nowrap shrink-0"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Download</span>
+                    <span>Download</span>
+                  </a>
+
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(shareUrl);
+                      setIsCopied(true);
+                      setTimeout(() => setIsCopied(false), 2000);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 text-xs font-medium transition-colors whitespace-nowrap shrink-0"
+                  >
+                    {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5 text-zinc-500" />}
+                    <span>{isCopied ? 'Copied!' : 'Copy Link'}</span>
+                  </button>
+
+                  {materialId && (
+                    <BookmarkButton materialId={materialId} variant="pill" className="shrink-0 border-zinc-200 shadow-none hover:shadow-none" />
+                  )}
+
+                  <a
+                    href={proxyUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 text-xs font-medium transition-colors whitespace-nowrap shrink-0"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-zinc-500" />
+                    <span>Open in Tab</span>
                   </a>
 
                   {materialId && (
-                    <BookmarkButton materialId={materialId} />
+                     <Link href={`/takedown?id=${materialId}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 bg-white text-red-500 hover:bg-red-50 text-xs font-medium transition-colors whitespace-nowrap shrink-0">
+                       <Flag className="w-3.5 h-3.5" /> <span>Report</span>
+                     </Link>
                   )}
-
-                  <button
-                    onClick={onClose}
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors ml-1"
-                    aria-label="Close Preview"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
               </div>
 
               {/* Viewer Body */}

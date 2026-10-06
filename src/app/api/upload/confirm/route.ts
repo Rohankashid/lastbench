@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebaseAdmin';
 import { verifyAuth } from '@/lib/auth-server';
 import { withRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/rateLimit';
+import { FieldValue } from 'firebase-admin/firestore';
 
 async function confirmHandler(req: NextRequest) {
   try {
@@ -29,6 +30,8 @@ async function confirmHandler(req: NextRequest) {
       fileType: fileDetails.type,
       uploadedBy: decodedToken.uid, // Force uploadedBy to be the authenticated user
       uploadedAt: new Date().toISOString(),
+      rightsConfirmed: metadata.rightsConfirmed || false,
+      rightsConfirmedAt: metadata.rightsConfirmed ? new Date().toISOString() : null,
     };
 
     // Remove empty fields
@@ -39,6 +42,13 @@ async function confirmHandler(req: NextRequest) {
     });
 
     await db.collection('materials').add(firestoreData);
+
+    // Increment user's contribution count
+    const userRef = db.collection('users').doc(decodedToken.uid);
+    await userRef.set({
+      contributionsCount: FieldValue.increment(1),
+      lastContributionAt: new Date().toISOString()
+    }, { merge: true });
 
     return NextResponse.json({ success: true, url: fileDetails.fileUrl });
   } catch (error) {

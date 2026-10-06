@@ -19,10 +19,10 @@ export async function generateMetadata(
 
   try {
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/pyqs/${v}`);
+    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/materials/${v}`);
     if (res.ok) {
       const data = await res.json();
-      const title = data.fields?.title?.stringValue || 'PYQ Paper';
+      const title = data.fields?.name?.stringValue || data.fields?.title?.stringValue || 'PYQ Paper';
       const university = data.fields?.university?.stringValue || '';
       const subject = data.fields?.subject?.stringValue || '';
       const year = data.fields?.year?.stringValue || '';

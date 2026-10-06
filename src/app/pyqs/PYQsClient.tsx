@@ -34,8 +34,10 @@ import {
   Trash2, 
   RotateCcw,
   Calendar,
-  X
+  X,
+  Flag
 } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 
 interface PYQ {
   id: string;
@@ -285,9 +287,9 @@ function PYQsContent() {
   };
 
   return (
-    <div className="relative min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen py-10 px-4 sm:px-6 lg:px-12 xl:px-16">
       <BackgroundGrid variant="grid" />
-      <div className="max-w-5xl mx-auto space-y-8">
+      <div className="max-w-[1600px] mx-auto space-y-8">
         
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-zinc-200 pb-5">
@@ -469,7 +471,7 @@ function PYQsContent() {
                 onClick: handleResetFilters
               }}
               secondaryAction={{
-                label: 'Request Material',
+                label: 'Request this paper',
                 onClick: () => {
                   toast.success('Request sent to admins! We will try to upload it soon.');
                 }
@@ -480,7 +482,7 @@ function PYQsContent() {
               variants={containerVariants}
               initial="hidden"
               animate="show"
-              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4"
             >
               {filteredPYQs.map((pyq) => (
                 <motion.div
@@ -564,7 +566,29 @@ function PYQsContent() {
                       <Download className="w-3.5 h-3.5" />
                       Download
                     </a>
+
+                    <a
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`📚 Check out this ${pyq.subject || pyq.title} PYQ — free preview, no login needed! ${typeof window !== 'undefined' ? `${window.location.origin}/pyqs?v=${pyq.id}` : ''}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex justify-center items-center p-2 text-[#25D366] hover:bg-[#25D366]/10 rounded-lg transition-colors"
+                      title="Share to WhatsApp"
+                    >
+                      <FaWhatsapp className="w-4 h-4" />
+                    </a>
+
                     <BookmarkButton materialId={pyq.id} />
+                    
+                    <a
+                      href={`/takedown?id=${pyq.id}`}
+                      className="inline-flex justify-center items-center p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Report this file"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Flag className="w-4 h-4" />
+                    </a>
+
                     {isAdmin && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setPyqToDelete(pyq); }}

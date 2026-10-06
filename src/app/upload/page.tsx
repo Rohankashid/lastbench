@@ -60,6 +60,7 @@ export default function UploadPage() {
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [rightsConfirmed, setRightsConfirmed] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -285,7 +286,8 @@ export default function UploadPage() {
             category,
             semester,
             university,
-            branch: branch.join(', ')
+            branch: branch.join(', '),
+            rightsConfirmed: true
           },
           fileDetails: {
             fileUrl: presignData.fileUrl,
@@ -631,9 +633,9 @@ export default function UploadPage() {
                   <label className="block text-xs font-semibold text-zinc-900">
                     5. Academic Scope &amp; Target Audience
                   </label>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">
+                  {/* <p className="text-[11px] text-zinc-500 mt-0.5">
                     Controls branch vaults and syllabus feeds for students.
-                  </p>
+                  </p> */}
                 </div>
 
                 <button
@@ -717,6 +719,25 @@ export default function UploadPage() {
                 )}
               </AnimatePresence>
             </div>
+            {/* ========================================================================= */}
+            {/* RIGHTS CONFIRMATION                                                       */}
+            {/* ========================================================================= */}
+            <div className="pt-2">
+              <label className="flex items-start gap-3 cursor-pointer p-4 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100/50 transition-colors">
+                <div className="flex items-center h-5 mt-0.5">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={rightsConfirmed}
+                    onChange={(e) => setRightsConfirmed(e.target.checked)}
+                    className="w-4 h-4 rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950"
+                  />
+                </div>
+                <div className="text-xs text-zinc-700 leading-relaxed">
+                  I confirm I have the right to share this material and that it does not infringe anyone&apos;s copyright. I understand LastBench removes reported content and may remove my upload.
+                </div>
+              </label>
+            </div>
 
             {/* ========================================================================= */}
             {/* SUBMIT BUTTON                                                             */}
@@ -728,7 +749,7 @@ export default function UploadPage() {
 
               <button
                 type="submit"
-                disabled={uploading || !file || !subject.trim() || !semester}
+                disabled={uploading || !file || !subject.trim() || !semester || !rightsConfirmed}
                 className="w-full sm:w-auto px-6 py-3 rounded-xl bg-zinc-950 text-white font-medium text-xs hover:bg-zinc-800 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
               >
                 {uploading ? (
