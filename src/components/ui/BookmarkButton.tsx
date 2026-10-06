@@ -79,7 +79,7 @@ export function BookmarkButton({
       onClick={handleClick}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.85 }}
-      className={`${buttonPadding} rounded-lg transition-colors cursor-pointer group relative overflow-hidden ${
+      className={`inline-flex justify-center items-center ${buttonPadding} rounded-lg transition-colors cursor-pointer group relative overflow-hidden ${
         bookmarked
           ? 'text-zinc-950 bg-zinc-100 hover:bg-zinc-200'
           : 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100'

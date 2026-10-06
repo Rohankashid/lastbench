@@ -569,7 +569,7 @@ function NotesContent() {
                       <FaWhatsapp className="w-4 h-4" />
                     </a>
 
-                    <BookmarkButton materialId={note.id} />
+                    <BookmarkButton materialId={note.id} className="!p-2" />
                     
                     <a
                       href={`/takedown?id=${note.id}`}

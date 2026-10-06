@@ -95,11 +95,11 @@ export function AuthModal() {
     };
   }, [isOpen, closeAuthModal]);
 
-  // Reset errors when mode changes
+  // Reset errors when mode or modal visibility changes
   useEffect(() => {
     setError('');
     setForgotSent(false);
-  }, [mode]);
+  }, [mode, isOpen]);
 
   const handleGoogleSignIn = async () => {
     setError('');
@@ -387,7 +387,10 @@ export function AuthModal() {
                       type="email"
                       required
                       value={signInEmail}
-                      onChange={(e) => setSignInEmail(e.target.value)}
+                      onChange={(e) => {
+                        setSignInEmail(e.target.value);
+                        if (error) setError('');
+                      }}
                       placeholder="name@example.com"
                       className="w-full px-3.5 py-2.5 bg-white border border-zinc-200 rounded-xl text-xs text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors"
                     />
@@ -411,7 +414,10 @@ export function AuthModal() {
                         type={showSignInPassword ? 'text' : 'password'}
                         required
                         value={signInPassword}
-                        onChange={(e) => setSignInPassword(e.target.value)}
+                        onChange={(e) => {
+                          setSignInPassword(e.target.value);
+                          if (error) setError('');
+                        }}
                         placeholder="••••••••"
                         className="w-full pl-3.5 pr-9 py-2.5 bg-white border border-zinc-200 rounded-xl text-xs text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors"
                       />
@@ -511,7 +517,10 @@ export function AuthModal() {
                       type="text"
                       required
                       value={signUpData.name}
-                      onChange={(e) => setSignUpData({ ...signUpData, name: e.target.value })}
+                      onChange={(e) => {
+                        setSignUpData({ ...signUpData, name: e.target.value });
+                        if (error) setError('');
+                      }}
                       placeholder="e.g. Ram Sharma"
                       className="w-full px-3.5 py-2 bg-white border border-zinc-200 rounded-xl text-xs text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors"
                     />
@@ -525,7 +534,10 @@ export function AuthModal() {
                       type="email"
                       required
                       value={signUpData.email}
-                      onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+                      onChange={(e) => {
+                        setSignUpData({ ...signUpData, email: e.target.value });
+                        if (error) setError('');
+                      }}
                       placeholder="name@example.com"
                       className="w-full px-3.5 py-2 bg-white border border-zinc-200 rounded-xl text-xs text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors"
                     />
@@ -591,7 +603,10 @@ export function AuthModal() {
                           type={showSignUpPassword ? 'text' : 'password'}
                           required
                           value={signUpData.password}
-                          onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
+                          onChange={(e) => {
+                            setSignUpData({ ...signUpData, password: e.target.value });
+                            if (error) setError('');
+                          }}
                           placeholder="Min 6 chars"
                           className="w-full pl-3 pr-8 py-2 bg-white border border-zinc-200 rounded-xl text-xs text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900"
                         />
@@ -614,7 +629,10 @@ export function AuthModal() {
                         type={showSignUpPassword ? 'text' : 'password'}
                         required
                         value={signUpData.confirmPassword}
-                        onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })}
+                        onChange={(e) => {
+                          setSignUpData({ ...signUpData, confirmPassword: e.target.value });
+                          if (error) setError('');
+                        }}
                         placeholder="Re-enter password"
                         className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900"
                       />
