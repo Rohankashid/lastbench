@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     default: "LastBench | Engineering Notes & PYQs Community",
     template: "%s | LastBench"
   },
-  description: "Open-access peer study archive for engineering students across all universities. Find and share past question papers (PYQs), lecture digests, and syllabus notes for free.",
+  description: "Open-access peer study archive for engineering students. Find and share past university question papers (PYQs) and lecture notes for free.",
   keywords: ["LastBench", "LastBench community", "engineering notes", "engineering PYQs", "university papers", "engineering study material", "Last Bench notes", "BTech notes"],
   authors: [{ name: "LastBench" }],
   openGraph: {
