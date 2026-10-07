@@ -48,9 +48,12 @@ const Footer = () => {
           {/* Column 3: Legal */}
           <div className="space-y-3">
             <h4 className="font-mono text-[11px] uppercase tracking-wider text-zinc-900 font-semibold">
-              Legal
+              About & Legal
             </h4>
             <nav className="flex flex-col space-y-2 text-xs">
+              <Link href="/about" className="text-zinc-500 hover:text-zinc-950 transition-colors">
+                About Us
+              </Link>
               <Link href="/privacy" className="text-zinc-500 hover:text-zinc-950 transition-colors">
                 Privacy Policy
               </Link>

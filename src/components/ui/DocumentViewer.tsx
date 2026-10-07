@@ -7,6 +7,7 @@ import { FaWhatsapp } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import { SignInModal } from '@/components/ui/SignInModal';
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
+import { HelpfulButton } from '@/components/ui/HelpfulButton';
 import Link from 'next/link';
 
 interface DocumentViewerProps {
@@ -198,6 +199,10 @@ export function DocumentViewer({
                     </a>
 
                     {materialId && (
+                      <HelpfulButton materialId={materialId} />
+                    )}
+
+                    {materialId && (
                       <BookmarkButton materialId={materialId} variant="pill" className="shrink-0 border-zinc-200 shadow-none hover:shadow-none bg-white" />
                     )}
                     
@@ -264,6 +269,10 @@ export function DocumentViewer({
                     {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5 text-zinc-500" />}
                     <span>{isCopied ? 'Copied!' : 'Copy Link'}</span>
                   </button>
+
+                  {materialId && (
+                    <HelpfulButton materialId={materialId} />
+                  )}
 
                   {materialId && (
                     <BookmarkButton materialId={materialId} variant="pill" className="shrink-0 border-zinc-200 shadow-none hover:shadow-none" />

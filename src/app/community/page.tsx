@@ -14,6 +14,7 @@ interface Post {
   authorName: string;
   text: string;
   createdAt: Timestamp;
+  pinnedAt?: Timestamp | null;
 }
 
 export default function CommunityPage() {
@@ -24,10 +25,27 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      user.getIdToken().then(token => {
+        fetch('/api/auth/is-admin', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(data => setIsAdmin(data.isAdmin))
+        .catch(() => setIsAdmin(false));
+      });
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     const q = query(
       collection(db, "community_posts"),
+      orderBy("pinnedAt", "desc"),
       orderBy("createdAt", "desc")
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -49,12 +67,33 @@ export default function CommunityPage() {
         authorName: user.displayName || user.email?.split('@')[0] || "Student",
         text: newPostText.trim(),
         createdAt: Timestamp.now(),
+        pinnedAt: null,
       });
       setNewPostText("");
     } catch (error) {
       console.error("Failed to post:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTogglePin = async (postId: string, isPinned: boolean) => {
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      await fetch('/api/community/pin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          postId,
+          action: isPinned ? 'unpin' : 'pin'
+        })
+      });
+    } catch (error) {
+      console.error('Failed to toggle pin:', error);
     }
   };
 
@@ -96,7 +135,7 @@ export default function CommunityPage() {
             Community
           </h1>
           <p className="text-base text-zinc-500 tracking-[-0.01em] max-w-xl">
-            A minimalist board for engineering students to ask questions, request syllabus copies, or discuss midterms.
+            A minimalist board for engineering students to ask questions, request notes and papers, or discuss insems.
           </p>
         </motion.div>
 
@@ -168,10 +207,22 @@ export default function CommunityPage() {
                       <span className="text-xs font-medium text-zinc-950 truncate max-w-[100px]">
                         {post.authorName}
                       </span>
+                      {post.pinnedAt && (
+                        <span className="text-[9px] font-medium text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded uppercase tracking-wider hidden sm:inline-block">
+                          Pinned
+                        </span>
+                      )}
                     </div>
-                    <span className="text-[11px] font-mono text-zinc-400 sm:block sm:pl-7">
-                      {formatTime(post.createdAt)}
-                    </span>
+                    <div className="flex items-center gap-2 sm:block sm:pl-7">
+                      <span className="text-[11px] font-mono text-zinc-400">
+                        {formatTime(post.createdAt)}
+                      </span>
+                      {post.pinnedAt && (
+                        <span className="text-[9px] font-medium text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded uppercase tracking-wider sm:hidden">
+                          Pinned
+                        </span>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="flex-1 flex flex-col sm:flex-row sm:justify-between gap-4">
@@ -179,14 +230,24 @@ export default function CommunityPage() {
                       {post.text}
                     </p>
                     
-                    {user && user.uid === post.authorId && (
-                      <button
-                        onClick={() => setPostToDelete(post.id)}
-                        className="text-[11px] text-zinc-400 hover:text-rose-600 transition-colors sm:opacity-0 group-hover:opacity-100 self-start"
-                      >
-                        Delete
-                      </button>
-                    )}
+                    <div className="flex items-center gap-3 self-start">
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleTogglePin(post.id, !!post.pinnedAt)}
+                          className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors sm:opacity-0 group-hover:opacity-100"
+                        >
+                          {post.pinnedAt ? 'Unpin' : 'Pin'}
+                        </button>
+                      )}
+                      {user && user.uid === post.authorId && (
+                        <button
+                          onClick={() => setPostToDelete(post.id)}
+                          className="text-[11px] font-medium text-zinc-400 hover:text-rose-600 transition-colors sm:opacity-0 group-hover:opacity-100"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
