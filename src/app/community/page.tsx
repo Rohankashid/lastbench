@@ -205,7 +205,7 @@ export default function CommunityPage() {
                         {post.authorName?.[0]?.toUpperCase() || "U"}
                       </div>
                       <span className="text-xs font-medium text-zinc-950 truncate max-w-[100px]">
-                        {post.authorName}
+                        {post.authorName?.split(' ')[0] || 'Student'}
                       </span>
                       {post.pinnedAt && (
                         <span className="text-[9px] font-medium text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded uppercase tracking-wider hidden sm:inline-block">
