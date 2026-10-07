@@ -165,11 +165,17 @@ export function DocumentViewer({
                     </button>
 
                     <a
-                      href={proxyUrl}
-                      target="_blank"
+                      href={user ? proxyUrl : '#'}
+                      target={user ? "_blank" : undefined}
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 text-xs font-medium transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 text-xs font-medium transition-colors cursor-pointer"
                       title="Open in new window"
+                      onClick={(e) => {
+                        if (!user) {
+                          e.preventDefault();
+                          setShowSignInModal(true);
+                        }
+                      }}
                     >
                       <ExternalLink className="w-3.5 h-3.5 text-zinc-500" />
                       <span>Open in Tab</span>
@@ -264,10 +270,16 @@ export function DocumentViewer({
                   )}
 
                   <a
-                    href={proxyUrl}
-                    target="_blank"
+                    href={user ? proxyUrl : '#'}
+                    target={user ? "_blank" : undefined}
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 text-xs font-medium transition-colors whitespace-nowrap shrink-0"
+                    onClick={(e) => {
+                      if (!user) {
+                        e.preventDefault();
+                        setShowSignInModal(true);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                   >
                     <ExternalLink className="w-3.5 h-3.5 text-zinc-500" />
                     <span>Open in Tab</span>
