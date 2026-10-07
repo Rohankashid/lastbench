@@ -7,6 +7,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
+import Script from 'next/script';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { SearchableMultiSelect } from '@/components/ui/SearchableMultiSelect';
 import { useToast } from '@/components/ui/Toast';
@@ -232,6 +233,15 @@ export default function UploadPage() {
       return;
     }
 
+    const form = e.target as HTMLFormElement;
+    const turnstileResponse = form.querySelector<HTMLInputElement>('[name="cf-turnstile-response"]')?.value;
+
+    if (!turnstileResponse) {
+      setError('Please complete the security check to upload.');
+      toast.error('Security check required');
+      return;
+    }
+
     const finalName = computedTitle || subject.trim();
 
     setUploading(true);
@@ -251,7 +261,8 @@ export default function UploadPage() {
         body: JSON.stringify({
           filename: file.name,
           contentType: file.type,
-          size: file.size
+          size: file.size,
+          'cf-turnstile-response': turnstileResponse
         })
       });
       
@@ -326,6 +337,12 @@ export default function UploadPage() {
       const msg = err instanceof Error ? err.message : 'Failed to upload material';
       setError(msg);
       toast.error(msg);
+      // Reset Turnstile token on failure so they can try again
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (typeof window !== 'undefined' && (window as any).turnstile) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).turnstile.reset();
+      }
     } finally {
       setUploading(false);
     }
@@ -737,6 +754,18 @@ export default function UploadPage() {
                   I confirm I have the right to share this material and that it does not infringe anyone&apos;s copyright. I understand LastBench removes reported content and may remove my upload.
                 </div>
               </label>
+            </div>
+
+            {/* ========================================================================= */}
+            {/* TURNSTILE WIDGET                                                          */}
+            {/* ========================================================================= */}
+            <div className="pt-2 flex justify-end">
+              <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" />
+              <div 
+                className="cf-turnstile" 
+                data-sitekey="0x4AAAAAAFQmDUhQSI4cvWsu" 
+                data-action="upload_material"
+              ></div>
             </div>
 
             {/* ========================================================================= */}

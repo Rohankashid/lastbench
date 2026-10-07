@@ -568,7 +568,7 @@ function PYQsContent() {
                     </a>
 
                     <a
-                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`📚 Check out this ${pyq.subject || pyq.title} PYQ — free preview, no login needed! ${typeof window !== 'undefined' ? `${window.location.origin}/pyqs?v=${pyq.id}` : ''}`)}`}
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`📚 Check out this ${pyq.subject || pyq.title} PYQ - free preview, no login needed! ${typeof window !== 'undefined' ? `${window.location.origin}/pyqs?v=${pyq.id}` : ''}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}

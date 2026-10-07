@@ -82,7 +82,7 @@ export function DocumentViewer({
     : proxyUrl;
 
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?v=${materialId}` : '';
-  const waMessage = `📚 Check out this ${metadata?.subject || title} notes/PYQ — free preview, no login needed! ${shareUrl}`;
+  const waMessage = `📚 Check out this ${metadata?.subject || title} notes/PYQ - free preview, no login needed! ${shareUrl}`;
 
   return (
     <>

@@ -559,7 +559,7 @@ function NotesContent() {
                     </a>
                     
                     <a
-                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`📚 Check out this ${note.subject || note.title} notes — free preview, no login needed! ${typeof window !== 'undefined' ? `${window.location.origin}/notes?v=${note.id}` : ''}`)}`}
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`📚 Check out this ${note.subject || note.title} notes - free preview, no login needed! ${typeof window !== 'undefined' ? `${window.location.origin}/notes?v=${note.id}` : ''}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}

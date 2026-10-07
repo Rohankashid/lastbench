@@ -7,7 +7,7 @@ const Footer = () => {
   return (
     <footer className="border-t border-zinc-200 bg-white text-zinc-600 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-10">
           
           {/* Column 1: Brand & Architecture */}
           <div className="md:col-span-2 space-y-3">
@@ -45,7 +45,25 @@ const Footer = () => {
             </nav>
           </div>
 
-          {/* Column 3: Contact & Attribution */}
+          {/* Column 3: Legal */}
+          <div className="space-y-3">
+            <h4 className="font-mono text-[11px] uppercase tracking-wider text-zinc-900 font-semibold">
+              Legal
+            </h4>
+            <nav className="flex flex-col space-y-2 text-xs">
+              <Link href="/privacy" className="text-zinc-500 hover:text-zinc-950 transition-colors">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="text-zinc-500 hover:text-zinc-950 transition-colors">
+                Terms of Service
+              </Link>
+              <Link href="/contact" className="text-zinc-500 hover:text-zinc-950 transition-colors">
+                Contact Us
+              </Link>
+            </nav>
+          </div>
+
+          {/* Column 4: Contact & Attribution */}
           <div className="space-y-3">
             <h4 className="font-mono text-[11px] uppercase tracking-wider text-zinc-900 font-semibold">
               Connect
