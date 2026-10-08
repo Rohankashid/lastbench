@@ -7,6 +7,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
+import { FullPageSpinner, Spinner } from '@/components/ui/Spinner';
 import Script from 'next/script';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { SearchableMultiSelect } from '@/components/ui/SearchableMultiSelect';
@@ -53,7 +54,7 @@ const CLIENT_VALIDATION = {
 const SEMESTER_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
 export default function UploadPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   
@@ -88,6 +89,7 @@ export default function UploadPage() {
 
   // Load user academic profile to prefill target audience
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       router.replace('/?auth=login&redirect=%2Fupload');
       return;
@@ -120,7 +122,7 @@ export default function UploadPage() {
     };
 
     loadProfile();
-  }, [user, router]);
+  }, [user, authLoading, router]);
 
   // Derived professional document title
   const computedTitle = useMemo(() => {
@@ -348,10 +350,10 @@ export default function UploadPage() {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-50">
-        <div className="w-7 h-7 border-2 border-zinc-200 border-t-zinc-950 rounded-full animate-spin" />
+        <FullPageSpinner />
       </div>
     );
   }
@@ -783,7 +785,7 @@ export default function UploadPage() {
               >
                 {uploading ? (
                   <>
-                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <Spinner size="sm" />
                     <span>Sharing &amp; Indexing...</span>
                   </>
                 ) : (

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Spinner } from '@/components/ui/Spinner';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { collection, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
@@ -11,6 +12,7 @@ import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { DocumentViewer } from '@/components/ui/DocumentViewer';
+import { FullPageSpinner } from '@/components/ui/Spinner';
 import { 
   UNIVERSITY_SELECT_GROUPS, 
   BRANCH_SELECT_GROUPS, 
@@ -49,7 +51,7 @@ interface Material {
 }
 
 export default function AdminPanel() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -90,6 +92,7 @@ export default function AdminPanel() {
   });
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       router.replace('/?auth=login&redirect=%2Fadmin');
       return;
@@ -110,7 +113,7 @@ export default function AdminPanel() {
     };
 
     checkAdminStatus();
-  }, [user, router]);
+  }, [user, authLoading, router]);
 
   const fetchMaterials = async () => {
     try {
@@ -272,7 +275,7 @@ export default function AdminPanel() {
   if (loading && materials.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-50">
-        <div className="w-8 h-8 border-2 border-zinc-200 border-t-zinc-950 rounded-full animate-spin" />
+        <FullPageSpinner />
       </div>
     );
   }
@@ -552,7 +555,7 @@ export default function AdminPanel() {
               >
                 {uploading ? (
                   <>
-                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <Spinner size="sm" />
                     <span>Uploading Document...</span>
                   </>
                 ) : (

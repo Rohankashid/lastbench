@@ -286,7 +286,7 @@ export default function Navbar() {
                 {[
                   { name: 'Notes', path: '/notes' },
                   { name: 'PYQs', path: '/pyqs' },
-                  { name: 'Community', path: '/community' },
+                                { name: 'Community', path: '/community' },
                   { name: 'Leaderboard', path: '/leaderboard' },
                   ...(user ? [{ name: 'Upload', path: '/upload' }] : []),
                   { name: 'Home', path: '/' },

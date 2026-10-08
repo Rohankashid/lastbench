@@ -9,6 +9,7 @@ import { SignInModal } from '@/components/ui/SignInModal';
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
 import { HelpfulButton } from '@/components/ui/HelpfulButton';
 import Link from 'next/link';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface DocumentViewerProps {
   isOpen: boolean;
@@ -320,7 +321,7 @@ export function DocumentViewer({
                     isLoading ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
                   }`}
                 >
-                  <div className="w-8 h-8 rounded-full border-2 border-zinc-200 border-t-zinc-900 animate-spin" />
+                  <Spinner size="md" />
                   <div className="text-center">
                     <p className="text-xs font-semibold text-zinc-900">Opening preview...</p>
                     <p className="text-[11px] text-zinc-500 mt-0.5">Preparing document for viewing</p>

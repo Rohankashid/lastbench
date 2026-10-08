@@ -25,27 +25,46 @@ interface AuthModalContextType {
 
 const AuthModalContext = createContext<AuthModalContextType | undefined>(undefined);
 
+function cleanAuthUrl() {
+  if (typeof window !== 'undefined') {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('auth') || url.searchParams.has('redirect')) {
+      url.searchParams.delete('auth');
+      url.searchParams.delete('redirect');
+      const cleanPath = url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '') + url.hash;
+      window.history.replaceState({}, '', cleanPath);
+    }
+  }
+}
+
 function AuthModalWatcher({
   openAuthModal,
 }: {
   openAuthModal: (mode?: AuthMode, options?: OpenAuthModalOptions) => void;
 }) {
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
+    if (loading) return;
+
     // Check if ?auth=login or ?auth=signup is present in URL
     const authParam = searchParams.get('auth');
     const redirectParam = searchParams.get('redirect') || '';
 
     if (!user && (authParam === 'login' || authParam === 'signin')) {
       openAuthModal('signin', { redirectUrl: redirectParam });
+      cleanAuthUrl();
     } else if (!user && (authParam === 'signup' || authParam === 'register')) {
       openAuthModal('signup', { redirectUrl: redirectParam });
+      cleanAuthUrl();
     } else if (!user && (authParam === 'forgot' || authParam === 'forgot-password')) {
       openAuthModal('forgot-password', { redirectUrl: redirectParam });
+      cleanAuthUrl();
+    } else if (user && authParam) {
+      cleanAuthUrl();
     }
-  }, [searchParams, user, openAuthModal]);
+  }, [searchParams, user, loading, openAuthModal]);
 
   return null;
 }
@@ -72,6 +91,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
     setIsOpen(false);
     setContextMessage('');
     setOnSuccessCallback(undefined);
+    cleanAuthUrl();
   }, []);
 
   return (

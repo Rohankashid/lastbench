@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { Spinner } from '@/components/ui/Spinner';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -33,8 +34,7 @@ import {
   Upload,
   BookOpen,
   FileText,
-  Loader2
-} from 'lucide-react';
+  } from 'lucide-react';
 
 interface ProfileData {
   name: string;
@@ -47,7 +47,7 @@ interface ProfileData {
 }
 
 export default function ProfilePage() {
-  const { user, signOut } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const { bookmarks } = useBookmarks();
   const router = useRouter();
 
@@ -95,12 +95,13 @@ export default function ProfilePage() {
   }, [user]);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       router.replace('/?auth=login&redirect=%2Fprofile');
       return;
     }
     fetchProfile();
-  }, [user, router, fetchProfile]);
+  }, [user, authLoading, router, fetchProfile]);
 
   const handleEdit = () => {
     setError('');
@@ -241,7 +242,7 @@ export default function ProfilePage() {
                 >
                   {saving ? (
                     <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <Spinner size="sm" />
                       Saving...
                     </>
                   ) : (
@@ -564,7 +565,7 @@ export default function ProfilePage() {
                       >
                         {saving ? (
                           <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <Spinner size="sm" />
                             <span>Saving...</span>
                           </>
                         ) : (

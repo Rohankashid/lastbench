@@ -8,50 +8,36 @@ import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuthModal } from '@/context/AuthModalContext';
 import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
-import { Folder } from '@/components/ui/Folder';
 import { 
   ArrowRight, 
   BookOpen, 
   FileText, 
   UploadCloud, 
   Search, 
-  CheckCircle2, 
-  GraduationCap, 
-  Flame, 
+  TrendingUp, 
   ShieldCheck, 
-  Layers, 
-  ChevronRight,
-  BookmarkCheck
+  ChevronRight
 } from 'lucide-react';
-
-interface SubjectPill {
-  id: string;
-  name: string;
-  semester: string;
-  branch: string;
-  topics: string;
-}
 
 
 const UniversityLogo = ({ uni }: { uni: { name: string, src: string, invert?: boolean } }) => {
   const [error, setError] = React.useState(false);
   return (
     <div 
-      className="flex-none w-20 h-20 sm:w-32 sm:h-32 flex items-center justify-center opacity-50 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 cursor-pointer hover:scale-110 mx-4 sm:mx-8"
+      className="flex-none w-24 h-24 sm:w-32 sm:h-32 flex items-center justify-center opacity-60 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 cursor-pointer hover:scale-105 mx-6 sm:mx-10"
       title={uni.name}
-      style={{ minWidth: '80px', minHeight: '80px' }}
     >
       {!error ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img 
           src={uni.src}
           alt={uni.name} 
-          style={{ width: '100%', height: '100%', objectFit: 'contain', flexShrink: 0 }}
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           className={uni.invert ? 'invert' : ''}
           onError={() => setError(true)}
         />
       ) : (
-        <div className="w-full h-full rounded-full bg-zinc-100 border-2 border-zinc-200 flex items-center justify-center text-zinc-400 font-black text-2xl">
+        <div className="w-16 h-16 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-400 font-bold text-xl">
           {uni.name[0]}
         </div>
       )}
@@ -92,627 +78,385 @@ export function GuestLanding() {
         });
         const dynamicTrending = Array.from(subjectCounts.entries())
           .sort((a, b) => b[1] - a[1])
-          .slice(0, 6)
+          .slice(0, 5)
           .map(([subj]) => ({ label: subj, query: subj }));
-        setTrendingTopics(dynamicTrending);
+        
+        // Fallback static trending if none loaded
+        if (dynamicTrending.length === 0) {
+            setTrendingTopics([
+                { label: 'Data Structures', query: 'Data Structures' },
+                { label: 'OS', query: 'OS' },
+                { label: 'Mathematics III', query: 'Mathematics III' },
+            ]);
+        } else {
+            setTrendingTopics(dynamicTrending);
+        }
       } catch (err) {
-        console.error('Failed to load dynamic trending subjects in GuestLanding:', err);
+        console.error('Failed to load trending subjects:', err);
       }
     };
-
     fetchTrending();
   }, []);
 
-  const premierUniversities = [
-    { name: 'Savitribai Phule Pune University (SPPU)', short: 'SPPU Pune', filter: 'SPPU' },
-    { name: 'University of Mumbai (MU)', short: 'Mumbai University', filter: 'Mumbai' },
-    { name: 'Dr. Babasaheb Ambedkar Tech Univ', short: 'DBATU Lonere', filter: 'DBATU' },
-    { name: 'COEP Technological University', short: 'COEP Tech', filter: 'COEP' },
-    { name: 'Veermata Jijabai Tech Inst', short: 'VJTI Mumbai', filter: 'VJTI' },
-    { name: 'RTM Nagpur University', short: 'RTMNU Nagpur', filter: 'Nagpur' },
-    { name: 'Walchand College of Engineering', short: 'Walchand Sangli', filter: 'Walchand' },
-    { name: 'ICT Mumbai', short: 'ICT Mumbai', filter: 'ICT' },
-  ];
+  
 
-  const branchData: Record<string, {
-    title: string;
-    description: string;
-    branchFilter: string;
-    subjects: SubjectPill[];
-  }> = {
+  const branchData: Record<string, { title: string; description: string; branchFilter: string; subjects: { name: string, topics: string }[] }> = {
     comp: {
       title: 'Computer Engineering',
-      description: 'Core curriculum algorithms, software architecture, operating systems, and theory.',
+      description: 'Core algorithms, software architecture, and systems.',
       branchFilter: 'Computer Engineering',
       subjects: [
-        { id: 'c1', name: 'Data Structures & Algorithms', semester: 'Sem 3', branch: 'Computer', topics: 'Arrays, Trees, Graphs, Sorting' },
-        { id: 'c2', name: 'Operating Systems & Concurrency', semester: 'Sem 4', branch: 'Computer', topics: 'Processes, Memory, Deadlocks, Paging' },
-        { id: 'c3', name: 'Database Management Systems', semester: 'Sem 4', branch: 'Computer', topics: 'SQL, Normalization, Transactions, ACID' },
-        { id: 'c4', name: 'Theory of Computation (TOC)', semester: 'Sem 5', branch: 'Computer', topics: 'DFA/NFA, Grammars, Turing Machines' },
+        { name: 'Data Structures & Algorithms', topics: 'Arrays, Trees, Graphs, Sorting' },
+        { name: 'Operating Systems', topics: 'Processes, Memory, Deadlocks' },
+        { name: 'Database Management Systems', topics: 'SQL, Normalization, ACID' },
+        { name: 'Theory of Computation', topics: 'DFA, Grammars, Turing Machines' },
       ],
     },
     it: {
       title: 'Information Technology',
-      description: 'Distributed networks, web architectures, information security, and cloud systems.',
+      description: 'Web architecture, security, and cloud systems.',
       branchFilter: 'Information Technology (IT)',
       subjects: [
-        { id: 'i1', name: 'Computer Networks & Security', semester: 'Sem 4', branch: 'IT', topics: 'TCP/IP, Routing, OSI Layers, Cryptography' },
-        { id: 'i2', name: 'Web Application Development', semester: 'Sem 4', branch: 'IT', topics: 'REST APIs, Full-stack, Authentication' },
-        { id: 'i3', name: 'Software Engineering & Agile', semester: 'Sem 5', branch: 'IT', topics: 'Design Patterns, SDLC, Testing Suites' },
-        { id: 'i4', name: 'Cloud Computing & Virtualization', semester: 'Sem 6', branch: 'IT', topics: 'AWS, Microservices, Containers, Docker' },
+        { name: 'Computer Networks', topics: 'TCP/IP, Routing, Security' },
+        { name: 'Web Application Development', topics: 'APIs, Full-stack, Auth' },
+        { name: 'Software Engineering', topics: 'Design Patterns, SDLC' },
+        { name: 'Cloud Computing', topics: 'AWS, Microservices, Docker' },
       ],
     },
     aids: {
-      title: 'Artificial Intelligence & Data Science',
-      description: 'Machine learning fundamentals, deep learning, statistical modeling, and neural nets.',
+      title: 'AI & Data Science',
+      description: 'Machine learning fundamentals and neural networks.',
       branchFilter: 'Artificial Intelligence & Data Science (AI & DS)',
       subjects: [
-        { id: 'a1', name: 'Foundations of Machine Learning', semester: 'Sem 4', branch: 'AI & DS', topics: 'Regression, Classification, Clustering' },
-        { id: 'a2', name: 'Probability & Statistics for AI', semester: 'Sem 3', branch: 'AI & DS', topics: 'Bayes Theorem, Random Variables, Distributions' },
-        { id: 'a3', name: 'Deep Learning & Neural Networks', semester: 'Sem 6', branch: 'AI & DS', topics: 'Backprop, CNNs, RNNs, Transformers' },
-        { id: 'a4', name: 'Big Data Analytics & Spark', semester: 'Sem 5', branch: 'AI & DS', topics: 'Hadoop, PySpark, MapReduce, Pipelines' },
+        { name: 'Machine Learning', topics: 'Regression, Classification' },
+        { name: 'Probability & Statistics', topics: 'Bayes, Distributions' },
+        { name: 'Deep Learning', topics: 'CNNs, RNNs, Transformers' },
+        { name: 'Big Data Analytics', topics: 'Hadoop, PySpark' },
       ],
     },
     entc: {
-      title: 'Electronics & Telecommunication',
-      description: 'Signal processing, microcontrollers, embedded systems, and RF communications.',
+      title: 'Electronics & Telecom',
+      description: 'Signal processing, microcontrollers, and embedded systems.',
       branchFilter: 'Electronics & Telecommunication Engineering (ENTC)',
       subjects: [
-        { id: 'e1', name: 'Signals & Systems Analysis', semester: 'Sem 3', branch: 'ENTC', topics: 'Fourier Transform, Laplace, Z-Transform' },
-        { id: 'e2', name: 'Digital Signal Processing (DSP)', semester: 'Sem 5', branch: 'ENTC', topics: 'FIR/IIR Filters, DFT, FFT Algorithms' },
-        { id: 'e3', name: 'Microcontroller Architecture', semester: 'Sem 4', branch: 'ENTC', topics: 'ARM Cortex, 8051, Timers, Interrupts' },
-        { id: 'e4', name: 'Electromagnetics & Antennas', semester: 'Sem 4', branch: 'ENTC', topics: 'Maxwell Equations, Waveguides, Radiation' },
+        { name: 'Signals & Systems', topics: 'Fourier, Laplace, Z-Transform' },
+        { name: 'Digital Signal Processing', topics: 'FIR/IIR, DFT, FFT' },
+        { name: 'Microcontrollers', topics: 'ARM, 8051, Timers' },
+        { name: 'Electromagnetics', topics: 'Maxwell, Waveguides' },
       ],
     },
     mech: {
-      title: 'Mechanical & Automation',
-      description: 'Thermal dynamics, fluid mechanics, CAD/CAM manufacturing, and robotics.',
+      title: 'Mechanical Engineering',
+      description: 'Thermodynamics, fluid mechanics, and CAD/CAM.',
       branchFilter: 'Mechanical Engineering',
       subjects: [
-        { id: 'm1', name: 'Thermodynamics & Heat Transfer', semester: 'Sem 3', branch: 'Mechanical', topics: 'Carnot Cycles, Entropy, Conduction' },
-        { id: 'm2', name: 'Strength of Materials (SOM)', semester: 'Sem 3', branch: 'Mechanical', topics: 'Stress-Strain, Bending Moment, Shear' },
-        { id: 'm3', name: 'Fluid Mechanics & Machinery', semester: 'Sem 4', branch: 'Mechanical', topics: 'Bernoulli, Navier-Stokes, Turbines' },
-        { id: 'm4', name: 'Theory of Machines & Kinematics', semester: 'Sem 4', branch: 'Mechanical', topics: 'Gears, Cams, Flywheels, Vibrations' },
+        { name: 'Thermodynamics', topics: 'Carnot Cycles, Entropy' },
+        { name: 'Strength of Materials', topics: 'Stress-Strain, Bending' },
+        { name: 'Fluid Mechanics', topics: 'Bernoulli, Turbines' },
+        { name: 'Theory of Machines', topics: 'Gears, Cams, Vibrations' },
       ],
     },
     fe: {
-      title: 'First Year Engineering (Common)',
-      description: 'Foundational mathematics, basic electrical, engineering mechanics, and chemistry.',
+      title: 'First Year (Common)',
+      description: 'Foundational mathematics and basic sciences.',
       branchFilter: 'First Year Engineering (Common)',
       subjects: [
-        { id: 'f1', name: 'Engineering Mathematics I & II', semester: 'Sem 1-2', branch: 'First Year', topics: 'Calculus, Matrices, Differential Equations' },
-        { id: 'f2', name: 'Engineering Mechanics', semester: 'Sem 1-2', branch: 'First Year', topics: 'Statics, Kinetics, Trusses, Friction' },
-        { id: 'f3', name: 'Basic Electrical & Electronics', semester: 'Sem 1-2', branch: 'First Year', topics: 'Kirchhoff Laws, AC Circuits, Diodes' },
-        { id: 'f4', name: 'Engineering Physics & Chemistry', semester: 'Sem 1-2', branch: 'First Year', topics: 'Quantum Basics, Lasers, Polymers' },
+        { name: 'Engineering Mathematics', topics: 'Calculus, Matrices' },
+        { name: 'Engineering Mechanics', topics: 'Statics, Kinetics' },
+        { name: 'Basic Electrical', topics: 'Kirchhoff Laws, AC' },
+        { name: 'Engineering Physics', topics: 'Quantum, Lasers' },
       ],
     },
   };
 
-  const noteFolderItems = [
-    { id: '1', title: 'Data Structures & Algorithms', subtitle: 'Sem 3 • Computer Engineering', tag: 'CSE' },
-    { id: '2', title: 'Signals & Systems Analysis', subtitle: 'Sem 4 • Electronics & Telecom', tag: 'ENTC' },
-    { id: '3', title: 'Thermodynamics & Heat Transfer', subtitle: 'Sem 3 • Mechanical Engineering', tag: 'MECH' },
-  ];
-
-  const pyqFolderItems = [
-    { id: 'p1', title: 'End-Sem 2024 Question Paper', subtitle: 'Operating Systems • SPPU / MU', tag: '2024' },
-    { id: 'p2', title: 'In-Sem 2023 Exam Paper', subtitle: 'Database Management Systems', tag: '2023' },
-    { id: 'p3', title: 'Winter 2022 Question Bank', subtitle: 'Computer Networks & Security', tag: '2022' },
-  ];
-
   const activeBranch = branchData[activeBranchTab];
 
   return (
-    <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-zinc-50/50">
-      <BackgroundGrid variant="both" />
+    <div className="relative min-h-screen bg-white">
+      <BackgroundGrid variant="dots" className="opacity-40" />
 
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 xl:px-16 pt-6 sm:pt-8 pb-16 space-y-12 sm:space-y-16">
-        
-        {/* ========================================================================= */}
-        {/* 1. HERO SECTION: Compact Headline, Search Bar, Trending Chips             */}
-        {/* ========================================================================= */}
-        <section className="text-center max-w-4xl mx-auto pt-2">
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-          >
-            {/* Live Indicator Chip */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-zinc-200/90 bg-white/95 shadow-[0_1px_3px_rgba(0,0,0,0.03)] mb-4">
+      {/* Hero Section */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 pb-20">
+        <div className="text-center max-w-3xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            {/* <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-100 border border-zinc-200 mb-8">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[11px] text-zinc-700 font-medium">
-                Maharashtra Engineering Archive • 100% Free Online Preview
-              </span>
-            </div>
-
-            {/* Architectural Headline */}
-            <h1 className="text-3xl sm:text-5xl font-semibold text-zinc-950 tracking-tight leading-[1.15] mb-4">
-              Engineering Notes &amp; PYQs, Built for Last-Night Prep.
+              <span className="text-sm text-zinc-600 font-medium">Over 500+ documents verified for 2024-25</span>
+            </div> */}
+            
+            <h1 className="text-4xl sm:text-6xl font-bold text-zinc-900 tracking-tight mb-6 leading-[1.1]">
+              The open archive for <br className="hidden sm:block" />
+              <span className="text-zinc-500">engineering students.</span>
             </h1>
-
-            {/* Clear, Student-Friendly Subtitle */}
-            <p className="text-sm sm:text-base text-zinc-600 mb-6 max-w-2xl mx-auto leading-relaxed">
-              Concise lecture summaries, verified previous year question papers, and syllabus cheat-sheets across 30+ universities. Free in-browser reading with zero paywalls.
+            
+            <p className="text-lg sm:text-xl text-zinc-600 mb-10 leading-relaxed max-w-2xl mx-auto">
+              Access comprehensive lecture notes, verified past year question papers, and syllabus guides across top universities. Free and accessible anywhere.
             </p>
 
-            {/* Large Interactive Command Search Bar */}
-            <div className="max-w-2xl mx-auto mb-4">
-              <form onSubmit={handleSearchSubmit} className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-zinc-950 transition-colors">
-                  <Search className="w-4 h-4" />
-                </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by subject, code, or topic (e.g. Data Structures, M3, SPPU)..."
-                  className="w-full pl-11 pr-28 py-3.5 bg-white border border-zinc-200/90 rounded-2xl text-xs sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-950/10 focus:border-zinc-950 shadow-[0_1px_4px_rgba(0,0,0,0.03)] transition-all"
-                />
-                <div className="absolute inset-y-1.5 right-1.5 flex items-center">
-                  <button
-                    type="submit"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-medium rounded-xl transition-colors shadow-sm"
-                  >
-                    <span>Search</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-zinc-300" />
-                  </button>
-                </div>
-              </form>
-            </div>
+            {/* Omnibox Search */}
+            <form onSubmit={handleSearchSubmit} className="relative max-w-2xl mx-auto group mb-6">
+              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                <Search className="w-5 h-5 text-zinc-400 group-focus-within:text-zinc-900 transition-colors" />
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for subjects, topics, or course codes..."
+                className="w-full pl-14 pr-32 py-4 sm:py-5 bg-white border-2 border-zinc-200 rounded-2xl text-base text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-4 focus:ring-zinc-900/5 transition-all shadow-sm"
+              />
+              <div className="absolute inset-y-2 right-2 flex items-center">
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center px-6 py-2.5 sm:py-3 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
+                >
+                  Search
+                </button>
+              </div>
+            </form>
 
-            {/* Dynamic Trending / High-Yield Subject Chips */}
+            {/* Trending */}
             {trendingTopics.length > 0 && (
-              <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto text-xs">
-                <span className="inline-flex items-center gap-1 text-[11px] text-zinc-600 font-medium">
-                  <Flame className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Trending:</span>
-                </span>
+              <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-zinc-500">
+                <TrendingUp className="w-4 h-4 mr-1" />
+                <span>Trending:</span>
                 {trendingTopics.map((topic) => (
                   <Link
                     key={topic.label}
                     href={`/notes?search=${encodeURIComponent(topic.query)}`}
-                    className="px-2.5 py-0.5 rounded-lg border border-zinc-200/80 bg-white/90 hover:bg-zinc-950 hover:text-white hover:border-zinc-950 text-zinc-600 text-[11px] font-medium transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+                    className="px-3 py-1 rounded-md bg-zinc-50 hover:bg-zinc-100 text-zinc-700 transition-colors"
                   >
                     {topic.label}
                   </Link>
                 ))}
               </div>
             )}
-
-            {/* Action Row */}
-            <div className="mt-6 flex flex-wrap justify-center items-center gap-3">
-              <Link
-                href="/notes"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-950 text-white text-xs font-medium hover:bg-zinc-800 transition-colors shadow-sm"
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>Browse Lecture Notes</span>
-              </Link>
-              <Link
-                href="/pyqs"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-zinc-200 text-zinc-800 text-xs font-medium hover:bg-zinc-50 transition-colors shadow-sm"
-              >
-                <FileText className="w-3.5 h-3.5 text-zinc-500" />
-                <span>Question Papers</span>
-              </Link>
-              <Link
-                href="/upload"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100/90 border border-zinc-200/60 text-zinc-700 text-xs font-medium hover:bg-zinc-200 transition-colors"
-              >
-                <UploadCloud className="w-3.5 h-3.5 text-zinc-500" />
-                <span>Upload Material</span>
-              </Link>
-            </div>
           </motion.div>
-        </section>
+        </div>
+      </div>
 
+      {/* University Marquee */}
+      <div className="border-y border-zinc-100 bg-zinc-50/50 py-10 overflow-hidden relative">
+        <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-zinc-50/50 to-transparent z-10" />
+        <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-zinc-50/50 to-transparent z-10" />
+        <div className="flex w-max animate-marquee items-center">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="flex items-center shrink-0">
+              {[
+                { name: 'Pune University (SPPU)', src: '/logos/Pune.png' },
+                { name: 'Mumbai University', src: '/logos/Mumbai.png', invert: true },
+                { name: 'Shivaji University', src: '/logos/Shivaji.jpg' },
+                { name: 'DBATU', src: '/logos/DBATU.png' },
+                { name: 'Nagpur University', src: '/logos/Nagpur.png' },
+                { name: 'Amravati University', src: '/logos/Amravati.jpg' },
+                { name: 'BAMU', src: '/logos/BAMU.png' },
+              ].map((uni, j) => (
+                <UniversityLogo key={`${i}-${j}`} uni={uni} />
+              ))}
+            </div>
+          ))}
+        </div>
+        <style jsx>{`
+          @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-50%); }
+          }
+          .animate-marquee {
+            animation: marquee 40s linear infinite;
+          }
+          .animate-marquee:hover {
+            animation-play-state: paused;
+          }
+        `}</style>
+      </div>
 
-        {/* ========================================================================= */}
-        {/* 1.5. UNIVERSITY MARQUEE HOOK (Added per request)                          */}
-        {/* ========================================================================= */}
-        <section className="w-full overflow-hidden py-4 sm:py-8 relative border-t border-b border-zinc-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.01)] my-8">
-          <div className="absolute inset-y-0 left-0 w-16 sm:w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-16 sm:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24 space-y-32">
+        
+        {/* Core Value Props */}
+        {/* Bento Grid Features */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6">
           
-          <div className="flex w-max animate-marquee items-center">
-            {[...Array(2)].map((_, i) => (
-              <div key={i} className="flex gap-12 sm:gap-20 items-center px-6 sm:px-10 shrink-0">
-                {[
-                  { name: 'Pune University (SPPU)', src: '/logos/Pune.png' },
-                  { name: 'Mumbai University', src: '/logos/Mumbai.png', invert: true },
-                  { name: 'Shivaji University', src: '/logos/Shivaji.jpg' },
-                  { name: 'DBATU', src: '/logos/DBATU.png' },
-                  { name: 'Nagpur University', src: '/logos/Nagpur.png' },
-                  { name: 'Amravati University', src: '/logos/Amravati.jpg' },
-                  { name: 'BAMU', src: '/logos/BAMU.png' },
-                ].map((uni, j) => (
-                  <UniversityLogo key={`${i}-${j}`} uni={uni} />
-                ))}
+          {/* Card 1: Notes (spans 7 cols) */}
+          <div className="hidden md:block col-span-1 md:col-span-7 bg-white border border-zinc-200/80 rounded-3xl p-6 sm:p-10 relative overflow-hidden group hover:border-zinc-300 transition-colors shadow-sm">
+            <div className="relative z-10 max-w-sm mb-8 md:mb-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-zinc-100 flex items-center justify-center mb-5 border border-zinc-200/50">
+                <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-800" />
               </div>
-            ))}
+              <h3 className="text-xl sm:text-2xl font-semibold text-zinc-950 mb-2 sm:mb-3 tracking-tight">Topper-written summaries</h3>
+              <p className="text-sm sm:text-base text-zinc-500 leading-relaxed">
+                Skip the messy textbook chapters. Access precise, high-yield unit summaries designed specifically for last-minute revision.
+              </p>
+            </div>
+            
+            {/* Visual / Mockup inside the card (Visible on both mobile and desktop) */}
+            <div className="relative md:absolute md:-right-4 md:top-1/2 md:-translate-y-1/2 w-full md:w-80 mt-auto flex justify-center md:block">
+              <div className="w-64 sm:w-80 bg-white rounded-2xl border border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-5 transform md:rotate-3 group-hover:-rotate-1 transition-transform duration-500 translate-y-4 md:translate-y-0">
+                <div className="flex items-center justify-between mb-4 border-b border-zinc-100 pb-3 sm:pb-4">
+                   <span className="text-[9px] sm:text-[10px] font-mono font-medium text-emerald-700 bg-emerald-50 px-2 sm:px-2.5 py-1 rounded-full border border-emerald-100">UNIT 4</span>
+                   <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400">PDF DOC</span>
+                </div>
+                <div className="h-3 sm:h-4 w-3/4 bg-zinc-100 rounded mb-2 sm:mb-3"></div>
+                <div className="h-2 sm:h-2.5 w-full bg-zinc-50 rounded mb-2 sm:mb-2.5"></div>
+                <div className="h-2 sm:h-2.5 w-5/6 bg-zinc-50 rounded mb-2 sm:mb-2.5"></div>
+                <div className="h-2 sm:h-2.5 w-4/6 bg-zinc-50 rounded"></div>
+              </div>
+            </div>
           </div>
-          
-          <style jsx>{`
-            @keyframes marquee {
-              0% { transform: translateX(0%); }
-              100% { transform: translateX(-50%); }
-            }
-            .animate-marquee {
-              animation: marquee 35s linear infinite;
-            }
-            .animate-marquee:hover {
-              animation-play-state: paused;
-            }
-          `}</style>
-        </section>
 
-        {/* ========================================================================= */}
-        {/* 2. CORE STUDY REPOSITORIES (Moved Up Right Under The Hero!)               */}
-        {/* ========================================================================= */}
-        <section className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-zinc-200 pb-3">
+          {/* Card 2: PYQs (spans 5 cols) */}
+          <div className="hidden md:flex col-span-1 md:col-span-5 bg-white border border-zinc-200/80 rounded-3xl p-6 sm:p-10 relative overflow-hidden hover:border-zinc-300 transition-colors shadow-sm flex-col justify-between">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-zinc-600 text-xs font-medium mb-1">
-                <BookmarkCheck className="w-3.5 h-3.5 text-zinc-600" />
-                <span>STUDY ARCHIVES</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-zinc-100 flex items-center justify-center mb-5 border border-zinc-200/50">
+                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-800" />
               </div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-zinc-950 tracking-tight">
-                Interactive Study Repositories
-              </h2>
-            </div>
-            <p className="text-xs text-zinc-500">
-              Hover folders to preview internal documents. Free in-browser reading on desktop &amp; mobile.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto pt-2">
-            <Folder
-              title="Comprehensive Lecture Notes"
-              count={48}
-              category="Study Materials"
-              href="/notes"
-              items={noteFolderItems}
-            />
-
-            <Folder
-              title="University Previous Year Papers"
-              count={32}
-              category="Exam PYQs"
-              href="/pyqs"
-              items={pyqFolderItems}
-            />
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* 3. MAHARASHTRA UNIVERSITY QUICK-SELECTOR RIBBON (Hook 2 - Fluid Strip)    */}
-        {/* ========================================================================= */}
-        <section className="pt-1">
-          <div className="border border-zinc-200/80 bg-white/70 backdrop-blur-sm rounded-2xl p-5 shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-zinc-100">
-              <div className="flex items-center gap-2">
-                <GraduationCap className="w-4 h-4 text-zinc-700" />
-                <h3 className="text-xs font-semibold text-zinc-950 tracking-tight">
-                  Browse Resources by Maharashtra University
-                </h3>
-              </div>
-              <Link
-                href="/notes"
-                className="text-[11px] font-medium text-zinc-500 hover:text-zinc-950 inline-flex items-center gap-1 transition-colors"
-              >
-                <span>View all 30+ universities</span>
-                <ChevronRight className="w-3 h-3" />
-              </Link>
+              <h3 className="text-xl sm:text-2xl font-semibold text-zinc-950 mb-2 sm:mb-3 tracking-tight">Identify patterns</h3>
+              <p className="text-sm sm:text-base text-zinc-500 leading-relaxed mb-6">
+                Master your exams with our structured database of previous year question papers across 30+ universities.
+              </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {premierUniversities.map((univ) => (
-                <Link
-                  key={univ.short}
-                  href={`/notes?university=${encodeURIComponent(univ.filter)}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 bg-white hover:border-zinc-400 hover:bg-zinc-50 text-zinc-800 text-xs font-medium transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
-                  <span>{univ.short}</span>
-                </Link>
+            {/* Visual Tags - Horizontal Scroll on Mobile */}
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2 sm:mx-0 sm:px-0 sm:flex-wrap">
+              {['2023', '2022', '2021', '2020'].map((year, i) => (
+                <div key={year} className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-[11px] sm:text-xs font-mono text-zinc-600 flex items-center gap-1.5 sm:gap-2 ${i === 0 ? 'ring-1 ring-zinc-950 bg-white shadow-sm' : ''}`}>
+                  <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-50" />
+                  {year} PYQ
+                </div>
               ))}
             </div>
           </div>
-        </section>
 
-        {/* ========================================================================= */}
-        {/* 4. INTERACTIVE CURRICULUM NAVIGATOR (Hook 3 - Breaks "Boxes Boxes")       */}
-        {/* ========================================================================= */}
-        <section className="space-y-4">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-zinc-200 pb-3">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-zinc-700 text-xs font-medium mb-1">
-                <Layers className="w-3.5 h-3.5 text-zinc-600" />
-                <span>CURRICULUM NAVIGATOR</span>
+          {/* Card 3: Free / Community (spans 12 cols, wide) */}
+          <div className="col-span-1 md:col-span-12 bg-zinc-950 rounded-3xl p-6 sm:p-12 relative overflow-hidden flex flex-col md:flex-row items-center justify-between group">
+            <div className="max-w-2xl z-10 w-full text-center md:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-white text-[10px] sm:text-xs font-medium mb-4 sm:mb-6 backdrop-blur-sm">
+                <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span>Open Educational Utility</span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-zinc-950 tracking-tight">
-                Explore Core Subjects by Branch
-              </h2>
+              <h3 className="text-xl sm:text-3xl font-semibold text-white mb-3 sm:mb-4 tracking-tight">100% Free. No paywalls.</h3>
+              <p className="text-sm sm:text-base text-zinc-400 leading-relaxed">
+                LastBench is built by students, for students. We believe educational resources should be universally accessible. No subscriptions, no hidden fees, ever.
+              </p>
             </div>
-            <p className="text-xs text-zinc-500 max-w-sm">
-              Instant access to high-yield semester notes and university past questions for your specific engineering stream.
-            </p>
+            
+            {/* Visual: Avatars */}
+            <div className="mt-8 md:mt-0 flex items-center justify-center relative z-10 w-full md:w-auto">
+              <div className="flex -space-x-3 sm:-space-x-4">
+                {[
+                  { initials: 'RK', color: 'from-blue-500 to-cyan-500' },
+                  { initials: 'SJ', color: 'from-emerald-400 to-teal-500' },
+                  { initials: 'AM', color: 'from-violet-500 to-purple-500' },
+                  { initials: 'PR', color: 'from-orange-400 to-rose-500' }
+                ].map((user, i) => (
+                  <div key={i} className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-zinc-950 flex items-center justify-center transform transition-transform group-hover:-translate-y-1 overflow-hidden relative shadow-md`} style={{ transitionDelay: `${i * 50}ms` }}>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${user.color} opacity-90`} />
+                    <span className="relative z-10 text-[9px] sm:text-[11px] font-bold text-white tracking-wider">{user.initials}</span>
+                  </div>
+                ))}
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white text-zinc-950 border-2 border-zinc-950 flex items-center justify-center text-[10px] sm:text-xs font-bold z-20 shadow-xl group-hover:-translate-y-1 transition-transform" style={{ transitionDelay: '200ms' }}>
+                  +1k
+                </div>
+              </div>
+            </div>
+            
+            {/* Subtle grid background inside dark card */}
+            <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
           </div>
+        </div>
 
-          {/* Interactive Branch Switcher Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {([
-              { id: 'comp' as const, label: 'Computer Engineering' },
-              { id: 'it' as const, label: 'Information Tech' },
-              { id: 'aids' as const, label: 'AI & Data Science' },
-              { id: 'entc' as const, label: 'Electronics & Telecom' },
-              { id: 'mech' as const, label: 'Mechanical' },
-              { id: 'fe' as const, label: 'First Year (FE)' },
-            ]).map((tab) => {
-              const active = activeBranchTab === tab.id;
-              return (
+        {/* Curriculum Explorer */}
+        <div className="bg-white rounded-[2rem] border border-zinc-200 overflow-hidden shadow-sm">
+          <div className="p-8 sm:p-12 border-b border-zinc-100">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div>
+                <h2 className="text-3xl font-bold text-zinc-900 mb-4">Explore Curriculum</h2>
+                <p className="text-lg text-zinc-600 max-w-xl">
+                  Find the exact materials for your semester. Organized by branch and subject to save you time.
+                </p>
+              </div>
+              <div className="flex gap-4">
+                <Link href="/notes" className="inline-flex items-center justify-center px-6 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 text-sm font-semibold rounded-xl transition-colors">
+                  View Notes
+                </Link>
+                <Link href="/pyqs" className="inline-flex items-center justify-center px-6 py-3 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-semibold rounded-xl transition-colors">
+                  View PYQs
+                </Link>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-12">
+            <div className="lg:col-span-4 border-r border-zinc-100 p-6 space-y-2 bg-zinc-50/50">
+              {([
+                { id: 'comp' as const, label: 'Computer Engineering' },
+                { id: 'it' as const, label: 'Information Tech' },
+                { id: 'aids' as const, label: 'AI & Data Science' },
+                { id: 'entc' as const, label: 'Electronics & Telecom' },
+                { id: 'mech' as const, label: 'Mechanical' },
+                { id: 'fe' as const, label: 'First Year (FE)' },
+              ]).map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveBranchTab(tab.id)}
-                  className={`relative px-4 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap ${
-                    active
-                      ? 'bg-zinc-950 text-white shadow-sm'
-                      : 'bg-white border border-zinc-200/90 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-50'
+                  className={`w-full text-left px-5 py-4 rounded-xl text-sm font-medium transition-all flex items-center justify-between group ${
+                    activeBranchTab === tab.id
+                      ? 'bg-white shadow-sm border border-zinc-200/60 text-zinc-900'
+                      : 'text-zinc-600 hover:bg-zinc-100/50'
                   }`}
                 >
                   {tab.label}
+                  <ChevronRight className={`w-4 h-4 ${activeBranchTab === tab.id ? 'text-zinc-900' : 'text-zinc-400 group-hover:text-zinc-600'}`} />
                 </button>
-              );
-            })}
-          </div>
-
-          {/* Branch Content Showcase (Asymmetric Flow, NOT repetitive boxes) */}
-          <div className="border border-zinc-200 rounded-3xl bg-white p-6 sm:p-8 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-zinc-100">
-              <div>
-                <h3 className="text-lg font-semibold text-zinc-950">
-                  {activeBranch.title}
-                </h3>
-                <p className="text-xs text-zinc-500 mt-0.5">
-                  {activeBranch.description}
-                </p>
-              </div>
-              <Link
-                href={`/notes?branch=${encodeURIComponent(activeBranch.branchFilter)}`}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-900 text-xs font-medium transition-colors shrink-0"
-              >
-                <span>View Full Branch Vault</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            {/* High-Yield Subject Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {activeBranch.subjects.map((sub) => (
-                <div
-                  key={sub.id}
-                  className="rounded-2xl border border-zinc-200/80 bg-zinc-50/60 p-4 flex flex-col justify-between hover:bg-white hover:border-zinc-300 hover:shadow-sm transition-all"
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="font-mono text-[10px] uppercase px-2 py-0.5 rounded bg-white text-zinc-700 font-medium border border-zinc-200/80">
-                        {sub.semester}
-                      </span>
-                      <span className="text-[10px] text-emerald-600 font-medium bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/50">
-                        High Yield
-                      </span>
-                    </div>
-                    <h4 className="text-xs font-semibold text-zinc-950 line-clamp-1">
-                      {sub.name}
-                    </h4>
-                    <p className="text-[11px] text-zinc-500 mt-1 line-clamp-2 leading-relaxed">
-                      Units: {sub.topics}
-                    </p>
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-zinc-200/60 flex items-center gap-2">
-                    <Link
-                      href={`/notes?search=${encodeURIComponent(sub.name)}&branch=${encodeURIComponent(activeBranch.branchFilter)}`}
-                      className="flex-1 inline-flex justify-center items-center gap-1 px-2.5 py-1.5 bg-white border border-zinc-200 hover:border-zinc-400 text-zinc-800 text-[11px] font-medium rounded-lg transition-colors"
-                    >
-                      <BookOpen className="w-3 h-3 text-zinc-400" />
-                      <span>Notes</span>
-                    </Link>
-                    <Link
-                      href={`/pyqs?search=${encodeURIComponent(sub.name)}&branch=${encodeURIComponent(activeBranch.branchFilter)}`}
-                      className="flex-1 inline-flex justify-center items-center gap-1 px-2.5 py-1.5 bg-zinc-950 hover:bg-zinc-800 text-white text-[11px] font-medium rounded-lg transition-colors"
-                    >
-                      <FileText className="w-3 h-3 text-zinc-400" />
-                      <span>PYQs</span>
-                    </Link>
-                  </div>
-                </div>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* 5. "THE 48-HOUR EXAM SURVIVAL BLUEPRINT" (Hook 4 - Deep Dark Section)     */}
-        {/* ========================================================================= */}
-        <section className="relative overflow-hidden rounded-3xl bg-zinc-950 text-white p-8 sm:p-12 shadow-2xl border border-zinc-800">
-          <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-zinc-800/20 blur-3xl pointer-events-none" />
-          
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            
-            {/* Left 7 Columns: Strategy Narrative */}
-            <div className="lg:col-span-7 space-y-6">
-              {/* <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300">
-                <Zap className="w-3 h-3 text-amber-400" />
-                <span>THE LAST-BENCH EXAM PROTOCOL</span>
-              </div> */}
-
-              <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight leading-tight">
-                Why 80% of university exam marks come from past papers.
-              </h2>
-
-              <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
-                Semester exams don&apos;t require reading 900-page foreign textbooks. In-sem and end-sem tests repeat core derivations, numerical templates, and 6-mark theory patterns across 5-year cycles.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800/80">
-                  <div className="font-mono text-xs text-amber-400 font-semibold mb-1">01 / PYQ Patterns</div>
-                  <p className="text-xs text-zinc-300 leading-relaxed">
-                    Identify recurring 8-mark questions asked in previous winter &amp; summer papers.
-                  </p>
+            <div className="lg:col-span-8 p-8 sm:p-12">
+              <div className="mb-8 flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-zinc-900 mb-2">{activeBranch.title}</h3>
+                  <p className="text-zinc-600">{activeBranch.description}</p>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800/80">
-                  <div className="font-mono text-xs text-emerald-400 font-semibold mb-1">02 / Topper Summaries</div>
-                  <p className="text-xs text-zinc-300 leading-relaxed">
-                    15-page concise unit digests instead of endless messy slides.
-                  </p>
-                </div>
-                <div className="p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800/80">
-                  <div className="font-mono text-xs text-blue-400 font-semibold mb-1">03 / One-Page Formulas</div>
-                  <p className="text-xs text-zinc-300 leading-relaxed">
-                    Instant morning formula and diagram revision before entering the hall.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right 5 Columns: Quick Launch Kits */}
-            <div className="lg:col-span-5 bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-                <span className="text-xs font-semibold text-zinc-200">
-                  Popular Exam Kits
-                </span>
-                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-full">
-                  Updated for 2024-25
-                </span>
-              </div>
-
-              <div className="space-y-2.5">
-                {[
-                  { name: 'SPPU 2024 End-Sem Solved Papers', desc: 'Computer & IT • Sem 3 & 4', url: '/pyqs?university=SPPU' },
-                  { name: 'Mumbai University In-Sem Banks', desc: 'Mathematics & Mechanics • All Branches', url: '/pyqs?university=Mumbai' },
-                  { name: 'DBATU Technical Exam Sets', desc: 'Electronics & Mechanical • Sem 3 to 6', url: '/pyqs?university=DBATU' },
-                  { name: 'Topper Handwritten Formula Compendiums', desc: 'M1, M2, M3, Network Theory, Signals', url: '/notes?search=Mathematics' },
-                ].map((kit) => (
-                  <Link
-                    key={kit.name}
-                    href={kit.url}
-                    className="group block p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-950 transition-all"
-                  >
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-medium text-zinc-200 group-hover:text-white transition-colors">
-                        {kit.name}
-                      </h4>
-                      <ArrowRight className="w-3.5 h-3.5 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-                    </div>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">
-                      {kit.desc}
-                    </p>
-                  </Link>
-                ))}
-              </div>
-
-              <div className="pt-2 text-center">
                 <Link
-                  href="/pyqs"
-                  className="w-full inline-flex justify-center items-center gap-1.5 py-2 px-4 bg-white hover:bg-zinc-100 text-zinc-950 text-xs font-medium rounded-xl transition-colors shadow-sm"
+                  href={`/notes?branch=${encodeURIComponent(activeBranch.branchFilter)}`}
+                  className="hidden sm:inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700"
                 >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Access All Question Papers</span>
+                  View full branch <ArrowRight className="ml-1 w-4 h-4" />
                 </Link>
               </div>
-            </div>
-
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* 6. COMMUNITY CONTRIBUTOR HOOK & SCALE METRICS (Hook 6)                    */}
-        {/* ========================================================================= */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          
-          {/* Contributor Card */}
-          <div className="lg:col-span-7 border border-zinc-200 bg-white rounded-3xl p-6 sm:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-zinc-700 text-xs font-medium mb-2">
-                <UploadCloud className="w-3.5 h-3.5 text-zinc-600" />
-                <span>COMMUNITY DRIVEN</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {activeBranch.subjects.map((sub, idx) => (
+                  <div key={idx} className="p-5 rounded-2xl border border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-sm transition-all group cursor-pointer">
+                    <h4 className="font-semibold text-zinc-900 mb-2 group-hover:text-emerald-600 transition-colors">{sub.name}</h4>
+                    <p className="text-sm text-zinc-500 line-clamp-2">Units: {sub.topics}</p>
+                  </div>
+                ))}
               </div>
-              <h3 className="text-lg sm:text-xl font-semibold text-zinc-950 tracking-tight mb-2">
-                Have class notes or previous exam papers?
-              </h3>
-              <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed mb-5">
-                LastBench thrives as an open peer archive. Share lecture summaries, university question papers, or unit digests to help your peers prepare for exams with 100% free access.
-              </p>
-
-              <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-500 mb-5">
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Open Educational Reference</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>100% Free Peer Access</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Link
-                href="/upload"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-950 text-white font-medium text-xs hover:bg-zinc-800 transition-colors shadow-sm"
-              >
-                <UploadCloud className="w-3.5 h-3.5" />
-                <span>Contribute Study Resources</span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => openAuthModal('signup')}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700 font-medium text-xs hover:bg-zinc-50 transition-colors cursor-pointer"
-              >
-                <span>Create Student Account</span>
-              </button>
             </div>
           </div>
+        </div>
 
-          {/* Trust & Scale Metrics Card */}
-          <div className="lg:col-span-5 border border-zinc-200 bg-zinc-900 text-white rounded-3xl p-6 sm:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-zinc-400 text-xs font-medium mb-3">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>ACADEMIC VERIFICATION</span>
-              </div>
-              <h3 className="text-lg font-semibold tracking-tight text-white mb-5">
-                Verified Resources Across Maharashtra
-              </h3>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3.5 rounded-2xl bg-zinc-800/60 border border-zinc-700/60">
-                  <div className="text-xl font-bold tracking-tight text-white">30+</div>
-                  <div className="text-[11px] text-zinc-400 mt-0.5">Maharashtra Universities</div>
-                </div>
-                <div className="p-3.5 rounded-2xl bg-zinc-800/60 border border-zinc-700/60">
-                  <div className="text-xl font-bold tracking-tight text-white">500+</div>
-                  <div className="text-[11px] text-zinc-400 mt-0.5">Lecture Notes &amp; PYQs</div>
-                </div>
-                <div className="p-3.5 rounded-2xl bg-zinc-800/60 border border-zinc-700/60">
-                  <div className="text-xl font-bold tracking-tight text-emerald-400">100%</div>
-                  <div className="text-[11px] text-zinc-400 mt-0.5">Free In-Browser Reading</div>
-                </div>
-                <div className="p-3.5 rounded-2xl bg-zinc-800/60 border border-zinc-700/60">
-                  <div className="text-xl font-bold tracking-tight text-white">1 - 8</div>
-                  <div className="text-[11px] text-zinc-400 mt-0.5">All Semesters Covered</div>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-[11px] text-zinc-500 mt-5 pt-3 border-t border-zinc-800">
-              No subscription charges. No document paywalls. Built for university engineering students.
-            </p>
+        {/* CTA Section */}
+        <div className="bg-zinc-900 rounded-[2rem] p-10 sm:p-16 text-center">
+          <h2 className="text-3xl sm:text-5xl font-bold text-white mb-6">Built by students, for students.</h2>
+          <p className="text-lg text-zinc-400 max-w-2xl mx-auto mb-10">
+            Have high-quality notes or recent question papers? Contribute to the archive and help thousands of peers prepare for their exams.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              type="button"
+              onClick={() => openAuthModal('signin', { redirectUrl: '/upload' })}
+              className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 bg-white text-zinc-900 text-base font-semibold rounded-xl hover:bg-zinc-100 transition-colors"
+            >
+              <UploadCloud className="w-5 h-5 mr-2" />
+              Upload Material
+            </button>
+            <button
+              onClick={() => openAuthModal('signup')}
+              className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 bg-zinc-800 text-white text-base font-semibold rounded-xl hover:bg-zinc-700 transition-colors border border-zinc-700"
+            >
+              Create Free Account
+            </button>
           </div>
-
-        </section>
+        </div>
 
       </div>
     </div>

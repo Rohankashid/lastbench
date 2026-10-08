@@ -1,16 +1,11 @@
-// scripts/migrate-posts.js
-// Migration to add pinnedAt: null to all existing community posts.
-// Run this with Node (requires firebase-admin).
-// node scripts/migrate-posts.js
-
 const admin = require('firebase-admin');
 
-// Ensure you have your Firebase Admin credentials exported or loaded here.
-// e.g. export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
-// Or configure it manually if running locally:
-
 admin.initializeApp({
-  credential: admin.credential.applicationDefault()
+  credential: admin.credential.cert({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  }),
 });
 
 const db = admin.firestore();
@@ -21,7 +16,7 @@ async function migrate() {
   
   if (snapshot.empty) {
     console.log('No posts found.');
-    return;
+    return process.exit(0);
   }
 
   const batch = db.batch();
@@ -41,6 +36,10 @@ async function migrate() {
   } else {
     console.log('All posts already migrated.');
   }
+  process.exit(0);
 }
 
-migrate().catch(console.error);
+migrate().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

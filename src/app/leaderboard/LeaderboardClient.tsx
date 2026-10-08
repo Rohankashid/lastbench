@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { Spinner } from '@/components/ui/Spinner';
 import { motion } from 'framer-motion';
 import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
 import { ArrowRight } from 'lucide-react';
@@ -90,7 +91,7 @@ export function LeaderboardClient() {
           <div className="flex flex-col">
             {loading ? (
               <div className="py-24 flex items-center justify-center">
-                <div className="w-5 h-5 border-[1.5px] border-zinc-300 border-t-zinc-950 rounded-full animate-spin" />
+                <Spinner size="sm" />
               </div>
             ) : leaders.length === 0 ? (
               <div className="py-24 flex flex-col items-center justify-center text-center">

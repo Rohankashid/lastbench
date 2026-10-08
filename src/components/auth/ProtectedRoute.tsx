@@ -1,5 +1,6 @@
 'use client';
 
+import { Spinner } from '@/components/ui/Spinner';
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,7 +24,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-zinc-200 border-t-zinc-950"></div>
+        <Spinner size="md" />
         <p className="text-xs text-zinc-500 font-mono">Verifying student session...</p>
       </div>
     );

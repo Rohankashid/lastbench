@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Spinner } from '@/components/ui/Spinner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,7 +23,6 @@ import {
   AlertCircle, 
   CheckCircle2, 
   ArrowRight, 
-  Loader2,
   Lock,
   ArrowLeft
 } from 'lucide-react';
@@ -441,7 +441,7 @@ export function AuthModal() {
                   >
                     {loading ? (
                       <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <Spinner size="sm" />
                         <span>Signing In...</span>
                       </>
                     ) : (
@@ -648,7 +648,7 @@ export function AuthModal() {
                   >
                     {loading ? (
                       <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <Spinner size="sm" />
                         <span>Creating Profile...</span>
                       </>
                     ) : (
@@ -756,7 +756,7 @@ export function AuthModal() {
                       >
                         {loading ? (
                           <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <Spinner size="sm" />
                             <span>Sending Link...</span>
                           </>
                         ) : (

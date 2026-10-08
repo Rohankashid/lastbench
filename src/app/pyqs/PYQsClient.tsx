@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, Suspense } from 'react';
+import React, { useEffect, useState, Suspense, useRef } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, where, getDocs, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore';
-import { ref, deleteObject } from 'firebase/storage';
-import { db, storage } from '@/lib/firebase';
-import SkeletonCard from '@/components/SkeletonCard';
+import { collection, query, where, getDocs, orderBy, limit, startAfter } from 'firebase/firestore';
+import { } from 'firebase/storage';
+import { Spinner }
+from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { motion } from 'framer-motion';
 import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
-import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { SignInModal } from '@/components/ui/SignInModal';
@@ -20,22 +20,13 @@ import {
   UNIVERSITY_SELECT_GROUPS, 
   BRANCH_SELECT_GROUPS, 
   SEMESTERS,
-  matchesUniversity,
-  matchesBranch
 } from '@/lib/constants/academic';
 import { 
   FileText, 
   Search, 
-  MapPin, 
   GraduationCap, 
-  Library, 
-  Eye, 
-  Download, 
-  Trash2, 
   RotateCcw,
-  Calendar,
   X,
-  Flag
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
@@ -56,6 +47,7 @@ interface PYQ {
   uploadedAt: string;
 }
 
+
 const containerVariants = {
   hidden: { opacity: 0 },
   show: {
@@ -72,142 +64,104 @@ const itemVariants = {
 };
 
 function PYQsContent() {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const handleDownload = (item: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
+    toast.success('Download starting...');
+    if (item.fileUrl) window.open(item.fileUrl, '_blank');
+  };
+
+  const shareOnWhatsApp = (item: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
+    const text = `Check out this ${item.title || item.name} on LastBench!`;
+    const url = `https://wa.me/?text=${encodeURIComponent(text + ' ' + window.location.href)}`;
+    window.open(url, '_blank');
+  };
+  const { user: _user } = useAuth(); // eslint-disable-line @typescript-eslint/no-unused-vars
   const searchParams = useSearchParams();
-  const [allPYQs, setAllPYQs] = useState<PYQ[]>([]);
-  const [filteredPYQs, setFilteredPYQs] = useState<PYQ[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [pyqToDelete, setPyqToDelete] = useState<PYQ | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
   const [previewTarget, setPreviewTarget] = useState<PYQ | null>(null);
   const [downloadTarget, setDownloadTarget] = useState<PYQ | null>(null);
-  
-  // Auto-open preview from URL parameter
-  useEffect(() => {
-    const v = searchParams.get('v');
-    if (v && allPYQs.length > 0) {
-      const target = allPYQs.find(item => item.id === v);
-      if (target && !previewTarget) {
-        setPreviewTarget(target);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, allPYQs]);
-
   const [filters, setFilters] = useState({
-    search: '',
-    semester: '',
-    branch: '',
-    university: '',
+    search: searchParams.get('q') || '',
+    semester: searchParams.get('sem') || '',
+    branch: searchParams.get('branch') || '',
+    university: searchParams.get('uni') || ''
   });
+  const fetchPage = async ({ pageParam = null }: { pageParam?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ }) => {
+    const constraints: any[] /* eslint-disable-line @typescript-eslint/no-explicit-any */ = [
+      where('category', '==', 'pyq'),
+      orderBy('uploadedAt', 'desc')
+    ];
 
-  // Sync searchParams from URL
-  useEffect(() => {
-    const urlSearch = searchParams.get('search') || '';
-    const urlUniv = searchParams.get('university') || '';
-    const urlBranch = searchParams.get('branch') || '';
-    const urlSem = searchParams.get('semester') || '';
+    if (filters.semester) constraints.push(where('semester', '==', filters.semester));
+    if (filters.university) constraints.push(where('university', '==', filters.university));
+    if (filters.branch) constraints.push(where('branch', '==', filters.branch));
 
-    if (urlSearch || urlUniv || urlBranch || urlSem) {
-      setFilters(prev => ({
-        ...prev,
-        ...(urlSearch ? { search: urlSearch } : {}),
-        ...(urlUniv ? { university: urlUniv } : {}),
-        ...(urlBranch ? { branch: urlBranch } : {}),
-        ...(urlSem ? { semester: urlSem } : {}),
-      }));
-    }
-  }, [searchParams]);
+    if (pageParam) constraints.push(startAfter(pageParam));
+    constraints.push(limit(20));
 
-  const checkAdminStatus = useCallback(async () => {
-    if (!user) return false;
-    
     try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        return userData.role === 'admin';
-      }
-    } catch (error) {
-      console.error('Error checking admin status:', error);
-    }
-    return false;
-  }, [user]);
-
-  const fetchPYQs = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const q = query(
-        collection(db, 'materials'),
-        where('category', '==', 'pyq'),
-        orderBy('uploadedAt', 'desc')
-      );
+      const q = query(collection(db, 'materials'), ...constraints);
       const querySnapshot = await getDocs(q);
-      const pyqsData = querySnapshot.docs.map(doc => {
+      
+      const items = querySnapshot.docs.map(doc => {
         const safeData = { ...doc.data() };
         delete safeData.uploadedBy;
-        return {
-          id: doc.id,
-          ...safeData
-        };
-      }) as PYQ[];
-      setAllPYQs(pyqsData);
-    } catch (error) {
-      console.error('Error fetching PYQs:', error);
-      setError('Failed to fetch previous year questions. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        return { id: doc.id, ...safeData } as PYQ;
+      });
 
-  useEffect(() => {
-    let filtered = allPYQs;
-
-    if (filters.search) {
-      const q = filters.search.toLowerCase().trim();
-      filtered = filtered.filter(pyq =>
-        (pyq.name && pyq.name.toLowerCase().includes(q)) ||
-        (pyq.title && pyq.title.toLowerCase().includes(q)) ||
-        (pyq.subject && pyq.subject.toLowerCase().includes(q)) ||
-        (pyq.description && pyq.description.toLowerCase().includes(q)) ||
-        (pyq.university && pyq.university.toLowerCase().includes(q)) ||
-        (pyq.branch && pyq.branch.toLowerCase().includes(q)) ||
-        (pyq.examYear && pyq.examYear.toLowerCase().includes(q))
-      );
-    }
-
-    if (filters.semester) {
-      filtered = filtered.filter(pyq => pyq.semester === filters.semester);
-    }
-
-    if (filters.branch) {
-      filtered = filtered.filter(pyq => matchesBranch(pyq.branch, filters.branch));
-    }
-
-    if (filters.university) {
-      filtered = filtered.filter(pyq => matchesUniversity(pyq.university, filters.university));
-    }
-
-    setFilteredPYQs(filtered);
-  }, [allPYQs, filters.search, filters.semester, filters.branch, filters.university]);
-
-  useEffect(() => {
-    const initializePage = async () => {
-      if (user) {
-        const adminStatus = await checkAdminStatus();
-        setIsAdmin(adminStatus);
-      } else {
-        setIsAdmin(false);
+      return {
+        items,
+        lastVisible: querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null,
+        hasMore: querySnapshot.docs.length === 20,
+      };
+    } catch (error: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+      if (error.message && error.message.includes('requires an index')) {
+         toast.error('Database index building. Please check browser console for link.');
       }
-      await fetchPYQs();
+      throw error;
+    }
+  };
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: loading,
+    isError,
+  } = useInfiniteQuery({
+    queryKey: ['pyqs', filters.semester, filters.university, filters.branch],
+    queryFn: fetchPage,
+    getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.lastVisible : undefined,
+    initialPageParam: null,
+  });
+
+  const filteredPYQs = data?.pages.flatMap(page => page.items) || [];
+  const loadingMore = isFetchingNextPage;
+  const hasMore = hasNextPage;
+
+  const observerTarget = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) observer.unobserve(currentTarget);
     };
-    
-    initializePage();
-  }, [user, fetchPYQs, checkAdminStatus]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+
+
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -225,69 +179,9 @@ function PYQsContent() {
 
   const hasActiveFilters = Boolean(filters.search || filters.semester || filters.branch || filters.university);
 
-  const confirmDeletePYQ = async () => {
-    if (!pyqToDelete) return;
-    setIsDeleting(true);
-    setError('');
-
-    try {
-      // Check if this is an S3 URL or Firebase Storage URL
-      if (pyqToDelete.fileUrl && (pyqToDelete.fileUrl.includes('s3.amazonaws.com') || pyqToDelete.fileUrl.includes('s3.'))) {
-        // This is an S3 URL - delete from S3
-        try {
-          const response = await fetch('/api/delete', {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ fileUrl: pyqToDelete.fileUrl }),
-          });
-          
-          if (!response.ok) {
-            throw new Error('S3 deletion failed');
-          }
-        } catch (s3Error) {
-          console.error('S3 delete failed:', s3Error);
-          throw new Error('Failed to delete file from S3');
-        }
-      } else if (pyqToDelete.fileUrl && pyqToDelete.fileUrl.includes('firebasestorage.googleapis.com')) {
-        // This is a Firebase Storage URL - delete from Firebase Storage
-        try {
-          const firebaseUrl = new URL(pyqToDelete.fileUrl);
-          const pathMatch = firebaseUrl.pathname.match(/\/o\/(.+?)\?/);
-          const filePath = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
-          
-          if (filePath) {
-            const fileRef = ref(storage, filePath);
-            await deleteObject(fileRef);
-          } else {
-            throw new Error('Could not extract Firebase Storage path');
-          }
-        } catch (storageError) {
-          console.error('Firebase Storage delete failed:', storageError);
-          throw new Error('Failed to delete file from Firebase Storage');
-        }
-      }
-
-      // Delete from Firestore
-      await deleteDoc(doc(db, 'materials', pyqToDelete.id));
-      
-      // Update UI
-      setAllPYQs(prev => prev.filter(p => p.id !== pyqToDelete.id));
-      toast.success('Exam paper deleted permanently');
-      setPyqToDelete(null);
-    } catch (err: unknown) {
-      console.error('Error in delete process:', err);
-      const errMsg = err instanceof Error ? err.message : 'Failed to delete PYQ';
-      setError(errMsg);
-      toast.error(errMsg);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
 
   return (
-    <div className="relative min-h-screen py-10 px-4 sm:px-6 lg:px-12 xl:px-16">
+    <div className="relative min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <BackgroundGrid variant="grid" />
       <div className="max-w-[1600px] mx-auto space-y-8">
         
@@ -301,9 +195,6 @@ function PYQsContent() {
               Community archive of university question papers shared for exam practice and revision.
             </p>
           </div>
-          <p className="text-xs text-zinc-500 font-medium shrink-0">
-            {loading ? 'Loading...' : `${filteredPYQs.length} question papers available`}
-          </p>
         </div>
 
         {/* Filter Bar */}
@@ -440,7 +331,7 @@ function PYQsContent() {
         </motion.div>
 
         {/* Error State */}
-        {error && (
+        {isError && (
           <div className="bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r-xl">
             <div className="flex">
               <div className="flex-shrink-0">
@@ -449,7 +340,6 @@ function PYQsContent() {
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm text-rose-700 font-medium">{error}</p>
               </div>
             </div>
           </div>
@@ -458,8 +348,9 @@ function PYQsContent() {
         {/* Results */}
         <div className="mt-8">
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+            <div className="flex flex-col items-center justify-center py-20 w-full">
+              <Spinner size="lg" />
+              <p className="mt-4 text-sm font-medium text-zinc-500">Loading resources...</p>
             </div>
           ) : filteredPYQs.length === 0 ? (
             <EmptyState 
@@ -482,148 +373,68 @@ function PYQsContent() {
               variants={containerVariants}
               initial="hidden"
               animate="show"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
             >
               {filteredPYQs.map((pyq) => (
                 <motion.div
                   variants={itemVariants}
                   key={pyq.id}
-                  className="bg-white rounded-xl border border-zinc-200/90 shadow-[0_1px_3px_rgba(0,0,0,0.02)] hover:border-zinc-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all overflow-hidden flex flex-col justify-between"
+                  className="bg-white border border-zinc-200 rounded-lg p-5 sm:p-6 flex flex-col hover:border-zinc-300 transition-colors shadow-sm"
                 >
-                  <div className="p-5 flex-1 flex flex-col">
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <h3
-                        className="text-base font-semibold text-zinc-950 hover:text-blue-600 transition-colors cursor-pointer line-clamp-2 leading-snug"
-                        onClick={() => setPreviewTarget(pyq)}
-                        tabIndex={0}
-                        role="button"
-                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPreviewTarget(pyq); } }}
-                      >
-                        {pyq.name || pyq.title}
-                      </h3>
-                      {pyq.subject && (
-                        <span className="shrink-0 mono-chip">
-                          {pyq.subject}
-                        </span>
-                      )}
-                    </div>
-                    
-                    {pyq.description && (
-                      <p className="text-zinc-500 text-xs line-clamp-2 mb-4 leading-relaxed">
-                        {pyq.description}
-                      </p>
-                    )}
-
-                    <div className="mt-auto space-y-2 pt-3 border-t border-zinc-100">
-                      {pyq.examYear && (
-                        <div className="flex items-center text-xs font-mono font-medium text-zinc-800">
-                          <Calendar className="w-3.5 h-3.5 mr-2 text-zinc-400" />
-                          <span>EXAM YEAR: {pyq.examYear}</span>
-                        </div>
-                      )}
-                      {pyq.semester && (
-                        <div className="flex items-center text-xs text-zinc-500 font-mono">
-                          <GraduationCap className="w-3.5 h-3.5 mr-2 text-zinc-400" />
-                          <span>SEM {pyq.semester}</span>
-                        </div>
-                      )}
-                      {pyq.university && (
-                        <div className="flex items-center text-xs text-zinc-500">
-                          <MapPin className="w-3.5 h-3.5 mr-2 text-zinc-400" />
-                          <span className="truncate">{pyq.university}</span>
-                        </div>
-                      )}
-                      {pyq.branch && (
-                        <div className="flex items-center text-xs text-zinc-500">
-                          <Library className="w-3.5 h-3.5 mr-2 text-zinc-400" />
-                          <span className="truncate">{pyq.branch}</span>
-                        </div>
-                      )}
-                    </div>
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 
+                      className="text-sm sm:text-base font-semibold text-zinc-900 leading-tight hover:underline cursor-pointer line-clamp-2 pr-4"
+                      onClick={() => setPreviewTarget(pyq)}
+                    >
+                      {pyq.name || pyq.title}
+                    </h3>
+                    {pyq.examYear && <span className="text-xs font-mono text-zinc-500 shrink-0">{pyq.examYear}</span>}
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] sm:text-[11px] text-zinc-500 uppercase tracking-wide font-medium mb-6">
+                    {pyq.subject && <span>{pyq.subject}</span>}
+                    {pyq.subject && pyq.semester && <span className="text-zinc-300">•</span>}
+                    {pyq.semester && <span>SEM {pyq.semester}</span>}
+                    {(pyq.subject || pyq.semester) && pyq.university && <span className="text-zinc-300">•</span>}
+                    {pyq.university && <span>{pyq.university}</span>}
                   </div>
 
-                  <div className="p-3 bg-zinc-50/80 border-t border-zinc-100 flex items-center gap-2">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setPreviewTarget(pyq); }}
-                      className="flex-1 inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 text-xs font-medium rounded-lg transition-colors"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      View
-                    </button>
-                    <a
-                      href={user ? `/api/download?url=${encodeURIComponent(pyq.fileUrl || pyq.downloadUrl)}&filename=${encodeURIComponent(pyq.name || pyq.title || 'document.pdf')}` : '#'}
-                      download={user ? true : undefined}
-                      rel="noopener noreferrer"
-                      className="flex-1 inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!user) {
-                          e.preventDefault();
-                          setDownloadTarget(pyq);
-                        }
-                      }}
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      Download
-                    </a>
-
-                    <a
-                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`📚 Check out this ${pyq.subject || pyq.title} PYQ - free preview, no login needed! ${typeof window !== 'undefined' ? `${window.location.origin}/pyqs?v=${pyq.id}` : ''}`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex justify-center items-center p-2 text-[#25D366] hover:bg-[#25D366]/10 rounded-lg transition-colors"
-                      title="Share to WhatsApp"
-                    >
-                      <FaWhatsapp className="w-4 h-4" />
-                    </a>
-
-                    <BookmarkButton materialId={pyq.id} className="!p-2" />
-                    
-                    <a
-                      href={`/takedown?id=${pyq.id}`}
-                      className="inline-flex justify-center items-center p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Report this file"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Flag className="w-4 h-4" />
-                    </a>
-
-                    {isAdmin && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setPyqToDelete(pyq); }}
-                        className="inline-flex justify-center items-center p-2 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                        title="Delete PYQ"
-                      >
-                        <Trash2 className="w-4 h-4" />
+                  <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4">
+                    <div className="flex items-center gap-4">
+                      <button onClick={() => setPreviewTarget(pyq)} className="text-[11px] font-bold text-zinc-500 hover:text-zinc-900 uppercase tracking-wider transition-colors">
+                        View
                       </button>
-                    )}
+                      <button onClick={() => handleDownload(pyq)} className="text-[11px] font-bold text-zinc-500 hover:text-zinc-900 uppercase tracking-wider transition-colors">
+                        Download
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => shareOnWhatsApp(pyq)} className="text-zinc-400 hover:text-zinc-900 transition-colors">
+                        <FaWhatsapp className="w-4 h-4" />
+                      </button>
+                      <BookmarkButton materialId={pyq.id} />
+                    </div>
                   </div>
                 </motion.div>
               ))}
             </motion.div>
           )}
         </div>
+
+        {!loading && filteredPYQs.length > 0 && hasMore && (
+          <div ref={observerTarget} className="flex justify-center pt-8 pb-12">
+            <button
+              onClick={() => fetchNextPage()}
+              disabled={loadingMore}
+              className="px-6 py-2.5 bg-zinc-900 text-white text-sm font-medium rounded-full hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            >
+              {loadingMore ? <span className="flex items-center justify-center gap-2"><Spinner size="sm" /> Loading...</span> : 'Load More'}
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Rare UI Minimal Delete Modal */}
-      <Modal
-        isOpen={!!pyqToDelete}
-        onClose={() => setPyqToDelete(null)}
-        onConfirm={confirmDeletePYQ}
-        variant="danger"
-        title="Delete Question Paper"
-        confirmText={isDeleting ? 'Deleting...' : 'Delete Paper'}
-        cancelText="Cancel"
-      >
-        <p className="text-zinc-700">
-          Are you sure you want to permanently delete{' '}
-          <strong className="text-zinc-950 font-semibold">&ldquo;{pyqToDelete?.name || pyqToDelete?.title}&rdquo;</strong>?
-        </p>
-        <p className="mt-2 text-zinc-500">
-          This question paper will be permanently purged from the cloud storage repository. This action cannot be reversed.
-        </p>
-      </Modal>
 
       
       {/* Interactive In-App Document Viewer */}
@@ -665,7 +476,7 @@ export default function PYQsPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
-          <div className="w-6 h-6 border-2 border-zinc-300 border-t-zinc-950 rounded-full animate-spin" />
+          <Spinner size="sm" />
         </div>
       }
     >

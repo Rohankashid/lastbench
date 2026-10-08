@@ -8,6 +8,7 @@ import { AuthModal } from '@/components/auth/AuthModal';
 import { Analytics } from "@vercel/analytics/next";
 import { ToastProvider } from '@/components/ui/Toast';
 import Layout from '@/components/layout/Layout';
+import Providers from './Providers';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -62,7 +63,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AuthProvider>
+        <Providers>
+          <AuthProvider>
           <AuthModalProvider>
             <BookmarkProvider>
               <ToastProvider>
@@ -75,6 +77,7 @@ export default function RootLayout({
           </AuthModalProvider>
           <Analytics />
         </AuthProvider>
+        </Providers>
       </body>
     </html>
   );
