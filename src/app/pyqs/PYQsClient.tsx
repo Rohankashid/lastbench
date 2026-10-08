@@ -3,6 +3,7 @@
 import React, { useEffect, useState, Suspense, useRef } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
+import { db } from '@/lib/firebase';
 import { useSearchParams } from 'next/navigation';
 import { collection, query, where, getDocs, orderBy, limit, startAfter } from 'firebase/firestore';
 import { } from 'firebase/storage';
