@@ -87,9 +87,13 @@ function NotesContent() {
   });
   const fetchPage = async ({ pageParam = null }: { pageParam?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ }) => {
     const constraints: any[] /* eslint-disable-line @typescript-eslint/no-explicit-any */ = [
-      where('category', '==', 'note'),
-      orderBy('uploadedAt', 'desc')
+      where('category', '==', 'note')
     ];
+    
+    const hasFilters = Boolean(filters.semester || filters.university || filters.branch);
+    if (!hasFilters) {
+      constraints.push(orderBy('uploadedAt', 'desc'));
+    }
 
     if (filters.semester) constraints.push(where('semester', '==', filters.semester));
     if (filters.university) constraints.push(where('university', '==', filters.university));
@@ -129,7 +133,7 @@ function NotesContent() {
     isLoading: loading,
     isError,
   } = useInfiniteQuery({
-    queryKey: ['notes', filters.semester, filters.university, filters.branch],
+    queryKey: ['notes', filters.semester, filters.university, filters.branch, filters.search],
     queryFn: fetchPage,
     getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.lastVisible : undefined,
     initialPageParam: null,
