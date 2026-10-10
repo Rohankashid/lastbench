@@ -65,7 +65,17 @@ const itemVariants = {
 };
 
 function PYQsContent() {
+  const { user: _user } = useAuth();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+  const [previewTarget, setPreviewTarget] = useState<PYQ | null>(null);
+  const [downloadTarget, setDownloadTarget] = useState<PYQ | null>(null);
+
   const handleDownload = (item: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
+    if (!_user) {
+      setDownloadTarget(item);
+      return;
+    }
     toast.success('Download starting...');
     if (item.fileUrl) window.open(item.fileUrl, '_blank');
   };
@@ -75,11 +85,6 @@ function PYQsContent() {
     const url = `https://wa.me/?text=${encodeURIComponent(text + ' ' + window.location.href)}`;
     window.open(url, '_blank');
   };
-  const { user: _user } = useAuth(); // eslint-disable-line @typescript-eslint/no-unused-vars
-  const searchParams = useSearchParams();
-  const { toast } = useToast();
-  const [previewTarget, setPreviewTarget] = useState<PYQ | null>(null);
-  const [downloadTarget, setDownloadTarget] = useState<PYQ | null>(null);
   const [filters, setFilters] = useState({
     search: searchParams.get('q') || '',
     semester: searchParams.get('sem') || '',
@@ -144,26 +149,7 @@ function PYQsContent() {
   const loadingMore = isFetchingNextPage;
   const hasMore = hasNextPage;
 
-  const observerTarget = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
-        }
-      },
-      { threshold: 0.1 }
-    );
 
-    const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      observer.observe(currentTarget);
-    }
-
-    return () => {
-      if (currentTarget) observer.unobserve(currentTarget);
-    };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
 
 
@@ -428,7 +414,7 @@ function PYQsContent() {
         </div>
 
         {!loading && filteredPYQs.length > 0 && hasMore && (
-          <div ref={observerTarget} className="flex justify-center pt-8 pb-12">
+          <div className="flex justify-center pt-8 pb-12">
             <button
               onClick={() => fetchNextPage()}
               disabled={loadingMore}

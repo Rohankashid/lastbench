@@ -12,7 +12,7 @@ export async function GET() {
       .limit(50)
       .get();
 
-    const leaderboard = snapshot.docs.map(doc => {
+    const leaderboard = snapshot.docs.map((doc: any) => {
       const data = doc.data();
       return {
         uid: doc.id,

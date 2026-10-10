@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Form from 'next/form';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuthModal } from '@/context/AuthModalContext';
@@ -194,12 +195,13 @@ export function GuestLanding() {
             </p>
 
             {/* Omnibox Search */}
-            <form onSubmit={handleSearchSubmit} className="relative max-w-2xl mx-auto group mb-6">
+            <Form action="/notes" className="relative max-w-2xl mx-auto group mb-6">
               <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                 <Search className="w-5 h-5 text-zinc-400 group-focus-within:text-zinc-900 transition-colors" />
               </div>
               <input
                 type="text"
+                name="q"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for subjects, topics, or course codes..."
@@ -213,7 +215,7 @@ export function GuestLanding() {
                   Search
                 </button>
               </div>
-            </form>
+            </Form>
 
             {/* Trending */}
             {trendingTopics.length > 0 && (
@@ -223,7 +225,7 @@ export function GuestLanding() {
                 {trendingTopics.map((topic) => (
                   <Link
                     key={topic.label}
-                    href={`/notes?search=${encodeURIComponent(topic.query)}`}
+                    href={`/notes?q=${encodeURIComponent(topic.query)}`}
                     className="px-3 py-1 rounded-md bg-zinc-50 hover:bg-zinc-100 text-zinc-700 transition-colors"
                   >
                     {topic.label}

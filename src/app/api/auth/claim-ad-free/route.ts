@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     const usersRef = db.collection('users');
     
     // Run a secure transaction to check count and assign status
-    const result = await db.runTransaction(async (t) => {
+    const result = await db.runTransaction(async (t: any) => {
       // Get the count of users who already have adFree status
       const snapshot = await t.get(usersRef.where('adFree', '==', true));
       

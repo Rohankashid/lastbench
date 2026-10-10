@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Form from 'next/form';
 import { User } from 'firebase/auth';
 import { collection, query, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -314,12 +315,13 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
           transition={{ duration: 0.3, delay: 0.05 }}
           className="space-y-3"
         >
-          <form onSubmit={handleSearchSubmit} className="relative">
+          <Form action="/notes" className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400">
               <Search className="w-4 h-4" />
             </div>
             <input
               type="text"
+              name="q"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search across all subjects, semester notes, and past exam papers..."
@@ -333,7 +335,7 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
                 Search
               </button>
             </div>
-          </form>
+          </Form>
 
           {/* Dynamic Trending Subject Chips */}
           {trendingTopics.length > 0 && (
@@ -345,7 +347,7 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
               {trendingTopics.map((topic) => (
                 <Link
                   key={topic.label}
-                  href={`/notes?search=${encodeURIComponent(topic.query)}`}
+                  href={`/notes?q=${encodeURIComponent(topic.query)}`}
                   className="px-2.5 py-1 rounded-lg border border-zinc-200/80 bg-white hover:bg-zinc-100 text-zinc-700 text-[11px] font-medium transition-colors"
                 >
                   {topic.label}
