@@ -17,7 +17,10 @@ import {
   Search, 
   TrendingUp, 
   ShieldCheck, 
-  ChevronRight
+  ChevronRight,
+  Gift,
+  Sparkles,
+  Zap
 } from 'lucide-react';
 
 
@@ -45,6 +48,80 @@ const UniversityLogo = ({ uni }: { uni: { name: string, src: string, invert?: bo
     </div>
   );
 };
+
+const FOUNDERS_LIMIT = 100;
+
+function FoundersClubBanner({ onSignUp }: { onSignUp: () => void }) {
+  const [claimedCount, setClaimedCount] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const res = await fetch('/api/founders-count');
+        if (res.ok) {
+          const data = await res.json();
+          setClaimedCount(Math.min(data.count ?? 0, FOUNDERS_LIMIT));
+        } else {
+          setClaimedCount(0);
+        }
+      } catch {
+        setClaimedCount(0);
+      }
+    };
+    fetchCount();
+  }, []);
+
+  const spotsLeft = claimedCount !== null ? FOUNDERS_LIMIT - claimedCount : null;
+  const isFull = spotsLeft !== null && spotsLeft <= 0;
+
+  if (isFull) return null;
+
+  return (
+    <div className="mb-8">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 border border-zinc-200 hover:border-zinc-300 transition-colors cursor-pointer"
+      >
+        <Gift className="w-3.5 h-3.5 text-zinc-600" />
+        <span className="text-sm text-zinc-700 font-medium">
+          Founders Club
+        </span>
+        {spotsLeft !== null && (
+          <span className="text-xs text-zinc-400 font-mono">{spotsLeft} spots left</span>
+        )}
+        <ChevronRight className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+      </button>
+
+      {expanded && (
+        <div className="mt-4 text-left max-w-md mx-auto border border-zinc-200 rounded-xl bg-white p-5">
+          <p className="text-xs text-zinc-500 mb-3">Exclusive perks for the first 100 signups</p>
+          <div className="space-y-2 mb-4 text-sm text-zinc-600">
+            <div className="flex items-center gap-2.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+              <span>Lifetime ad-free access</span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <Zap className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+              <span>Priority notes request within 24hrs</span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+              <span>End-sem high-frequency question cheat sheet</span>
+            </div>
+          </div>
+          <button
+            onClick={onSignUp}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            Claim your spot
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function GuestLanding() {
   const router = useRouter();
@@ -180,10 +257,7 @@ export function GuestLanding() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 pb-20">
         <div className="text-center max-w-3xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            {/* <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-100 border border-zinc-200 mb-8">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-sm text-zinc-600 font-medium">Over 500+ documents verified for 2024-25</span>
-            </div> */}
+            <FoundersClubBanner onSignUp={() => openAuthModal('signup')} />
             
             <h1 className="text-4xl sm:text-6xl font-bold text-zinc-900 tracking-tight mb-6 leading-[1.1]">
               The open archive for <br className="hidden sm:block" />

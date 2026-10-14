@@ -9,6 +9,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { ToastProvider } from '@/components/ui/Toast';
 import Layout from '@/components/layout/Layout';
 import Providers from './Providers';
+import { GoogleAdSenseController } from '@/components/ads/GoogleAdSense';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -79,6 +80,7 @@ export default function RootLayout({
                   {children}
                 </Layout>
                 <AuthModal />
+                <GoogleAdSenseController />
               </ToastProvider>
             </BookmarkProvider>
           </AuthModalProvider>

@@ -68,24 +68,26 @@ export const SignInModal: React.FC<SignInModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden">
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs -z-10"
-            onClick={onClose}
-          />
-
+        <motion.div
+          key="signin-modal-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-hidden"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) onClose();
+          }}
+        >
           {/* Modal Container */}
           <motion.div
+            key="signin-modal-card"
             initial={{ opacity: 0, scale: 0.98, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98, y: 8 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-zinc-200 overflow-hidden p-6 sm:p-7 relative text-zinc-900"
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Header: Icon + Close Button in dedicated row */}
             <div className="flex items-center justify-between mb-4">
@@ -169,7 +171,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({
               </button>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

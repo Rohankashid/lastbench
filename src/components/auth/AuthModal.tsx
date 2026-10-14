@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
 import { useToast } from '@/components/ui/Toast';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
@@ -95,11 +95,11 @@ export function AuthModal() {
     };
   }, [isOpen, closeAuthModal]);
 
-  // Reset errors when mode or modal visibility changes
-  useEffect(() => {
+  const switchMode = (newMode: typeof mode) => {
     setError('');
     setForgotSent(false);
-  }, [mode, isOpen]);
+    setMode(newMode);
+  };
 
   const handleGoogleSignIn = async () => {
     setError('');
@@ -109,12 +109,34 @@ export function AuthModal() {
       
       // Save user to Firestore if they don't exist yet
       const userRef = doc(db, 'users', user.uid);
-      await setDoc(userRef, {
-        uid: user.uid,
-        email: user.email,
-        name: user.displayName || 'Student',
-        updatedAt: new Date().toISOString(),
-      }, { merge: true });
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        let isFoundingMember = false;
+        try {
+          const res = await fetch('/api/founders-count');
+          if (res.ok) {
+            const data = await res.json();
+            isFoundingMember = (data.count ?? 0) < 100;
+          }
+        } catch {
+          // If count check fails, don't block
+        }
+
+        await setDoc(userRef, {
+          uid: user.uid,
+          email: user.email,
+          name: user.displayName || 'Student',
+          role: 'student',
+          ...(isFoundingMember && { isFoundingMember: true, adFree: true }),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      } else {
+        await setDoc(userRef, {
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
+      }
 
       toast.success('Signed in successfully');
       closeAuthModal();
@@ -192,6 +214,18 @@ export function AuthModal() {
     try {
       const newUser = await signUp(signUpData.email.trim(), signUpData.password, signUpData.name.trim());
 
+      // Check if this user qualifies as a founding member (first 100)
+      let isFoundingMember = false;
+      try {
+        const res = await fetch('/api/founders-count');
+        if (res.ok) {
+          const data = await res.json();
+          isFoundingMember = (data.count ?? 0) < 100;
+        }
+      } catch {
+        // If count check fails, don't block signup
+      }
+
       await setDoc(doc(db, 'users', newUser.uid), {
         uid: newUser.uid,
         name: signUpData.name.trim(),
@@ -200,6 +234,7 @@ export function AuthModal() {
         branch: signUpData.branch,
         studyingYear: signUpData.studyingYear,
         role: 'student',
+        ...(isFoundingMember && { isFoundingMember: true, adFree: true }),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -269,67 +304,59 @@ export function AuthModal() {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10"
-            onClick={closeAuthModal}
-          />
-
+        <motion.div
+          key="auth-modal-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeAuthModal();
+          }}
+        >
           {/* Modal Card */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 10 }}
+            key="auth-modal-card"
+            initial={{ opacity: 0, scale: 0.97, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 10 }}
-            transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-            className="relative w-full max-w-md bg-white border border-zinc-200/90 rounded-3xl shadow-2xl overflow-hidden p-6 sm:p-8 my-auto"
+            exit={{ opacity: 0, scale: 0.97, y: 8 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="relative w-full max-w-md bg-white border border-zinc-200/90 rounded-3xl shadow-2xl p-6 sm:p-8 my-auto"
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Top Navigation Row: Tabs (or Back button) + Dedicated Close Button */}
             <div className="flex items-center justify-between gap-3 mb-5">
               {mode !== 'forgot-password' ? (
-                <div className="flex p-1 bg-zinc-100/90 rounded-2xl flex-1 border border-zinc-200/60">
+                <div className="flex p-1 bg-zinc-100 rounded-2xl flex-1 border border-zinc-200/60">
                   <button
                     type="button"
-                    onClick={() => setMode('signin')}
-                    className={`relative flex-1 py-2 text-xs font-medium rounded-xl transition-colors cursor-pointer ${
-                      mode === 'signin' ? 'text-zinc-950 font-semibold' : 'text-zinc-500 hover:text-zinc-900'
+                    onClick={() => switchMode('signin')}
+                    className={`flex-1 py-2 text-xs rounded-xl transition-all cursor-pointer ${
+                      mode === 'signin'
+                        ? 'bg-white text-zinc-950 font-semibold shadow-xs border border-zinc-200/60'
+                        : 'text-zinc-500 hover:text-zinc-900 font-medium'
                     }`}
                   >
-                    {mode === 'signin' && (
-                      <motion.div
-                        layoutId="auth-tab-pill"
-                        className="absolute inset-0 bg-white rounded-xl shadow-xs border border-zinc-200/60"
-                        transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                      />
-                    )}
-                    <span className="relative z-10">Sign In</span>
+                    Sign In
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setMode('signup')}
-                    className={`relative flex-1 py-2 text-xs font-medium rounded-xl transition-colors cursor-pointer ${
-                      mode === 'signup' ? 'text-zinc-950 font-semibold' : 'text-zinc-500 hover:text-zinc-900'
+                    onClick={() => switchMode('signup')}
+                    className={`flex-1 py-2 text-xs rounded-xl transition-all cursor-pointer ${
+                      mode === 'signup'
+                        ? 'bg-white text-zinc-950 font-semibold shadow-xs border border-zinc-200/60'
+                        : 'text-zinc-500 hover:text-zinc-900 font-medium'
                     }`}
                   >
-                    {mode === 'signup' && (
-                      <motion.div
-                        layoutId="auth-tab-pill"
-                        className="absolute inset-0 bg-white rounded-xl shadow-xs border border-zinc-200/60"
-                        transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                      />
-                    )}
-                    <span className="relative z-10">Create Account</span>
+                    Create Account
                   </button>
                 </div>
               ) : (
                 <button
                   type="button"
-                  onClick={() => setMode('signin')}
+                  onClick={() => switchMode('signin')}
                   className="inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-950 transition-colors font-medium py-1.5 cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
@@ -773,7 +800,7 @@ export function AuthModal() {
             )}
 
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

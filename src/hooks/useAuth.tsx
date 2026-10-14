@@ -11,19 +11,38 @@ import {
   GoogleAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
+
+export interface UserProfile {
+  uid: string;
+  name?: string;
+  email?: string;
+  role?: string;
+  university?: string;
+  branch?: string;
+  studyingYear?: string;
+  isFoundingMember?: boolean;
+  adFree?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+}
 
 interface AuthContextType {
   user: User | null;
+  userData: UserProfile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<User>;
   signInWithGoogle: () => Promise<User>;
   signUp: (email: string, password: string, name: string) => Promise<User>;
   signOut: () => Promise<void>;
+  refreshUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  userData: null,
   loading: true,
   signIn: async () => {
     throw new Error('Auth context not initialized');
@@ -37,20 +56,49 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {
     throw new Error('Auth context not initialized');
   },
+  refreshUserData: async () => {
+    throw new Error('Auth context not initialized');
+  },
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchProfile = async (uid: string) => {
+    try {
+      const snap = await getDoc(doc(db, 'users', uid));
+      if (snap.exists()) {
+        setUserData(snap.data() as UserProfile);
+      } else {
+        setUserData(null);
+      }
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+      setUserData(null);
+    }
+  };
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        await fetchProfile(currentUser.uid);
+      } else {
+        setUserData(null);
+      }
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
+
+  const refreshUserData = async () => {
+    if (auth.currentUser) {
+      await fetchProfile(auth.currentUser.uid);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -74,6 +122,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
+      setUserData(null);
     } catch (error) {
       throw error;
     }
@@ -91,11 +140,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const value = {
     user,
+    userData,
     loading,
     signIn,
     signInWithGoogle,
     signUp,
     signOut,
+    refreshUserData,
   };
 
   return (

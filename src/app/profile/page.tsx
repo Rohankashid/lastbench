@@ -44,6 +44,8 @@ interface ProfileData {
   branch: string;
   studyingYear: string;
   role: string;
+  isFoundingMember?: boolean;
+  adFree?: boolean;
 }
 
 export default function ProfilePage() {
@@ -65,6 +67,8 @@ export default function ProfilePage() {
     branch: '',
     studyingYear: '',
     role: '',
+    isFoundingMember: false,
+    adFree: false,
   });
 
   const fetchProfile = useCallback(async () => {
@@ -85,6 +89,8 @@ export default function ProfilePage() {
         branch: data.branch || '',
         studyingYear: data.studyingYear || '',
         role: data.role || 'student',
+        isFoundingMember: data.isFoundingMember || false,
+        adFree: data.adFree || false,
       });
     } catch (err) {
       console.error('Error fetching profile:', err);

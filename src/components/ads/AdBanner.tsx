@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 declare global {
   interface Window {
@@ -21,7 +22,10 @@ export function AdBanner({
   dataFullWidthResponsive = true,
   className = '',
 }: AdBannerProps) {
+  const { userData } = useAuth();
+
   useEffect(() => {
+    if (userData?.adFree) return;
     try {
       if (typeof window !== 'undefined') {
         window.adsbygoogle = window.adsbygoogle || [];
@@ -30,7 +34,11 @@ export function AdBanner({
     } catch (err) {
       console.error('AdSense ad push error:', err);
     }
-  }, []);
+  }, [userData?.adFree]);
+
+  if (userData?.adFree) {
+    return null;
+  }
 
   return (
     <div className={`overflow-hidden my-6 text-center ${className}`}>

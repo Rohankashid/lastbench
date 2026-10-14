@@ -240,24 +240,26 @@ export default function Navbar() {
       {/* Mobile Floating Menu Card (mkrting / Rare UI Minimalist Style) */}
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <div className="fixed inset-0 z-[70] md:hidden flex items-start sm:items-center justify-center p-4 pt-6 sm:p-6 overflow-y-auto">
-            {/* Dark Blur Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-md -z-10"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-
+          <motion.div
+            key="mobile-nav-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[70] md:hidden flex items-start sm:items-center justify-center p-4 pt-6 sm:p-6 bg-black/50 backdrop-blur-md overflow-y-auto"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setIsMobileMenuOpen(false);
+            }}
+          >
             {/* Floating Card */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: -12 }}
+              key="mobile-nav-card"
+              initial={{ opacity: 0, scale: 0.96, y: -8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.94, y: -12 }}
-              transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+              exit={{ opacity: 0, scale: 0.96, y: -8 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
               className="w-full max-w-sm sm:max-w-md bg-white rounded-[2rem] shadow-2xl border border-zinc-100 p-6 sm:p-7 flex flex-col my-auto relative overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
             >
               {/* Card Header */}
               <div className="flex items-start justify-between gap-4">
@@ -388,7 +390,7 @@ export default function Navbar() {
                 </div>
               )}
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </>

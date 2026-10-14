@@ -71,6 +71,7 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
     university?: string;
     branch?: string;
     semester?: string;
+    isFoundingMember?: boolean;
   } | null>(null);
 
   const [savedMaterials, setSavedMaterials] = useState<Material[]>([]);
@@ -131,6 +132,7 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
               university: data.university,
               branch: data.branch,
               semester: data.semester,
+              isFoundingMember: Boolean(data.isFoundingMember),
             });
           }
         }
