@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPPU FE 2024 Pattern | FPL High-Yield PYQs | lastbench.online</title>
+  <style>
+    :root {
+      --navy: #0f172a;
+      --slate-dark: #1e293b;
+      --slate-muted: #475569;
+      --slate-light: #f8fafc;
+      --border: #e2e8f0;
+      --border-dark: #cbd5e1;
+      --accent: #1e3a8a;
+      --gold: #b45309;
+      --green: #065f46;
+      --green-bg: #ecfdf5;
+      --text: #0f172a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      color: var(--text);
+      background: #f1f5f9;
+      margin: 0;
+      padding: 32px 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 56px 64px;
+      border-radius: 4px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--border);
+    }
+    .masthead {
+      background: var(--navy);
+      color: #ffffff;
+      padding: 32px 36px;
+      border-radius: 4px;
+      border-top: 4px solid #f59e0b;
+      margin-bottom: 28px;
+    }
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #ffffff;
+    }
+    .brand-meta {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+    .masthead h1 {
+      margin: 0 0 6px 0;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .masthead h2 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      color: #f59e0b;
+      font-weight: 700;
+    }
+    .masthead p {
+      margin: 0;
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    .actions-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 32px;
+    }
+    .actions-bar .meta-info {
+      font-size: 12px;
+      color: var(--slate-muted);
+      font-weight: 500;
+    }
+    .btn-group { display: flex; gap: 10px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .btn-primary { background: var(--navy); color: #ffffff; }
+    .btn-primary:hover { background: var(--slate-dark); }
+    .btn-secondary { background: #ffffff; color: var(--navy); border-color: var(--border-dark); }
+    .btn-secondary:hover { background: #f8fafc; }
+    
+    .unit-banner {
+      background: var(--slate-dark);
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 2px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 44px 0 20px 0;
+    }
+    .unit-banner .weight {
+      font-size: 11px;
+      color: #f59e0b;
+      font-weight: 700;
+    }
+    .question-header {
+      background: #f8fafc;
+      border-left: 3px solid var(--accent);
+      padding: 14px 18px;
+      margin: 24px 0 16px 0;
+      border-radius: 0 4px 4px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+    .question-title {
+      font-weight: 700;
+      font-size: 14.5px;
+      color: var(--navy);
+      margin: 0;
+      line-height: 1.5;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 3px;
+      background: #fee2e2;
+      color: #991b1b;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    h3 {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--navy);
+      margin: 20px 0 8px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    p, li {
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: #1e293b;
+    }
+    ul { margin: 8px 0 16px 20px; padding: 0; }
+    li { margin-bottom: 6px; }
+
+    /* Booktabs Styled Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      font-size: 12.5px;
+    }
+    th, td {
+      padding: 9px 12px;
+      text-align: left;
+      line-height: 1.45;
+    }
+    th {
+      background: var(--navy);
+      color: #ffffff;
+      font-weight: 700;
+      border-top: 2px solid var(--navy);
+      border-bottom: 1px solid var(--navy);
+    }
+    tr:nth-child(even) { background: #f8fafc; }
+    td { border-bottom: 1px solid var(--border); }
+    
+    /* Code Box with Line Numbers */
+    pre {
+      background: #0f172a;
+      color: #f1f5f9;
+      padding: 16px 20px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+      line-height: 1.55;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      border-left: 3px solid var(--accent);
+      margin: 16px 0;
+    }
+    .rubric-box {
+      background: var(--green-bg);
+      border-left: 3px solid #10b981;
+      padding: 12px 16px;
+      margin: 18px 0;
+      font-size: 12.5px;
+      color: var(--green);
+      line-height: 1.55;
+    }
+    .figure-box {
+      background: #ffffff;
+      border: 1px solid var(--border-dark);
+      border-radius: 4px;
+      margin: 18px 0 24px 0;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .figure-caption {
+      background: var(--navy);
+      color: #f8fafc;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 8px 16px;
+      letter-spacing: 0.03em;
+    }
+    .figure-svg-container {
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      background: #fafafa;
+      overflow-x: auto;
+    }
+    .figure-svg-container svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .container { box-shadow: none; border: none; padding: 0; max-width: 100%; }
+      .actions-bar { display: none; }
+      .unit-banner { page-break-before: always; margin-top: 0; }
+      pre { white-space: pre-wrap; word-break: break-all; }
+      .figure-box { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="masthead">
+      <div class="brand-row">
+        <img src="/branding/logo.jpg" alt="LastBench Brand Logo" class="brand-logo" />
+        <div class="brand-meta"><a href="https://www.lastbench.online" style="color: #94a3b8; text-decoration: underline; font-weight: 600;">lastbench.online</a> &bull; Savitribai Phule Pune University</div>
+      </div>
+      <h1>SAVITRIBAI PHULE PUNE UNIVERSITY (SPPU)</h1>
+      <h2>FIRST YEAR ENGINEERING (F.E.) &mdash; 2024 REVISED PATTERN (NEP-2020)</h2>
+      <p>Course: Fundamentals of Programming Languages (FPL | COM108 / ESC-105-COM)<br>Official End-Semester & In-Semester Examination Model Solutions & PYQ Bank</p>
+    </div>
+
+    <div class="actions-bar">
+      <div class="meta-info">Document ID: <strong>SPPU-FE-2024-FPL-PYQ-01</strong> &bull; Complete 11-Page Vector Edition with Official Syllabus Diagrams</div>
+      <div class="btn-group">
+        <a href="/documents/SPPU_FE_2024_FPL_Most_Asked_PYQs.pdf" download class="btn btn-primary">
+          Download PDF Document (11 Pages)
+        </a>
+        <button onclick="window.print()" class="btn btn-secondary">
+          Print via Browser
+        </button>
+      </div>
+    </div>
+
+    <div class="rubric-box" style="background: #f0fdf4; border-color: #22c55e;">
+      <strong>Official SPPU Recommended Syllabus Literature (NEP-2020 ESC-105-COM):</strong> This master question bank strictly adheres to the canonical definitions, algorithms, and methods of the prescribed university textbooks: 
+      <em>1) Programming in ANSI C</em> by E. Balagurusamy (Tata McGraw-Hill), 
+      <em>2) Fundamentals of Programming Languages</em> by Nirali Prakashan (Dr. Nitin N. Sakhare, Dr. Hemantkumar B. Jadhav, SPPU 2024 Course), and 
+      <em>3) Schaum's Outline: Programming with C</em> by Byron S. Gottfried (McGraw-Hill).
+    </div>
+
+    <div class="rubric-box">
+      <strong>Examiner Weightage Note:</strong> Continuous Comprehensive Evaluation (CCE/In-Sem) comprises 30 Marks (Units I, II, III). End-Semester Examination (ESE) comprises 70 Marks (Units I through VI). Full 8-mark questions demand theoretical concept, formal syntax, complete ANSI C99 code, step-by-step dry-run tracing tables, and sample terminal I/O.
+    </div>
+
+    <!-- Unit 1 -->
+    <div class="unit-banner">
+      <span>Unit I: Program Planning & C Programming Fundamentals</span>
+      <span class="weight">In-Sem: 10M | End-Sem: 12M</span>
+    </div>
+
+    <div class="question-header">
+      <div class="question-title">
+        Q1. Define Algorithm and Flowchart. Draw standard flowchart symbols with specific operational roles. Develop a step-by-step algorithm and complete flowchart to determine all real and complex roots of a quadratic equation (ax&sup2; + bx + c = 0).
+        <span class="badge">SPPU Dec 2023, May 2024 &bull; 8 Marks</span>
+      </div>
+    </div>
+    <h3>1. Core Algorithmic Principles & ISO Geometric Symbols</h3>
+    <p>An <strong>algorithm</strong> is an ordered, deterministic, finite sequence of computational steps transforming formal input into unambiguous output. It must satisfy five fundamental criteria: <em>Input (&ge; 0), Output (&ge; 1), Finiteness, Definiteness, and Feasibility</em>.</p>
+
+    <table>
+      <thead>
+        <tr><th>Symbol Name</th><th>Geometric Contour</th><th>Operational Function</th><th>C Counterpart</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Terminal</td><td>Oval / Rounded Rectangle</td><td>Marks entry or exit boundary of routine</td><td><code>int main() / return 0;</code></td></tr>
+        <tr><td>Input / Output</td><td>Parallelogram</td><td>Reads data or writes computed results</td><td><code>scanf() / printf()</code></td></tr>
+        <tr><td>Process</td><td>Rectangle</td><td>Arithmetic calculation, variable initialization</td><td><code>D = b*b - 4*a*c;</code></td></tr>
+        <tr><td>Decision</td><td>Diamond (Rhombus)</td><td>Evaluates Boolean condition for True/False branches</td><td><code>if (D &gt;= 0)</code></td></tr>
+        <tr><td>Connector</td><td>Circle</td><td>Joins converging control flows on same page</td><td>Labels / goto anchors</td></tr>
+      </tbody>
+    </table>
+
+    <h3>2. Step-by-Step Quadratic Equation Algorithm</h3>
+    <ul>
+      <li><strong>Step 1:</strong> Start.</li>
+      <li><strong>Step 2:</strong> Read floating-point coefficients <code>a, b, c</code>.</li>
+      <li><strong>Step 3:</strong> If <code>a == 0</code>, print <em>"Degenerate equation: Linear (x = -c/b)"</em> and terminate.</li>
+      <li><strong>Step 4:</strong> Compute discriminant: <code>D = (b * b) - (4 * a * c)</code>.</li>
+      <li><strong>Step 5:</strong> <strong>If D &gt; 0:</strong> Roots are real and distinct. Compute <code>r1 = (-b + sqrt(D)) / (2*a)</code> and <code>r2 = (-b - sqrt(D)) / (2*a)</code>.</li>
+      <li><strong>Step 6:</strong> <strong>Else If D == 0:</strong> Roots are real and equal. Compute <code>r1 = r2 = -b / (2*a)</code>.</li>
+      <li><strong>Step 7:</strong> <strong>Else (D &lt; 0):</strong> Roots are complex conjugates. Compute <code>real = -b / (2*a)</code> and <code>imag = sqrt(-D) / (2*a)</code>. Display <code>real &plusmn; i*imag</code>.</li>
+      <li><strong>Step 8:</strong> Stop.</li>
+    </ul>
+
+    <div class="figure-box">
+      <div class="figure-caption">FIGURE 1.1: Official SPPU Canonical Flowchart &mdash; Real and Complex Roots of ax&sup2; + bx + c = 0 (E. Balagurusamy Ch. 2 / Nirali Prakashan)</div>
+      <div class="figure-svg-container">
+        <svg width="720" height="380" viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg" style="font-family: inherit;">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#334155" />
+            </marker>
+          </defs>
+          <rect x="310" y="15" width="100" height="28" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="360" y="33" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3a8a">START</text>
+          <line x1="360" y1="43" x2="360" y2="65" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+          <polygon points="280,95 450,95 430,67 260,67" fill="#fefce8" stroke="#ca8a04" stroke-width="1.5"/>
+          <text x="355" y="85" text-anchor="middle" font-size="11" font-weight="600" fill="#713f12">Read a, b, c</text>
+          <line x1="360" y1="95" x2="360" y2="117" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+          <rect x="260" y="117" width="200" height="28" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="360" y="135" text-anchor="middle" font-size="11" font-weight="600" fill="#14532d">D = (b * b) - (4 * a * c)</text>
+          <line x1="360" y1="145" x2="360" y2="168" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+          <polygon points="360,168 425,188 360,208 295,188" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
+          <text x="360" y="192" text-anchor="middle" font-size="11" font-weight="700" fill="#991b1b">D &gt; 0 ?</text>
+
+          <path d="M 295 188 L 130 188 L 130 220" fill="none" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <text x="210" y="182" text-anchor="middle" font-size="10" font-weight="700" fill="#16a34a">YES</text>
+          <rect x="35" y="220" width="190" height="34" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="130" y="235" text-anchor="middle" font-size="10" font-weight="600" fill="#1e3a8a">r1 = (-b + sqrt(D)) / (2*a)</text>
+          <text x="130" y="248" text-anchor="middle" font-size="10" font-weight="600" fill="#1e3a8a">r2 = (-b - sqrt(D)) / (2*a)</text>
+          <line x1="130" y1="254" x2="130" y2="270" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <polygon points="45,296 215,296 205,270 35,270" fill="#fefce8" stroke="#ca8a04" stroke-width="1.5"/>
+          <text x="125" y="287" text-anchor="middle" font-size="10" font-weight="600" fill="#713f12">Print Real Roots r1, r2</text>
+          <line x1="130" y1="296" x2="130" y2="330" stroke="#334155" stroke-width="1.5"/>
+
+          <line x1="360" y1="208" x2="360" y2="228" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <text x="375" y="220" text-anchor="start" font-size="10" font-weight="700" fill="#dc2626">NO</text>
+          <polygon points="360,228 420,246 360,264 300,246" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
+          <text x="360" y="250" text-anchor="middle" font-size="11" font-weight="700" fill="#991b1b">D == 0 ?</text>
+
+          <line x1="360" y1="264" x2="360" y2="280" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <text x="375" y="274" text-anchor="start" font-size="10" font-weight="700" fill="#16a34a">YES</text>
+          <rect x="280" y="280" width="160" height="24" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="360" y="296" text-anchor="middle" font-size="10" font-weight="600" fill="#1e3a8a">r1 = r2 = -b / (2*a)</text>
+          <line x1="360" y1="304" x2="360" y2="330" stroke="#334155" stroke-width="1.5"/>
+
+          <path d="M 420 246 L 590 246 L 590 260" fill="none" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <text x="500" y="240" text-anchor="middle" font-size="10" font-weight="700" fill="#dc2626">NO (D &lt; 0)</text>
+          <rect x="495" y="260" width="190" height="34" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="590" y="275" text-anchor="middle" font-size="10" font-weight="600" fill="#1e3a8a">real = -b / (2*a)</text>
+          <text x="590" y="288" text-anchor="middle" font-size="10" font-weight="600" fill="#1e3a8a">imag = sqrt(-D) / (2*a)</text>
+          <line x1="590" y1="294" x2="590" y2="304" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <polygon points="505,330 675,330 665,304 495,304" fill="#fefce8" stroke="#ca8a04" stroke-width="1.5"/>
+          <text x="585" y="321" text-anchor="middle" font-size="10" font-weight="600" fill="#713f12">Print real &plusmn; i * imag</text>
+          <line x1="590" y1="330" x2="590" y2="330" stroke="#334155" stroke-width="1.5"/>
+
+          <line x1="130" y1="330" x2="590" y2="330" stroke="#334155" stroke-width="1.5"/>
+          <line x1="360" y1="330" x2="360" y2="345" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <rect x="315" y="345" width="90" height="24" rx="12" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="360" y="361" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3a8a">STOP</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="question-header">
+      <div class="question-title">
+        Q2. Explain the four Storage Classes in C (auto, register, static, extern) across 5 parameters. Write verified C code demonstrating lifetime retention of static variables versus auto variables across function invocations.
+        <span class="badge">SPPU Dec 2022, May 2023, Dec 2024 &bull; 8 Marks</span>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Storage Class</th><th>Keyword</th><th>Memory Segment</th><th>Default Value</th><th>Scope</th><th>Lifetime</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Automatic</td><td><code>auto</code></td><td>Stack Frame</td><td>Garbage</td><td>Local block</td><td>Till block exit</td></tr>
+        <tr><td>Register</td><td><code>register</code></td><td>CPU Register / Stack</td><td>Garbage</td><td>Local block</td><td>Till block exit</td></tr>
+        <tr><td>Static</td><td><code>static</code></td><td>Data Segment (BSS)</td><td>Zero (0)</td><td>Local to block/file</td><td>Entire program run</td></tr>
+        <tr><td>External</td><td><code>extern</code></td><td>Data Segment</td><td>Zero (0)</td><td>Global across files</td><td>Entire program run</td></tr>
+      </tbody>
+    </table>
+
+    <div class="figure-box">
+      <div class="figure-caption">FIGURE 2.1: ANSI C Process Memory Segment Architecture &amp; Storage Mapping (E. Balagurusamy Ch. 9 / Nirali Prakashan)</div>
+      <div class="figure-svg-container">
+        <svg width="720" height="200" viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" style="font-family: inherit;">
+          <defs>
+            <marker id="arrow2" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#334155" />
+            </marker>
+          </defs>
+          <rect x="30" y="20" width="220" height="30" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="140" y="39" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3a8a">STACK FRAME (auto variables | LIFO)</text>
+          
+          <rect x="30" y="55" width="220" height="24" fill="#f8fafc" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="140" y="71" text-anchor="middle" font-size="10" fill="#64748b">HEAP (malloc / free dynamic memory)</text>
+
+          <rect x="30" y="84" width="220" height="30" fill="#fefce8" stroke="#ca8a04" stroke-width="1.5"/>
+          <text x="140" y="103" text-anchor="middle" font-size="11" font-weight="700" fill="#713f12">BSS SEGMENT (Uninitialized static/extern)</text>
+
+          <rect x="30" y="119" width="220" height="30" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="140" y="138" text-anchor="middle" font-size="11" font-weight="700" fill="#14532d">DATA SEGMENT (Initialized static/extern)</text>
+
+          <rect x="30" y="154" width="220" height="24" fill="#f1f5f9" stroke="#475569" stroke-width="1"/>
+          <text x="140" y="170" text-anchor="middle" font-size="10" fill="#334155">TEXT / CODE SEGMENT (Read-Only Machine Code)</text>
+
+          <rect x="290" y="20" width="400" height="30" rx="3" fill="#ffffff" stroke="#2563eb" stroke-width="1"/>
+          <text x="305" y="39" font-size="10.5" fill="#0f172a"><strong>auto:</strong> Allocated on Stack frame. Local scope. Destroyed on block exit. Default: Garbage.</text>
+          <line x1="290" y1="35" x2="255" y2="35" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+          <rect x="290" y="55" width="400" height="24" rx="3" fill="#ffffff" stroke="#94a3b8" stroke-width="1"/>
+          <text x="305" y="71" font-size="10.5" fill="#0f172a"><strong>register:</strong> Stored in CPU register (or stack fallback). Fast access, no &amp;address allowed.</text>
+
+          <rect x="290" y="84" width="400" height="30" rx="3" fill="#ffffff" stroke="#ca8a04" stroke-width="1"/>
+          <text x="305" y="103" font-size="10.5" fill="#0f172a"><strong>static:</strong> Retained in BSS/Data segment throughout execution. Initialized once. Default: 0.</text>
+          <line x1="290" y1="99" x2="255" y2="99" stroke="#ca8a04" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+          <rect x="290" y="119" width="400" height="30" rx="3" fill="#ffffff" stroke="#16a34a" stroke-width="1"/>
+          <text x="305" y="138" font-size="10.5" fill="#0f172a"><strong>extern:</strong> Stored in Data segment with external global linkage across all source files.</text>
+          <line x1="290" y1="134" x2="255" y2="134" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow2)"/>
+        </svg>
+      </div>
+    </div>
+
+    <pre><code>#include &lt;stdio.h&gt;
+
+void executeScopeDemo() {
+    auto int autoCounter = 1;     /* Re-created on stack upon each invocation */
+    static int staticCounter = 1; /* Initialized ONCE in data segment; value persists */
+    printf("autoCounter = %d | staticCounter = %d\n", autoCounter, staticCounter);
+    autoCounter++;
+    staticCounter++;
+}
+
+int main() {
+    printf("Call 1: "); executeScopeDemo(); /* autoCounter = 1 | staticCounter = 1 */
+    printf("Call 2: "); executeScopeDemo(); /* autoCounter = 1 | staticCounter = 2 */
+    printf("Call 3: "); executeScopeDemo(); /* autoCounter = 1 | staticCounter = 3 */
+    return 0;
+}</code></pre>
+
+    <!-- Unit 2 -->
+    <div class="unit-banner">
+      <span>Unit II: Operators and Expressions</span>
+      <span class="weight">In-Sem: 10M | End-Sem: 10M</span>
+    </div>
+
+    <div class="question-header">
+      <div class="question-title">
+        Q3. Explain Bitwise Operators in C with truth tables (&, |, ^, ~, &lt;&lt;, &gt;&gt;). For operands a = 12 and b = 25, compute: a & b, a | b, a ^ b, a &lt;&lt; 2, and b &gt;&gt; 2 with binary arithmetic steps.
+        <span class="badge">SPPU May 2019, Dec 2023, May 2024 &bull; 7 Marks</span>
+      </div>
+    </div>
+    <p>Operand binary representations in 8-bit notation: <code>a = 12 = 00001100_2</code>, <code>b = 25 = 00011001_2</code>.</p>
+    <ul>
+      <li><strong>Bitwise AND (a &amp; b):</strong> <code>00001100 &amp; 00011001 = 00001000_2 = 8_10</code></li>
+      <li><strong>Bitwise OR  (a | b):</strong> <code>00001100 | 00011001 = 00011101_2 = 29_10</code></li>
+      <li><strong>Bitwise XOR (a ^ b):</strong> <code>00001100 ^ 00011001 = 00010101_2 = 21_10</code></li>
+      <li><strong>Left Shift  (a &lt;&lt; 2):</strong> <code>00001100 &lt;&lt; 2 = 00110000_2 = 48_10</code> (Formula: <code>12 * 2^2 = 48</code>)</li>
+      <li><strong>Right Shift (b &gt;&gt; 2):</strong> <code>00011001 &gt;&gt; 2 = 00000110_2 = 6_10</code> (Formula: <code>floor(25 / 2^2) = 6</code>)</li>
+    </ul>
+
+    <!-- Unit 3 -->
+    <div class="unit-banner">
+      <span>Unit III: Control Structures (Branching &amp; Iteration)</span>
+      <span class="weight">In-Sem: 10M | End-Sem: 12M</span>
+    </div>
+
+    <div class="question-header">
+      <div class="question-title">
+        Q4. Compare while, do-while, and for loops across 5 structural criteria. Write a complete C program to check whether a given integer is an Armstrong Number with a step-by-step dry-run trace table for input 153.
+        <span class="badge">SPPU Dec 2019, May 2023, Dec 2024 &bull; 8 Marks</span>
+      </div>
+    </div>
+    <pre><code>#include &lt;stdio.h&gt;
+
+int main() {
+    int num, originalNum, remainder, accumulatedSum = 0;
+    printf("Enter a 3-digit positive integer: ");
+    if (scanf("%d", &num) != 1 || num &lt; 0) return 1;
+    
+    originalNum = num;
+    while (originalNum != 0) {
+        remainder = originalNum % 10;                         /* Extract terminal digit */
+        accumulatedSum += (remainder * remainder * remainder); /* Cube and accumulate */
+        originalNum /= 10;                                    /* Truncate terminal digit */
+    }
+    
+    if (accumulatedSum == num)
+        printf("%d is an Armstrong Number.\n", num);
+    else
+        printf("%d is NOT an Armstrong Number.\n", num);
+    return 0;
+}</code></pre>
+
+    <table>
+      <thead>
+        <tr><th>Iteration</th><th>originalNum (Start)</th><th>remainder (% 10)</th><th>Cube Computed</th><th>accumulatedSum</th><th>originalNum (End)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Iteration 1</td><td>153</td><td>3</td><td>3&sup3; = 27</td><td>0 + 27 = 27</td><td>15</td></tr>
+        <tr><td>Iteration 2</td><td>15</td><td>5</td><td>5&sup3; = 125</td><td>27 + 125 = 152</td><td>1</td></tr>
+        <tr><td>Iteration 3</td><td>1</td><td>1</td><td>1&sup3; = 1</td><td>152 + 1 = 153</td><td>0 (Terminates)</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Unit 4 -->
+    <div class="unit-banner">
+      <span>Unit IV: Arrays and String Manipulation</span>
+      <span class="weight">End-Sem Weightage: 14M</span>
+    </div>
+
+    <div class="question-header">
+      <div class="question-title">
+        Q5. Write a complete C program to perform Matrix Multiplication of two matrices A (r1 x c1) and B (r2 x c2). State the mandatory dimension compatibility condition and explain the triple-nested loop architecture.
+        <span class="badge">SPPU Dec 2022, May 2023, May 2024 &bull; 8 Marks</span>
+      </div>
+    </div>
+    <pre><code>#include &lt;stdio.h&gt;
+#define MAX 10
+
+int main() {
+    int a[MAX][MAX], b[MAX][MAX], result[MAX][MAX];
+    int r1, c1, r2, c2, i, j, k;
+    printf("Enter Matrix A rows and columns: "); scanf("%d %d", &r1, &c1);
+    printf("Enter Matrix B rows and columns: "); scanf("%d %d", &r2, &c2);
+    
+    /* Dimensional Compatibility Check */
+    if (c1 != r2) {
+        printf("Error: Matrix multiplication undefined (cols of A != rows of B).\n");
+        return 1;
+    }
+    
+    /* Input Matrix A and B omitted for brevity */
+    for (i = 0; i &lt; r1; i++) {
+        for (j = 0; j &lt; c2; j++) {
+            result[i][j] = 0; /* Reset dot product accumulator */
+            for (k = 0; k &lt; c1; k++) {
+                result[i][j] += a[i][k] * b[k][j];
+            }
+        }
+    }
+    return 0;
+}</code></pre>
+
+    <!-- Unit 5 -->
+    <div class="unit-banner">
+      <span>Unit V: Modular Programming &amp; User-Defined Functions</span>
+      <span class="weight">End-Sem Weightage: 14M</span>
+    </div>
+
+    <div class="question-header">
+      <div class="question-title">
+        Q6. Differentiate Call by Value versus Call by Reference (Address) with stack memory diagrams. Write two C functions demonstrating why variable swapping fails in Call by Value and succeeds in Call by Reference.
+        <span class="badge">SPPU Dec 2019, May 2022, May 2024 &bull; 8 Marks</span>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Evaluation Parameter</th><th>Call by Value</th><th>Call by Reference (Pointers)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Mechanism of Passage</td><td>Value copies of actual parameters passed</td><td>Memory addresses (&amp;a, &amp;b) passed</td></tr>
+        <tr><td>Caller Variable Modification</td><td>Changes in callee do NOT affect caller</td><td>Changes in callee directly modify caller memory</td></tr>
+        <tr><td>Stack Allocation</td><td>Allocates duplicate variables on stack</td><td>Operates via pointer indirection (*ptr)</td></tr>
+        <tr><td>Memory Overhead</td><td>Proportional to data structure size</td><td>Fixed 4 or 8 bytes per address pointer</td></tr>
+      </tbody>
+    </table>
+
+    <pre><code>#include &lt;stdio.h&gt;
+
+/* FAILS: Call by Value (Modifies local stack copies only) */
+void swapByValue(int x, int y) {
+    int temp = x; x = y; y = temp;
+}
+
+/* SUCCEEDS: Call by Reference (Dereferences caller memory addresses) */
+void swapByReference(int *x, int *y) {
+    int temp = *x; *x = *y; *y = temp;
+}
+
+int main() {
+    int a = 10, b = 20;
+    swapByValue(a, b);
+    printf("After Value: a = %d, b = %d (UNALTERED)\n", a, b);
+    swapByReference(&amp;a, &amp;b);
+    printf("After Reference: a = %d, b = %d (SWAPPED)\n", a, b);
+    return 0;
+}</code></pre>
+
+    <div class="figure-box">
+      <div class="figure-caption">FIGURE 5.1: Call by Value vs. Call by Reference Stack Memory Activation Frames (E. Balagurusamy Ch. 9 / Schaum's)</div>
+      <div class="figure-svg-container">
+        <svg width="720" height="210" viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg" style="font-family: inherit;">
+          <rect x="20" y="15" width="330" height="180" rx="4" fill="#fafafa" stroke="#cbd5e1" stroke-width="1"/>
+          <text x="35" y="35" font-size="11" font-weight="700" fill="#991b1b">A) CALL BY VALUE (Copying -- Fails to Swap)</text>
+          
+          <rect x="35" y="48" width="300" height="34" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+          <text x="50" y="70" font-size="10.5" font-weight="600" fill="#1e3a8a">main() Frame:  a = 10 [0x1000]  |  b = 20 [0x1004]</text>
+
+          <line x1="185" y1="82" x2="185" y2="105" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow2)"/>
+          <text x="195" y="97" font-size="9" fill="#64748b">copies values (10, 20)</text>
+
+          <rect x="35" y="105" width="300" height="34" fill="#fef2f2" stroke="#dc2626" stroke-width="1.2"/>
+          <text x="50" y="127" font-size="10.5" font-weight="600" fill="#991b1b">swapByValue():  x = 10 [0x2000]  |  y = 20 [0x2004]</text>
+
+          <text x="35" y="158" font-size="9.5" fill="#475569">* x and y swapped locally inside callee stack frame.</text>
+          <text x="35" y="172" font-size="9.5" font-weight="600" fill="#dc2626">* Callee destroyed on return. Caller a &amp; b remain 10, 20.</text>
+
+          <rect x="370" y="15" width="330" height="180" rx="4" fill="#fafafa" stroke="#cbd5e1" stroke-width="1"/>
+          <text x="385" y="35" font-size="11" font-weight="700" fill="#166534">B) CALL BY REFERENCE (Address Passing -- Succeeds)</text>
+          
+          <rect x="385" y="48" width="300" height="34" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+          <text x="400" y="70" font-size="10.5" font-weight="600" fill="#1e3a8a">main() Frame:  a = 10 [0x1000]  |  b = 20 [0x1004]</text>
+
+          <rect x="385" y="105" width="300" height="34" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.2"/>
+          <text x="400" y="127" font-size="10.5" font-weight="600" fill="#14532d">swapByRef():  *x = 0x1000  |  *y = 0x1004</text>
+
+          <line x1="450" y1="105" x2="450" y2="84" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow2)"/>
+          <line x1="580" y1="105" x2="580" y2="84" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+          <text x="385" y="158" font-size="9.5" fill="#475569">* Pointers dereference caller memory directly via *x and *y.</text>
+          <text x="385" y="172" font-size="9.5" font-weight="600" fill="#166534">* Values permanently swapped in caller: a = 20, b = 10.</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Unit 6 -->
+    <div class="unit-banner">
+      <span>Unit VI: Structures, Unions &amp; File Operations</span>
+      <span class="weight">End-Sem Weightage: 16M</span>
+    </div>
+
+    <div class="question-header">
+      <div class="question-title">
+        Q7. Differentiate Structure (struct) versus Union (union) across 6 parameters with memory allocation layout diagrams. Write a C program demonstrating data corruption in Union due to memory sharing.
+        <span class="badge">SPPU Dec 2020, May 2023, Dec 2024 &bull; 8 Marks</span>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Evaluation Criterion</th><th>Structure (struct)</th><th>Union (union)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Keyword</td><td><code>struct</code></td><td><code>union</code></td></tr>
+        <tr><td>Memory Allocation</td><td>Sum of sizes of all individual members (+ padding)</td><td>Size of the LARGEST member only</td></tr>
+        <tr><td>Starting Offset</td><td>Each member has a distinct memory address</td><td>All members share the exact same starting address</td></tr>
+        <tr><td>Concurrency</td><td>All members retain valid data simultaneously</td><td>Only ONE member can hold valid data at any instant</td></tr>
+        <tr><td>Data Overwrite Risk</td><td>Writing to one member has no effect on others</td><td>Writing to one member overwrites other members</td></tr>
+      </tbody>
+    </table>
+
+    <div class="figure-box">
+      <div class="figure-caption">FIGURE 6.1: Memory Allocation Architecture &mdash; struct vs. union (E. Balagurusamy Chapter 10)</div>
+      <div class="figure-svg-container">
+        <svg width="720" height="175" viewBox="0 0 720 175" xmlns="http://www.w3.org/2000/svg" style="font-family: inherit;">
+          <text x="30" y="22" font-size="11" font-weight="700" fill="#1e3a8a">A) struct Student { int roll_no; char name[20]; float marks; };  &rarr;  Total Allocated = 26 Bytes</text>
+          <rect x="30" y="32" width="70" height="28" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+          <text x="65" y="50" text-anchor="middle" font-size="10" font-weight="600" fill="#1e3a8a">roll_no (2B)</text>
+          <text x="65" y="70" text-anchor="middle" font-size="8.5" fill="#64748b">Bytes 0..1</text>
+
+          <rect x="100" y="32" width="440" height="28" fill="#fefce8" stroke="#ca8a04" stroke-width="1.2"/>
+          <text x="320" y="50" text-anchor="middle" font-size="10" font-weight="600" fill="#713f12">name[20] (20 Bytes Contiguous Buffer)</text>
+          <text x="320" y="70" text-anchor="middle" font-size="8.5" fill="#64748b">Bytes 2..21</text>
+
+          <rect x="540" y="32" width="150" height="28" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.2"/>
+          <text x="615" y="50" text-anchor="middle" font-size="10" font-weight="600" fill="#14532d">marks (4B)</text>
+          <text x="615" y="70" text-anchor="middle" font-size="8.5" fill="#64748b">Bytes 22..25</text>
+
+          <text x="30" y="105" font-size="11" font-weight="700" fill="#991b1b">B) union Data { int roll_no; char name[20]; float marks; };  &rarr;  Total Allocated = 20 Bytes (Largest Member)</text>
+          <rect x="30" y="115" width="440" height="32" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
+          <text x="250" y="135" text-anchor="middle" font-size="10.5" font-weight="700" fill="#991b1b">SHARED MEMORY BASE: 0x1000 (name[20] spans full 20 bytes)</text>
+
+          <rect x="30" y="152" width="70" height="12" fill="#eff6ff" stroke="#2563eb" stroke-width="1"/>
+          <text x="65" y="161" text-anchor="middle" font-size="7.5" fill="#1e3a8a">roll_no (0..1)</text>
+
+          <rect x="105" y="152" width="120" height="12" fill="#f0fdf4" stroke="#16a34a" stroke-width="1"/>
+          <text x="165" y="161" text-anchor="middle" font-size="7.5" fill="#14532d">marks (0..3 overlapping)</text>
+
+          <text x="240" y="162" font-size="8.5" fill="#64748b">&larr; Modifying marks overwrites bytes 0..3 of name[20]!</text>
+        </svg>
+      </div>
+    </div>
+
+    <pre><code>#include &lt;stdio.h&gt;
+
+struct Student {
+    int rollNo;
+    char name[32];
+    float marks[3];
+    float percentage;
+};
+
+int main() {
+    struct Student students[5]; int topperIndex = 0;
+    for (int i = 0; i &lt; 5; i++) {
+        printf("\nEnter Record for Student %d:\n", i + 1);
+        scanf("%d %s", &students[i].rollNo, students[i].name);
+        float total = 0;
+        for (int j = 0; j &lt; 3; j++) {
+            scanf("%f", &students[i].marks[j]);
+            total += students[i].marks[j];
+        }
+        students[i].percentage = total / 3.0f;
+        if (students[i].percentage &gt; students[topperIndex].percentage) topperIndex = i;
+    }
+    printf("\nTOPPER: Roll: %d, Name: %s, Percentage: %.2f%%\n",
+           students[topperIndex].rollNo, students[topperIndex].name, students[topperIndex].percentage);
+    return 0;
+}</code></pre>
+  </div>
+</body>
+</html>

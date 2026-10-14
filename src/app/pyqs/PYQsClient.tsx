@@ -15,6 +15,7 @@ import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
 import { useToast } from '@/components/ui/Toast';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { SignInModal } from '@/components/ui/SignInModal';
+import { RequestPaperModal } from '@/components/ui/RequestPaperModal';
 import { DocumentViewer } from '@/components/ui/DocumentViewer';
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
 import { 
@@ -70,6 +71,7 @@ function PYQsContent() {
   const { toast } = useToast();
   const [previewTarget, setPreviewTarget] = useState<PYQ | null>(null);
   const [downloadTarget, setDownloadTarget] = useState<PYQ | null>(null);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
   const handleDownload = (item: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
     if (!_user) {
@@ -354,9 +356,7 @@ function PYQsContent() {
               }}
               secondaryAction={{
                 label: 'Request this paper',
-                onClick: () => {
-                  toast.success('Request sent to admins! We will try to upload it soon.');
-                }
+                onClick: () => setIsRequestModalOpen(true)
               }}
             />
           ) : (
@@ -457,6 +457,14 @@ function PYQsContent() {
         onClose={() => setDownloadTarget(null)}
         title={downloadTarget?.name || downloadTarget?.title}
         redirectUrl="/pyqs"
+      />
+
+      {/* Request Paper Modal */}
+      <RequestPaperModal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        source="pyqs"
+        initialQuery={filters.search}
       />
     </div>
   );

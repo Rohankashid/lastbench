@@ -103,11 +103,11 @@ function FoundersClubBanner({ onSignUp }: { onSignUp: () => void }) {
             </div>
             <div className="flex items-center gap-2.5">
               <Zap className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-              <span>Priority notes request within 24hrs</span>
+              <span>Priority PYQ & question paper request within 24hrs</span>
             </div>
             <div className="flex items-center gap-2.5">
               <Sparkles className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-              <span>End-sem high-frequency question cheat sheet</span>
+              <span>High-frequency sure-shot exam question banks</span>
             </div>
           </div>
           <button

@@ -15,6 +15,7 @@ import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
 import { useToast } from '@/components/ui/Toast';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { SignInModal } from '@/components/ui/SignInModal';
+import { RequestPaperModal } from '@/components/ui/RequestPaperModal';
 import { DocumentViewer } from '@/components/ui/DocumentViewer';
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
 import { 
@@ -69,6 +70,7 @@ function NotesContent() {
   const { toast } = useToast();
   const [previewTarget, setPreviewTarget] = useState<Note | null>(null);
   const [downloadTarget, setDownloadTarget] = useState<Note | null>(null);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
   const handleDownload = (item: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
     if (!_user) {
@@ -353,9 +355,7 @@ function NotesContent() {
               }}
               secondaryAction={{
                 label: 'Request this paper',
-                onClick: () => {
-                  toast.success('Request sent to admins! We will try to upload it soon.');
-                }
+                onClick: () => setIsRequestModalOpen(true)
               }}
             />
           ) : (
@@ -456,6 +456,14 @@ function NotesContent() {
         onClose={() => setDownloadTarget(null)}
         title={downloadTarget?.name || downloadTarget?.title}
         redirectUrl="/notes"
+      />
+
+      {/* Request Paper Modal */}
+      <RequestPaperModal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        source="notes"
+        initialQuery={filters.search}
       />
     </div>
   );
