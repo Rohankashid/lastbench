@@ -8,8 +8,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
 import { useToast } from '@/components/ui/Toast';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { sendPasswordResetEmail } from 'firebase/auth';
+import { sendPasswordResetEmail, sendEmailVerification } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
+import { validateStudentEmail } from '@/lib/emailValidation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { 
   UNIVERSITY_SELECT_GROUPS, 
@@ -128,6 +129,7 @@ export function AuthModal() {
           email: user.email,
           name: user.displayName || 'Student',
           role: 'student',
+          emailVerified: user.emailVerified ?? true,
           ...(isFoundingMember && { isFoundingMember: true, adFree: true }),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -199,6 +201,12 @@ export function AuthModal() {
     e.preventDefault();
     setError('');
 
+    const emailValidation = validateStudentEmail(signUpData.email);
+    if (!emailValidation.isValid) {
+      setError(emailValidation.error || 'Please enter a valid email address.');
+      return;
+    }
+
     if (signUpData.password !== signUpData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -213,6 +221,13 @@ export function AuthModal() {
 
     try {
       const newUser = await signUp(signUpData.email.trim(), signUpData.password, signUpData.name.trim());
+
+      // Send Firebase verification email so the student can verify account ownership
+      try {
+        await sendEmailVerification(newUser);
+      } catch (verificationErr) {
+        console.warn('Could not send verification email:', verificationErr);
+      }
 
       // Check if this user qualifies as a founding member (first 100)
       let isFoundingMember = false;
@@ -234,12 +249,13 @@ export function AuthModal() {
         branch: signUpData.branch,
         studyingYear: signUpData.studyingYear,
         role: 'student',
+        emailVerified: false,
         ...(isFoundingMember && { isFoundingMember: true, adFree: true }),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
 
-      toast.success('Student account created successfully!');
+      toast.success('Account created! A verification link was sent to your email.');
       closeAuthModal();
       if (onSuccessCallback) {
         onSuccessCallback();

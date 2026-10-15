@@ -6,6 +6,9 @@ export interface UserProfile {
   university: string;
   studyingYear: string;
   role: 'student' | 'admin';
+  emailVerified?: boolean;
+  isFoundingMember?: boolean;
+  adFree?: boolean;
   createdAt: string;
   updatedAt: string;
 }
