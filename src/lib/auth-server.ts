@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { auth } from './firebaseAdmin';
-import { DecodedIdToken } from 'firebase-admin/auth';
+import type { DecodedIdToken } from 'firebase-admin/auth';
 
 export async function verifyAuth(req: NextRequest): Promise<DecodedIdToken | null> {
   try {

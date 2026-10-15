@@ -1,6 +1,6 @@
 import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
-import { getAuth, type Auth } from 'firebase-admin/auth';
+import type { Auth } from 'firebase-admin/auth';
 
 let adminApp: App | null = null;
 let firestoreInstance: Firestore | null = null;
@@ -63,6 +63,8 @@ export const auth: Auth = new Proxy({} as Auth, {
   get(_target, prop) {
     if (!authInstance) {
       getAdminApp();
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { getAuth } = require('firebase-admin/auth');
       authInstance = getAuth();
     }
     const value = (authInstance as any)[prop];
