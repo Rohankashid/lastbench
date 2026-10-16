@@ -11,7 +11,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const searchParams = await props.searchParams;
   const v = searchParams.v;
-  if (!v || typeof v !== 'string') {
+  if (!v || typeof v !== 'string' || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
     return {
       title: 'Study Notes Archive - LastBench',
       description: 'Explore comprehensive engineering study notes, lecture digests, and exam guides.',
