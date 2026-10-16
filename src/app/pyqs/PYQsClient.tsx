@@ -23,6 +23,7 @@ import {
   SEMESTERS,
   getBranchSearchPattern,
 } from '@/lib/constants/academic';
+import { toSearchQuery } from '@/lib/search';
 import { 
   FileText, 
   Search, 
@@ -169,7 +170,13 @@ function PYQsContent() {
     }
 
     if (debouncedSearch.trim()) {
-      q = q.textSearch('search_vector', debouncedSearch.trim(), { type: 'websearch' });
+      const formatted = toSearchQuery(debouncedSearch);
+      if (formatted) {
+        q = q.textSearch('search_vector', formatted);
+      } else {
+        const raw = debouncedSearch.trim();
+        q = q.or(`title.ilike.%${raw}%,name.ilike.%${raw}%,subject.ilike.%${raw}%`);
+      }
     }
 
     q = q.order('uploaded_at', { ascending: false });
