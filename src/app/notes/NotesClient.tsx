@@ -5,7 +5,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, where, getDocs, orderBy, limit, startAfter } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit, startAfter, doc, getDoc } from 'firebase/firestore';
 import { } from 'firebase/storage';
 import { Spinner }
 from '@/components/ui/Spinner';
@@ -82,16 +82,36 @@ function NotesContent() {
   };
 
   const shareOnWhatsApp = (item: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
-    const text = `Check out this ${item.title || item.name} on LastBench!`;
-    const url = `https://wa.me/?text=${encodeURIComponent(text + ' ' + window.location.href)}`;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.lastbench.online';
+    const noteUrl = `${origin}/notes?v=${item.id}`;
+    const text = `📚 Check out ${item.title || item.name} on LastBench - free preview, no login needed!\n${noteUrl}`;
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
+
   const [filters, setFilters] = useState({
-    search: searchParams.get('q') || '',
+    search: searchParams.get('q') || searchParams.get('search') || '',
     semester: searchParams.get('sem') || '',
     branch: searchParams.get('branch') || '',
     university: searchParams.get('uni') || ''
   });
+
+  // Keep filters in sync if user navigates with query parameters (e.g. from homepage search or trending chips)
+  useEffect(() => {
+    const qParam = searchParams.get('q') || searchParams.get('search');
+    const semParam = searchParams.get('sem');
+    const branchParam = searchParams.get('branch');
+    const uniParam = searchParams.get('uni');
+
+    setFilters(prev => ({
+      ...prev,
+      search: qParam !== null ? qParam : prev.search,
+      semester: semParam !== null ? semParam : prev.semester,
+      branch: branchParam !== null ? branchParam : prev.branch,
+      university: uniParam !== null ? uniParam : prev.university,
+    }));
+  }, [searchParams]);
+
   const fetchPage = async ({ pageParam = null }: { pageParam?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ }) => {
     const constraints: any[] /* eslint-disable-line @typescript-eslint/no-explicit-any */ = [
       where('category', '==', 'note')
@@ -107,7 +127,8 @@ function NotesContent() {
     if (filters.branch) constraints.push(where('branch', '==', filters.branch));
 
     if (pageParam) constraints.push(startAfter(pageParam));
-    constraints.push(limit(20));
+    // Fetch up to 100 items when searching so multi-field matching finds relevant notes instantly
+    constraints.push(limit(filters.search.trim() ? 100 : 20));
 
     try {
       const q = query(collection(db, 'materials'), ...constraints);
@@ -146,7 +167,60 @@ function NotesContent() {
     initialPageParam: null,
   });
 
-  const filteredNotes = data?.pages.flatMap(page => page.items) || [];
+  const rawNotes = data?.pages.flatMap(page => page.items) || [];
+
+  // Client-side multi-token fuzzy search across name, subject, university, branch, description
+  const filteredNotes = rawNotes.filter(note => {
+    if (!filters.search.trim()) return true;
+    const tokens = filters.search.toLowerCase().trim().split(/\s+/);
+    const searchableText = [
+      note.title || '',
+      note.name || '',
+      note.subject || '',
+      note.university || '',
+      note.branch || '',
+      note.description || '',
+      note.year || '',
+    ].join(' ').toLowerCase();
+
+    return tokens.every(token => searchableText.includes(token));
+  });
+
+  // Auto-open document preview if ?v=<id> is in URL
+  const viewId = searchParams.get('v');
+  useEffect(() => {
+    if (!viewId) return;
+
+    // 1. If document is in loaded items, open it
+    const existing = rawNotes.find(item => item.id === viewId);
+    if (existing) {
+      setPreviewTarget(existing);
+      return;
+    }
+
+    // 2. Otherwise fetch from Firestore by ID directly
+    let isMounted = true;
+    const fetchDoc = async () => {
+      try {
+        const docRef = doc(db, 'materials', viewId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && isMounted) {
+          const raw = docSnap.data();
+          delete raw.uploadedBy;
+          setPreviewTarget({ id: docSnap.id, ...raw } as Note);
+        }
+      } catch (err) {
+        console.error('Failed to load shared note:', err);
+      }
+    };
+
+    fetchDoc();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [viewId, rawNotes]);
+
   const loadingMore = isFetchingNextPage;
   const hasMore = hasNextPage;
 
@@ -374,7 +448,10 @@ function NotesContent() {
                   <div className="flex justify-between items-start mb-4">
                     <h3 
                       className="text-sm sm:text-base font-semibold text-zinc-900 leading-tight hover:underline cursor-pointer line-clamp-2 pr-4"
-                      onClick={() => setPreviewTarget(note)}
+                      onClick={() => {
+                        setPreviewTarget(note);
+                        window.history.replaceState({}, '', `${window.location.pathname}?v=${note.id}`);
+                      }}
                     >
                       {note.name || note.title}
                     </h3>
@@ -391,16 +468,22 @@ function NotesContent() {
 
                   <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4">
                     <div className="flex items-center gap-4">
-                      <button onClick={() => setPreviewTarget(note)} className="text-[11px] font-bold text-zinc-500 hover:text-zinc-900 uppercase tracking-wider transition-colors">
+                      <button 
+                        onClick={() => {
+                          setPreviewTarget(note);
+                          window.history.replaceState({}, '', `${window.location.pathname}?v=${note.id}`);
+                        }} 
+                        className="text-[11px] font-bold text-zinc-500 hover:text-zinc-900 uppercase tracking-wider transition-colors cursor-pointer"
+                      >
                         View
                       </button>
-                      <button onClick={() => handleDownload(note)} className="text-[11px] font-bold text-zinc-500 hover:text-zinc-900 uppercase tracking-wider transition-colors">
+                      <button onClick={() => handleDownload(note)} className="text-[11px] font-bold text-zinc-500 hover:text-zinc-900 uppercase tracking-wider transition-colors cursor-pointer">
                         Download
                       </button>
                     </div>
                     
                     <div className="flex items-center gap-3">
-                      <button onClick={() => shareOnWhatsApp(note)} className="text-zinc-400 hover:text-zinc-900 transition-colors">
+                      <button onClick={() => shareOnWhatsApp(note)} className="text-zinc-400 hover:text-zinc-900 transition-colors cursor-pointer" title="Share to WhatsApp">
                         <FaWhatsapp className="w-4 h-4" />
                       </button>
                       <BookmarkButton materialId={note.id} />
@@ -433,10 +516,7 @@ function NotesContent() {
           isOpen={!!previewTarget}
           onClose={() => {
             setPreviewTarget(null);
-            // Optionally clear the URL without refreshing
-            if (searchParams.has('v')) {
-              window.history.replaceState({}, '', window.location.pathname);
-            }
+            window.history.replaceState({}, '', window.location.pathname);
           }}
           title={previewTarget.name || previewTarget.title}
           fileUrl={previewTarget.fileUrl || previewTarget.downloadUrl}
