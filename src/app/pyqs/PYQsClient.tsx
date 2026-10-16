@@ -114,7 +114,8 @@ function PYQsContent() {
       return;
     }
     toast.success('Download starting...');
-    if (item.fileUrl) window.open(item.fileUrl, '_blank');
+    const targetUrl = item.fileUrl || item.downloadUrl;
+    if (targetUrl) window.open(targetUrl, '_blank');
   };
 
   const shareOnWhatsApp = (item: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
@@ -163,8 +164,9 @@ function PYQsContent() {
     if (filters.branch) constraints.push(where('branch', '==', filters.branch));
 
     if (pageParam) constraints.push(startAfter(pageParam));
-    // Fetch up to 100 items when searching so multi-field matching finds relevant PYQs instantly
-    constraints.push(limit(filters.search.trim() ? 100 : 20));
+    // Fetch up to 1000 items when searching so multi-field matching finds every relevant PYQ across the entire catalog
+    const fetchLimit = filters.search.trim() ? 1000 : 20;
+    constraints.push(limit(fetchLimit));
 
     try {
       const q = query(collection(db, 'materials'), ...constraints);
@@ -179,7 +181,7 @@ function PYQsContent() {
       return {
         items,
         lastVisible: querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null,
-        hasMore: querySnapshot.docs.length === 20,
+        hasMore: querySnapshot.docs.length === fetchLimit,
       };
     } catch (error: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
       if (error.message && error.message.includes('requires an index')) {
@@ -500,7 +502,7 @@ function PYQsContent() {
                     >
                       {pyq.name || pyq.title}
                     </h3>
-                    {pyq.examYear && <span className="text-xs font-mono text-zinc-500 shrink-0">{pyq.examYear}</span>}
+                    {(pyq.examYear || pyq.year) && <span className="text-xs font-mono text-zinc-500 shrink-0">{pyq.examYear || pyq.year}</span>}
                   </div>
                   
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] sm:text-[11px] text-zinc-500 uppercase tracking-wide font-medium mb-6">
