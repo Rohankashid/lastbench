@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, Suspense, useRef } from 'react';
+import React, { useEffect, useState, Suspense, useRef, useMemo } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase';
@@ -22,6 +22,8 @@ import {
   UNIVERSITY_SELECT_GROUPS, 
   BRANCH_SELECT_GROUPS, 
   SEMESTERS,
+  matchesUniversity,
+  matchesBranch,
 } from '@/lib/constants/academic';
 import { 
   BookOpen, 
@@ -71,6 +73,39 @@ function NotesContent() {
   const [previewTarget, setPreviewTarget] = useState<Note | null>(null);
   const [downloadTarget, setDownloadTarget] = useState<Note | null>(null);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const dismissedIdsRef = useRef<Set<string>>(new Set());
+  const openedIdRef = useRef<string | null>(null);
+
+  const updateViewUrl = (id?: string) => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (id) {
+      url.searchParams.set('v', id);
+    } else {
+      url.searchParams.delete('v');
+    }
+    window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+  };
+
+  const handleOpenPreview = (note: Note) => {
+    dismissedIdsRef.current.delete(note.id);
+    openedIdRef.current = note.id;
+    setPreviewTarget(note);
+    updateViewUrl(note.id);
+  };
+
+  const handleClosePreview = () => {
+    if (previewTarget) {
+      dismissedIdsRef.current.add(previewTarget.id);
+    }
+    const currentParam = searchParams.get('v');
+    if (currentParam) {
+      dismissedIdsRef.current.add(currentParam);
+    }
+    openedIdRef.current = null;
+    setPreviewTarget(null);
+    updateViewUrl();
+  };
 
   const handleDownload = (item: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
     if (!_user) {
@@ -167,10 +202,16 @@ function NotesContent() {
     initialPageParam: null,
   });
 
-  const rawNotes = data?.pages.flatMap(page => page.items) || [];
+  const rawNotes = useMemo(() => data?.pages.flatMap(page => page.items) || [], [data]);
 
   // Client-side multi-token fuzzy search across name, subject, university, branch, description
   const filteredNotes = rawNotes.filter(note => {
+    if (filters.university && !matchesUniversity(note.university, filters.university)) {
+      return false;
+    }
+    if (filters.branch && !matchesBranch(note.branch, filters.branch)) {
+      return false;
+    }
     if (!filters.search.trim()) return true;
     const tokens = filters.search.toLowerCase().trim().split(/\s+/);
     const searchableText = [
@@ -190,10 +231,13 @@ function NotesContent() {
   const viewId = searchParams.get('v');
   useEffect(() => {
     if (!viewId) return;
+    if (dismissedIdsRef.current.has(viewId)) return;
+    if (openedIdRef.current === viewId) return;
 
     // 1. If document is in loaded items, open it
     const existing = rawNotes.find(item => item.id === viewId);
     if (existing) {
+      openedIdRef.current = viewId;
       setPreviewTarget(existing);
       return;
     }
@@ -204,9 +248,10 @@ function NotesContent() {
       try {
         const docRef = doc(db, 'materials', viewId);
         const docSnap = await getDoc(docRef);
-        if (docSnap.exists() && isMounted) {
+        if (docSnap.exists() && isMounted && !dismissedIdsRef.current.has(viewId)) {
           const raw = docSnap.data();
           delete raw.uploadedBy;
+          openedIdRef.current = viewId;
           setPreviewTarget({ id: docSnap.id, ...raw } as Note);
         }
       } catch (err) {
@@ -448,10 +493,7 @@ function NotesContent() {
                   <div className="flex justify-between items-start mb-4">
                     <h3 
                       className="text-sm sm:text-base font-semibold text-zinc-900 leading-tight hover:underline cursor-pointer line-clamp-2 pr-4"
-                      onClick={() => {
-                        setPreviewTarget(note);
-                        window.history.replaceState({}, '', `${window.location.pathname}?v=${note.id}`);
-                      }}
+                      onClick={() => handleOpenPreview(note)}
                     >
                       {note.name || note.title}
                     </h3>
@@ -469,10 +511,7 @@ function NotesContent() {
                   <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4">
                     <div className="flex items-center gap-4">
                       <button 
-                        onClick={() => {
-                          setPreviewTarget(note);
-                          window.history.replaceState({}, '', `${window.location.pathname}?v=${note.id}`);
-                        }} 
+                        onClick={() => handleOpenPreview(note)} 
                         className="text-[11px] font-bold text-zinc-500 hover:text-zinc-900 uppercase tracking-wider transition-colors cursor-pointer"
                       >
                         View
@@ -514,10 +553,7 @@ function NotesContent() {
       {previewTarget && (
         <DocumentViewer
           isOpen={!!previewTarget}
-          onClose={() => {
-            setPreviewTarget(null);
-            window.history.replaceState({}, '', window.location.pathname);
-          }}
+          onClose={handleClosePreview}
           title={previewTarget.name || previewTarget.title}
           fileUrl={previewTarget.fileUrl || previewTarget.downloadUrl}
           materialId={previewTarget.id}
