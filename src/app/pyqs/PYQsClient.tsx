@@ -3,6 +3,7 @@
 import React, { useEffect, useState, Suspense, useRef, useMemo } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
+import { useDebounce } from '@/hooks/useDebounce';
 import { supabase } from '@/lib/supabase';
 import { useSearchParams } from 'next/navigation';
 import { Spinner }
@@ -146,6 +147,7 @@ function PYQsContent() {
     }));
   }, [searchParams]);
 
+  const debouncedSearch = useDebounce(filters.search, 300);
   const PAGE_SIZE = 20;
 
   const fetchPage = async ({ pageParam = 0 }: { pageParam?: number }) => {
@@ -166,8 +168,8 @@ function PYQsContent() {
       q = q.ilike('branch', `%${getBranchSearchPattern(filters.branch)}%`);
     }
 
-    if (filters.search.trim()) {
-      q = q.textSearch('search_vector', filters.search.trim(), { type: 'websearch' });
+    if (debouncedSearch.trim()) {
+      q = q.textSearch('search_vector', debouncedSearch.trim(), { type: 'websearch' });
     }
 
     q = q.order('uploaded_at', { ascending: false });
@@ -213,7 +215,7 @@ function PYQsContent() {
     isLoading: loading,
     isError,
   } = useInfiniteQuery({
-    queryKey: ['pyqs', filters.semester, filters.university, filters.branch, filters.search],
+    queryKey: ['pyqs', filters.semester, filters.university, filters.branch, debouncedSearch],
     queryFn: fetchPage,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialPageParam: 0,
