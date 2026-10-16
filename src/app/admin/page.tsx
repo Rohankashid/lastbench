@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { collection, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
 import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
@@ -346,6 +347,7 @@ export default function AdminPanel() {
       }
 
       await deleteDoc(doc(db, 'materials', itemToDelete.id));
+      await supabase.from('materials').delete().eq('id', itemToDelete.id);
       setMaterials(prev => prev.filter(m => m.id !== itemToDelete.id));
       toast.success('Material deleted permanently');
       setItemToDelete(null);

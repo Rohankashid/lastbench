@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import NotesClient from './NotesClient';
+import { supabase } from '@/lib/supabase';
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -18,13 +19,16 @@ export async function generateMetadata(
   }
 
   try {
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/materials/${v}`);
-    if (res.ok) {
-      const data = await res.json();
-      const title = data.fields?.name?.stringValue || data.fields?.title?.stringValue || 'Study Note';
-      const university = data.fields?.university?.stringValue || '';
-      const subject = data.fields?.subject?.stringValue || '';
+    const { data } = await supabase
+      .from('materials')
+      .select('title, name, subject, university')
+      .eq('id', v)
+      .single();
+
+    if (data) {
+      const title = data.title || data.name || 'Study Note';
+      const university = data.university || '';
+      const subject = data.subject || '';
       
       const fullTitle = `${title} ${subject ? '- ' + subject : ''} | LastBench`;
       const description = `Download ${title} ${university ? 'for ' + university : ''} completely free on LastBench.`;
@@ -35,10 +39,6 @@ export async function generateMetadata(
         openGraph: {
           title: fullTitle,
           description: description,
-          images: [
-            // If we had a dynamic OG generator we could use it here
-            // `/api/og?title=${encodeURIComponent(title)}&subject=${encodeURIComponent(subject)}&uni=${encodeURIComponent(university)}`
-          ],
         }
       };
     }

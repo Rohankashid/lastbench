@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import PYQsClient from './PYQsClient';
+import { supabase } from '@/lib/supabase';
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -18,14 +19,17 @@ export async function generateMetadata(
   }
 
   try {
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/materials/${v}`);
-    if (res.ok) {
-      const data = await res.json();
-      const title = data.fields?.name?.stringValue || data.fields?.title?.stringValue || 'PYQ Paper';
-      const university = data.fields?.university?.stringValue || '';
-      const subject = data.fields?.subject?.stringValue || '';
-      const year = data.fields?.year?.stringValue || '';
+    const { data } = await supabase
+      .from('materials')
+      .select('title, name, subject, university, year, exam_year')
+      .eq('id', v)
+      .single();
+
+    if (data) {
+      const title = data.title || data.name || 'PYQ Paper';
+      const university = data.university || '';
+      const subject = data.subject || '';
+      const year = data.exam_year || data.year || '';
       
       const fullTitle = `${title} ${year ? '(' + year + ')' : ''} | LastBench`;
       const description = `Download the ${subject} PYQ for ${university} completely free on LastBench.`;

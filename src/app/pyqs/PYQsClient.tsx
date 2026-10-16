@@ -3,10 +3,8 @@
 import React, { useEffect, useState, Suspense, useRef, useMemo } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import { db } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
 import { useSearchParams } from 'next/navigation';
-import { collection, query, where, getDocs, orderBy, limit, startAfter, doc, getDoc } from 'firebase/firestore';
-import { } from 'firebase/storage';
 import { Spinner }
 from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -22,8 +20,7 @@ import {
   UNIVERSITY_SELECT_GROUPS, 
   BRANCH_SELECT_GROUPS, 
   SEMESTERS,
-  matchesUniversity,
-  matchesBranch,
+  getBranchSearchPattern,
 } from '@/lib/constants/academic';
 import { 
   FileText, 
@@ -149,46 +146,63 @@ function PYQsContent() {
     }));
   }, [searchParams]);
 
-  const fetchPage = async ({ pageParam = null }: { pageParam?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ }) => {
-    const constraints: any[] /* eslint-disable-line @typescript-eslint/no-explicit-any */ = [
-      where('category', '==', 'pyq')
-    ];
-    
-    const hasFilters = Boolean(filters.semester || filters.university || filters.branch);
-    if (!hasFilters) {
-      constraints.push(orderBy('uploadedAt', 'desc'));
+  const PAGE_SIZE = 20;
+
+  const fetchPage = async ({ pageParam = 0 }: { pageParam?: number }) => {
+    let q = supabase
+      .from('materials')
+      .select('id, title, name, category, subject, university, university_short, branch, semester, year, exam_year, download_url, file_url, uploaded_by, uploaded_at')
+      .eq('category', 'pyq');
+
+    if (filters.semester) {
+      q = q.eq('semester', String(filters.semester));
     }
 
-    if (filters.semester) constraints.push(where('semester', '==', filters.semester));
-    if (filters.university) constraints.push(where('university', '==', filters.university));
-    if (filters.branch) constraints.push(where('branch', '==', filters.branch));
+    if (filters.university) {
+      q = q.or(`university.eq.${JSON.stringify(filters.university)},university_short.eq.${JSON.stringify(filters.university)}`);
+    }
 
-    if (pageParam) constraints.push(startAfter(pageParam));
-    // Fetch up to 1000 items when searching so multi-field matching finds every relevant PYQ across the entire catalog
-    const fetchLimit = filters.search.trim() ? 1000 : 20;
-    constraints.push(limit(fetchLimit));
+    if (filters.branch) {
+      q = q.ilike('branch', `%${getBranchSearchPattern(filters.branch)}%`);
+    }
 
-    try {
-      const q = query(collection(db, 'materials'), ...constraints);
-      const querySnapshot = await getDocs(q);
-      
-      const items = querySnapshot.docs.map(doc => {
-        const safeData = { ...doc.data() };
-        delete safeData.uploadedBy;
-        return { id: doc.id, ...safeData } as PYQ;
-      });
+    if (filters.search.trim()) {
+      q = q.textSearch('search_vector', filters.search.trim(), { type: 'websearch' });
+    }
 
-      return {
-        items,
-        lastVisible: querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null,
-        hasMore: querySnapshot.docs.length === fetchLimit,
-      };
-    } catch (error: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
-      if (error.message && error.message.includes('requires an index')) {
-         toast.error('Database index building. Please check browser console for link.');
-      }
+    q = q.order('uploaded_at', { ascending: false });
+
+    const from = pageParam * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    q = q.range(from, to);
+
+    const { data: rows, error } = await q;
+    if (error) {
+      console.error('Failed to fetch PYQs from Supabase:', error);
       throw error;
     }
+
+    const items: PYQ[] = (rows || []).map(row => ({
+      id: row.id,
+      title: row.title || row.name || '',
+      name: row.name || row.title || '',
+      description: '',
+      subject: row.subject || '',
+      semester: row.semester || '',
+      university: row.university || '',
+      branch: row.branch || '',
+      year: row.year || row.exam_year || '',
+      examYear: row.exam_year || row.year || '',
+      downloadUrl: row.download_url || row.file_url || '',
+      fileUrl: row.file_url || row.download_url || '',
+      uploadedBy: row.uploaded_by || '',
+      uploadedAt: row.uploaded_at || '',
+    }));
+
+    return {
+      items,
+      nextPage: items.length === PAGE_SIZE ? pageParam + 1 : undefined,
+    };
   };
 
   const {
@@ -201,36 +215,11 @@ function PYQsContent() {
   } = useInfiniteQuery({
     queryKey: ['pyqs', filters.semester, filters.university, filters.branch, filters.search],
     queryFn: fetchPage,
-    getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.lastVisible : undefined,
-    initialPageParam: null,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    initialPageParam: 0,
   });
 
-  const rawPYQs = useMemo(() => data?.pages.flatMap(page => page.items) || [], [data]);
-
-  // Client-side multi-token fuzzy search across name, subject, university, branch, examYear
-  const filteredPYQs = rawPYQs.filter(pyq => {
-    if (filters.university && !matchesUniversity(pyq.university, filters.university)) {
-      return false;
-    }
-    if (filters.branch && !matchesBranch(pyq.branch, filters.branch)) {
-      return false;
-    }
-    if (!filters.search.trim()) return true;
-    const tokens = filters.search.toLowerCase().trim().split(/\s+/);
-    const searchableText = [
-      pyq.title || '',
-      pyq.name || '',
-      pyq.subject || '',
-      pyq.university || '',
-      pyq.branch || '',
-      pyq.description || '',
-      pyq.examYear || '',
-      pyq.year || '',
-      pyq.semester || '',
-    ].join(' ').toLowerCase();
-
-    return tokens.every(token => searchableText.includes(token));
-  });
+  const filteredPYQs = useMemo(() => data?.pages.flatMap(page => page.items) || [], [data]);
 
   // Auto-open document preview if ?v=<id> is in URL
   const viewId = searchParams.get('v');
@@ -240,24 +229,41 @@ function PYQsContent() {
     if (openedIdRef.current === viewId) return;
 
     // 1. If document is in loaded items, open it
-    const existing = rawPYQs.find(item => item.id === viewId);
+    const existing = filteredPYQs.find(item => item.id === viewId);
     if (existing) {
       openedIdRef.current = viewId;
       setPreviewTarget(existing);
       return;
     }
 
-    // 2. Otherwise fetch from Firestore by ID directly
+    // 2. Otherwise fetch from Supabase by ID directly
     let isMounted = true;
     const fetchDoc = async () => {
       try {
-        const docRef = doc(db, 'materials', viewId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists() && isMounted && !dismissedIdsRef.current.has(viewId)) {
-          const raw = docSnap.data();
-          delete raw.uploadedBy;
+        const { data: docData, error } = await supabase
+          .from('materials')
+          .select('id, title, name, category, subject, university, university_short, branch, semester, year, exam_year, download_url, file_url, uploaded_by, uploaded_at')
+          .eq('id', viewId)
+          .single();
+
+        if (docData && isMounted && !dismissedIdsRef.current.has(viewId)) {
           openedIdRef.current = viewId;
-          setPreviewTarget({ id: docSnap.id, ...raw } as PYQ);
+          setPreviewTarget({
+            id: docData.id,
+            title: docData.title || docData.name || '',
+            name: docData.name || docData.title || '',
+            description: '',
+            subject: docData.subject || '',
+            semester: docData.semester || '',
+            university: docData.university || '',
+            branch: docData.branch || '',
+            year: docData.year || docData.exam_year || '',
+            examYear: docData.exam_year || docData.year || '',
+            downloadUrl: docData.download_url || docData.file_url || '',
+            fileUrl: docData.file_url || docData.download_url || '',
+            uploadedBy: docData.uploaded_by || '',
+            uploadedAt: docData.uploaded_at || '',
+          });
         }
       } catch (err) {
         console.error('Failed to load shared PYQ:', err);
@@ -269,7 +275,7 @@ function PYQsContent() {
     return () => {
       isMounted = false;
     };
-  }, [viewId, rawPYQs]);
+  }, [viewId, filteredPYQs]);
 
   const loadingMore = isFetchingNextPage;
   const hasMore = hasNextPage;

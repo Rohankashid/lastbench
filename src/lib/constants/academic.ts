@@ -252,3 +252,16 @@ export function matchesBranch(documentBranch: string | undefined, filterBranch: 
 
   return false;
 }
+
+/**
+ * Resolves a selected branch option into a clean search root pattern for database matching.
+ */
+export function getBranchSearchPattern(filterBranch: string): string {
+  if (!filterBranch) return '';
+  const trimmed = filterBranch.trim();
+  if (trimmed.startsWith('First Year') || trimmed.toLowerCase().startsWith('common')) {
+    return 'First Year';
+  }
+  const root = trimmed.split(/[\s&/(]+/)[0];
+  return root || trimmed;
+}
