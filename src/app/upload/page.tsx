@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
 import { FullPageSpinner, Spinner } from '@/components/ui/Spinner';
@@ -22,14 +21,16 @@ import {
   UploadCloud, 
   CheckCircle, 
   AlertCircle, 
-  Sparkles,
   Building2,
   GraduationCap,
   ChevronDown,
   ChevronUp,
   FileCheck,
-  RotateCcw
+  RotateCcw,
+  Sparkles,
+  ExternalLink
 } from 'lucide-react';
+import type { ExtractedMetadata } from '@/lib/ai/geminiExtractor';
 
 const CLIENT_VALIDATION = {
   maxSizeBytes: 100 * 1024 * 1024,
@@ -62,9 +63,12 @@ export default function UploadPage() {
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [lastUploadedName, setLastUploadedName] = useState('');
+  const [lastUploadedCategory, setLastUploadedCategory] = useState<'note' | 'pyq'>('note');
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const aiAbortControllerRef = useRef<AbortController | null>(null);
 
   // Form inputs
   const [category, setCategory] = useState<'note' | 'pyq'>('note');
@@ -87,41 +91,15 @@ export default function UploadPage() {
     size?: string;
   }>({ isValid: false });
 
-  // Load user academic profile to prefill target audience
+  // Auth gate only: fields will be populated strictly from the uploaded document
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
       router.replace('/?auth=login&redirect=%2Fupload');
       return;
     }
-
-    const loadProfile = async () => {
-      try {
-        const userSnap = await getDoc(doc(db, 'users', user.uid));
-        if (userSnap.exists()) {
-          const data = userSnap.data();
-          if (data.university) setUniversity(data.university);
-          if (data.branch) setBranch(data.branch.split(',').map((b: string) => b.trim()));
-          if (data.semester) setSemester(String(data.semester));
-          
-          // If university and branch exist, keep audience collapsed to save space
-          if (data.university && data.branch) {
-            setIsAudienceExpanded(false);
-          } else {
-            setIsAudienceExpanded(true);
-          }
-        } else {
-          setIsAudienceExpanded(true);
-        }
-      } catch (err) {
-        console.error('Failed to load profile for upload prefill:', err);
-        setIsAudienceExpanded(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProfile();
+    setLoading(false);
+    setIsAudienceExpanded(true);
   }, [user, authLoading, router]);
 
   // Derived professional document title
@@ -169,20 +147,100 @@ export default function UploadPage() {
     };
   };
 
+  // AI analysis state
+  const [analyzingFile, setAnalyzingFile] = useState(false);
+  const [aiAnalysisResult, setAiAnalysisResult] = useState<ExtractedMetadata | null>(null);
+
+  const analyzeWithAI = async (targetFile: File) => {
+    const isPdf = targetFile.type === 'application/pdf' || targetFile.name.toLowerCase().endsWith('.pdf');
+    const isImage = targetFile.type.startsWith('image/');
+    if (!isPdf && !isImage) return;
+    if (!user) return;
+
+    // Abort any prior in-flight AI analysis
+    aiAbortControllerRef.current?.abort();
+    const controller = new AbortController();
+    aiAbortControllerRef.current = controller;
+
+    try {
+      setAnalyzingFile(true);
+      const idToken = await user.getIdToken();
+      const fd = new FormData();
+      fd.append('file', targetFile);
+      fd.append('fileName', targetFile.name);
+
+      const res = await fetch('/api/ai/extract-metadata', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: fd,
+        signal: controller.signal,
+      });
+
+      if (res.status === 429) {
+        toast.error('AI rate limit reached (10/min). You can fill fields manually or wait a minute.');
+        return;
+      }
+
+      if (res.status === 401) {
+        toast.error('Please log in to use AI metadata detection');
+        return;
+      }
+
+      if (!res.ok) {
+        return;
+      }
+
+      const data = await res.json();
+      if (data?.metadata) {
+        const meta: ExtractedMetadata = data.metadata;
+        setAiAnalysisResult(meta);
+
+        if (meta.category) setCategory(meta.category);
+        if (meta.subject) setSubject(meta.subject);
+        if (meta.semester) setSemester(meta.semester);
+        if (meta.branch && meta.branch.length > 0) setBranch(meta.branch);
+        if (meta.university) setUniversity(meta.university);
+        if (meta.suggestedTitle) {
+          setCustomTitle(meta.suggestedTitle);
+          setIsEditingTitle(false);
+        }
+        if (meta.topic) {
+          setTopic(meta.topic);
+        } else if (meta.unitsCovered) {
+          setTopic(meta.unitsCovered);
+        }
+
+        toast.success(`Detected: ${meta.subject}`);
+      }
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
+      console.warn('Analysis error:', err);
+    } finally {
+      setAnalyzingFile(false);
+    }
+  };
+
   const handleFileChange = (pickedFile: File | null) => {
     if (!pickedFile) {
       setFile(null);
       setFileValidation({ isValid: false });
+      setAiAnalysisResult(null);
       return;
     }
+    setSuccess(false);
+    setError('');
     const validation = validateFile(pickedFile);
     setFileValidation(validation);
     setFile(pickedFile);
 
-    // If subject is empty, give a clean suggestion based on filename if helpful
-    if (!subject) {
+    // If file is valid, trigger intelligent AI extraction
+    if (validation.isValid) {
+      analyzeWithAI(pickedFile);
+    } else if (!subject) {
+      // Fallback: If subject is empty, give a clean suggestion based on filename if helpful
       const baseName = pickedFile.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
-      // If filename looks like a readable title (not random scanner garbage), set as topic or customTitle
       if (!/^(IMG|SCAN|DOC|WhatsApp|CamScanner|File)/i.test(baseName) && baseName.length > 3) {
         setTopic(baseName);
       }
@@ -317,22 +375,26 @@ export default function UploadPage() {
 
       toast.success('Document uploaded and indexed successfully!');
       setSuccess(true);
+      setLastUploadedName(finalName);
+      setLastUploadedCategory(category);
 
-      // Reset form
+      // Reset form fields so the user can immediately drop the next document
       setFile(null);
       setSubject('');
       setTopic('');
       setCustomTitle('');
       setIsEditingTitle(false);
+      setAiAnalysisResult(null);
       setFileValidation({ isValid: false });
+      setRightsConfirmed(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
 
-      setTimeout(() => {
-        setSuccess(false);
-        router.push(category === 'pyq' ? '/pyqs' : '/notes');
-      }, 1500);
+      // Reset Turnstile token so subsequent uploads can generate a new valid token
+      if (typeof window !== 'undefined' && (window as any).turnstile) {
+        (window as any).turnstile.reset();
+      }
 
     } catch (err) {
       console.error('Error uploading material:', err);
@@ -396,13 +458,39 @@ export default function UploadPage() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800"
+                className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start justify-between gap-3 text-emerald-900"
               >
-                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
-                <div className="text-xs">
-                  <p className="font-semibold text-emerald-950">Material uploaded successfully!</p>
-                  <p className="text-emerald-700 mt-0.5">Redirecting to repository archive...</p>
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="text-xs">
+                    <p className="font-semibold text-emerald-950">Document uploaded successfully!</p>
+                    {lastUploadedName && (
+                      <p className="text-emerald-800 font-medium mt-0.5 line-clamp-1">
+                        &ldquo;{lastUploadedName}&rdquo;
+                      </p>
+                    )}
+                    <p className="text-emerald-700 mt-1">
+                      Ready for your next document. Drop another file below to continue uploading, or{' '}
+                      <Link
+                        href={lastUploadedCategory === 'pyq' ? '/pyqs' : '/notes'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 font-semibold underline hover:text-emerald-950"
+                      >
+                        view in {lastUploadedCategory === 'pyq' ? 'PYQs archive' : 'notes archive'}
+                        <ExternalLink className="w-3 h-3 inline" />
+                      </Link>
+                    </p>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setSuccess(false)}
+                  className="text-emerald-500 hover:text-emerald-900 text-sm leading-none p-1 cursor-pointer"
+                  title="Dismiss notification"
+                >
+                  &times;
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -499,6 +587,29 @@ export default function UploadPage() {
                   className="hidden"
                 />
               </div>
+
+              {/* Analysis Status */}
+              {analyzingFile && (
+                <div className="mt-3 flex items-center gap-2 px-3.5 py-2 rounded-xl bg-zinc-100 text-zinc-700 text-xs font-medium">
+                  <Spinner size="sm" />
+                  <span>Analyzing document...</span>
+                </div>
+              )}
+
+              {aiAnalysisResult && (
+                <div className="mt-2.5 px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-200 text-xs flex items-center justify-between text-zinc-600">
+                  <span className="truncate">
+                    Detected: <strong className="text-zinc-900 font-medium">{aiAnalysisResult.subject}</strong> • Sem {aiAnalysisResult.semester} {aiAnalysisResult.unitsCovered ? `• ${aiAnalysisResult.unitsCovered}` : ''}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAiAnalysisResult(null)}
+                    className="text-zinc-400 hover:text-zinc-700 text-xs ml-2 shrink-0 cursor-pointer"
+                  >
+                    &times;
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* ========================================================================= */}

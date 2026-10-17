@@ -20,6 +20,11 @@ export const RATE_LIMIT_CONFIGS = {
     interval: 60 * 1000, 
     maxRequests: 10,
   },
+  aiExtract: {
+    uniqueTokenPerInterval: 1000,
+    interval: 60 * 1000,
+    maxRequests: 10,
+  },
  
   delete: {
     uniqueTokenPerInterval: 1000,
