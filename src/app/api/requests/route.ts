@@ -32,12 +32,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Description is required' }, { status: 400 });
     }
 
+    if (!userId || !userEmail || typeof userEmail !== 'string' || !userEmail.includes('@')) {
+      return NextResponse.json(
+        { error: 'Sign in with a verified account is required to submit a paper request' },
+        { status: 401 }
+      );
+    }
+
     const docRef = await db.collection('paper_requests').add({
       description: description.trim(),
       source: source || 'general',
-      userId: userId || null,
-      userEmail: userEmail || null,
-      userName: userName || null,
+      userId: userId.trim(),
+      userEmail: userEmail.trim().toLowerCase(),
+      userName: userName?.trim() || null,
       isFoundingMember: Boolean(isFoundingMember),
       status: 'pending',
       createdAt: new Date().toISOString(),

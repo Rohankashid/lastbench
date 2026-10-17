@@ -141,9 +141,10 @@ export function AuthModal() {
       }
 
       toast.success('Signed in successfully');
+      const cb = onSuccessCallback;
       closeAuthModal();
-      if (onSuccessCallback) {
-        onSuccessCallback();
+      if (cb) {
+        cb();
       } else if (redirectUrl) {
         router.push(redirectUrl);
       }
@@ -163,9 +164,10 @@ export function AuthModal() {
     try {
       await signIn(signInEmail.trim(), signInPassword);
       toast.success('Signed in successfully');
+      const cb = onSuccessCallback;
       closeAuthModal();
-      if (onSuccessCallback) {
-        onSuccessCallback();
+      if (cb) {
+        cb();
       } else if (redirectUrl) {
         router.push(redirectUrl);
       }
@@ -256,9 +258,10 @@ export function AuthModal() {
       });
 
       toast.success('Account created! A verification link was sent to your email.');
+      const cb = onSuccessCallback;
       closeAuthModal();
-      if (onSuccessCallback) {
-        onSuccessCallback();
+      if (cb) {
+        cb();
       } else if (redirectUrl) {
         router.push(redirectUrl);
       }

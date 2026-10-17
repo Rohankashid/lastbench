@@ -3,6 +3,7 @@
 import React, { useEffect, useState, Suspense, useRef, useMemo } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthModal } from '@/context/AuthModalContext';
 import { useDebounce } from '@/hooks/useDebounce';
 import { supabase } from '@/lib/supabase';
 import { useSearchParams } from 'next/navigation';
@@ -68,6 +69,7 @@ const itemVariants = {
 
 function PYQsContent({ initialPYQs = [] }: { initialPYQs?: PYQ[] }) {
   const { user: _user } = useAuth();
+  const { openAuthModal } = useAuthModal();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const [previewTarget, setPreviewTarget] = useState<PYQ | null>(null);
@@ -75,6 +77,17 @@ function PYQsContent({ initialPYQs = [] }: { initialPYQs?: PYQ[] }) {
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const dismissedIdsRef = useRef<Set<string>>(new Set());
   const openedIdRef = useRef<string | null>(null);
+
+  const handleRequestPaper = () => {
+    if (!_user) {
+      openAuthModal('signin', {
+        contextMessage: 'Sign in to request question papers & get notified when uploaded',
+        onSuccess: () => setIsRequestModalOpen(true),
+      });
+      return;
+    }
+    setIsRequestModalOpen(true);
+  };
 
   const updateViewUrl = (id?: string) => {
     if (typeof window === 'undefined') return;
@@ -503,7 +516,7 @@ function PYQsContent({ initialPYQs = [] }: { initialPYQs?: PYQ[] }) {
               }}
               secondaryAction={{
                 label: 'Request this paper',
-                onClick: () => setIsRequestModalOpen(true)
+                onClick: handleRequestPaper
               }}
             />
           ) : (

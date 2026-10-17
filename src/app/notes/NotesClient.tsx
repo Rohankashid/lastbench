@@ -3,6 +3,7 @@
 import React, { useEffect, useState, Suspense, useRef, useMemo } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthModal } from '@/context/AuthModalContext';
 import { useDebounce } from '@/hooks/useDebounce';
 import { supabase } from '@/lib/supabase';
 import { useSearchParams } from 'next/navigation';
@@ -67,6 +68,7 @@ const itemVariants = {
 
 function NotesContent({ initialNotes = [] }: { initialNotes?: Note[] }) {
   const { user: _user } = useAuth();
+  const { openAuthModal } = useAuthModal();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const [previewTarget, setPreviewTarget] = useState<Note | null>(null);
@@ -74,6 +76,17 @@ function NotesContent({ initialNotes = [] }: { initialNotes?: Note[] }) {
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const dismissedIdsRef = useRef<Set<string>>(new Set());
   const openedIdRef = useRef<string | null>(null);
+
+  const handleRequestNotes = () => {
+    if (!_user) {
+      openAuthModal('signin', {
+        contextMessage: 'Sign in to request study materials & get notified when uploaded',
+        onSuccess: () => setIsRequestModalOpen(true),
+      });
+      return;
+    }
+    setIsRequestModalOpen(true);
+  };
 
   const updateViewUrl = (id?: string) => {
     if (typeof window === 'undefined') return;
@@ -500,7 +513,7 @@ function NotesContent({ initialNotes = [] }: { initialNotes?: Note[] }) {
               }}
               secondaryAction={{
                 label: 'Request this paper',
-                onClick: () => setIsRequestModalOpen(true)
+                onClick: handleRequestNotes
               }}
             />
           ) : (

@@ -183,6 +183,29 @@ export default function AdminPanel() {
     fetchPaperRequests();
   };
 
+  const buildNotifyMailto = (req: PaperRequest) => {
+    if (!req.userEmail) return '#';
+    const subject = encodeURIComponent('Your requested study material is now live on LastBench!');
+    const studentName = req.userName || 'Student';
+    const targetPage = req.source === 'notes' ? 'https://www.lastbench.online/notes' : 'https://www.lastbench.online/pyqs';
+    const body = encodeURIComponent(
+`Hi ${studentName},
+
+Good news! The study material you requested on LastBench:
+"${req.description}"
+
+has now been uploaded and is ready for you to view and download:
+${targetPage}
+
+Thank you for contributing to the LastBench student community!
+
+Best regards,
+The LastBench Team
+https://www.lastbench.online`
+    );
+    return `mailto:${req.userEmail}?subject=${subject}&body=${body}`;
+  };
+
   const handleUpdateStatus = async (id: string, newStatus: 'pending' | 'in_progress' | 'fulfilled' | 'rejected') => {
     try {
       setUpdatingRequestId(id);
@@ -193,7 +216,14 @@ export default function AdminPanel() {
       });
       if (!res.ok) throw new Error('Failed to update status');
       setPaperRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
-      toast.success(`Request marked as ${newStatus.replace('_', ' ')}`);
+
+      const targetReq = paperRequests.find(r => r.id === id);
+      if (newStatus === 'fulfilled' && targetReq?.userEmail) {
+        window.open(buildNotifyMailto(targetReq), '_blank');
+        toast.success('Request marked fulfilled! Pre-filled notification email opened.');
+      } else {
+        toast.success(`Request marked as ${newStatus.replace('_', ' ')}`);
+      }
     } catch (err) {
       console.error('Error updating request status:', err);
       toast.error('Failed to update request status');
@@ -1133,26 +1163,50 @@ export default function AdminPanel() {
                     {/* Bottom row: Student details and Action buttons */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
                       {/* Student info */}
-                      <div className="flex items-center gap-3 text-xs text-zinc-600 flex-wrap">
-                        {req.userName && (
-                          <span className="font-semibold text-zinc-950">{req.userName}</span>
-                        )}
+                      <div className="flex items-center gap-2.5 text-xs text-zinc-600 flex-wrap">
                         {req.userEmail ? (
-                          <a
-                            href={`mailto:${req.userEmail}?subject=Regarding your question paper request on LastBench`}
-                            className="inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900 underline text-[11px]"
-                            title="Send email to student"
-                          >
-                            <Mail className="w-3 h-3 text-zinc-400" />
-                            <span>{req.userEmail}</span>
-                          </a>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <div className="w-5 h-5 rounded-full bg-zinc-900 text-white font-semibold flex items-center justify-center text-[10px]">
+                              {(req.userName || req.userEmail)[0].toUpperCase()}
+                            </div>
+                            <span className="font-semibold text-zinc-950">
+                              {req.userName || 'Student'}
+                            </span>
+                            <span className="text-zinc-300">&bull;</span>
+                            <a
+                              href={`mailto:${req.userEmail}?subject=Regarding your study material request on LastBench`}
+                              className="font-mono text-zinc-600 hover:text-zinc-950 underline text-[11px]"
+                              title="Email student"
+                            >
+                              {req.userEmail}
+                            </a>
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded">
+                              Verified
+                            </span>
+                          </div>
                         ) : (
-                          <span className="text-zinc-400 text-[11px]">Anonymous Student</span>
+                          <span className="text-zinc-400 text-[11px] italic">
+                            Anonymous Student (No email registered)
+                          </span>
                         )}
                       </div>
 
                       {/* Action buttons */}
-                      <div className="flex items-center gap-2 self-end sm:self-center">
+                      <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
+                        {/* 1-Click Notify Student Button */}
+                        {req.userEmail && (
+                          <a
+                            href={buildNotifyMailto(req)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-2xs hover:shadow-xs cursor-pointer"
+                            title="Send pre-filled fulfillment notification email to student"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            <span>Notify Student</span>
+                          </a>
+                        )}
+
                         {/* Quick fulfill via upload */}
                         {req.status !== 'fulfilled' && (
                           <button
