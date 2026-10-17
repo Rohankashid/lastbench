@@ -198,11 +198,25 @@ Respond ONLY with valid JSON following this JSON Schema:
     },
   };
 
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(requestBody),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+  let res: Response;
+  try {
+    res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    });
+  } catch (fetchErr: any) {
+    if (fetchErr?.name === 'AbortError') {
+      throw new Error('Gemini API call timed out after 25 seconds');
+    }
+    throw fetchErr;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!res.ok) {
     const errorText = await res.text();
@@ -224,9 +238,14 @@ Respond ONLY with valid JSON following this JSON Schema:
     // Filename-based unit detection fallback/reinforcement
     let detectedUnit = parsed.unitsCovered?.trim() || '';
     if (fileName) {
-      const match = fileName.match(/(?:unit|u|chapter|ch)\s*([0-9]+(?:\s*(?:&|and|-)\s*[0-9]+)?)/i);
-      if (match && match[1]) {
-        const fileUnit = `Unit ${match[1].replace(/\s+/g, ' ').toUpperCase()}`;
+      let unitNum = null;
+      const m1 = fileName.match(/(?:unit|u|chapter|ch)\s*([0-9]+(?:\s*(?:&|and|-)\s*[0-9]+)?)/i);
+      if (m1 && m1[1]) unitNum = m1[1];
+      const m2 = fileName.match(/([0-9]+(?:\s*(?:&|and|-)\s*[0-9]+)?)\s*(?:unit|units|ch|chapter)/i);
+      if (m2 && m2[1]) unitNum = m2[1];
+
+      if (unitNum) {
+        const fileUnit = `Unit ${unitNum.replace(/\s+/g, ' ').toUpperCase()}`;
         if (!detectedUnit || detectedUnit.toLowerCase().includes('complete') || detectedUnit.toLowerCase().includes('all')) {
           detectedUnit = fileUnit;
         }

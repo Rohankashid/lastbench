@@ -43,11 +43,20 @@ async function extractMetadataHandler(req: NextRequest) {
     const fileArrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(fileArrayBuffer);
 
-    let base64Data = fileBuffer.toString('base64');
-    let originalPageCount = 1;
-    let sampledPageIndices: number[] = [1];
+    const originalPageCountParam = formData.get('originalPageCount');
+    const sampledPageIndicesParam = formData.get('sampledPageIndices');
 
-    if (isPdf) {
+    let originalPageCount = originalPageCountParam ? parseInt(originalPageCountParam as string, 10) : 1;
+    let sampledPageIndices: number[] = [1];
+    if (sampledPageIndicesParam) {
+      try {
+        sampledPageIndices = JSON.parse(sampledPageIndicesParam as string);
+      } catch {}
+    }
+
+    let base64Data = fileBuffer.toString('base64');
+
+    if (isPdf && !originalPageCountParam) {
       const sampleResult = await samplePdfMilestones(fileBuffer, 6);
       base64Data = sampleResult.sampledBuffer.toString('base64');
       originalPageCount = sampleResult.originalPageCount;

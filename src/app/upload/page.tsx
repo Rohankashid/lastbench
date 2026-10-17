@@ -31,6 +31,43 @@ import {
   ExternalLink
 } from 'lucide-react';
 import type { ExtractedMetadata } from '@/lib/ai/geminiExtractor';
+import { samplePdfMilestones } from '@/lib/ai/pdfSampler';
+
+async function compressImageForAI(file: File, maxDim = 1600): Promise<Blob> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return resolve(file);
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => resolve(blob || file),
+        'image/jpeg',
+        0.85
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file);
+    };
+    img.src = url;
+  });
+}
 
 const CLIENT_VALIDATION = {
   maxSizeBytes: 100 * 1024 * 1024,
@@ -69,6 +106,71 @@ export default function UploadPage() {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const aiAbortControllerRef = useRef<AbortController | null>(null);
+
+  // Turnstile state & explicit rendering refs
+  const [turnstileToken, setTurnstileToken] = useState<string>('');
+  const turnstileContainerRef = useRef<HTMLDivElement>(null);
+  const turnstileWidgetIdRef = useRef<string | null>(null);
+
+  const renderTurnstile = () => {
+    if (
+      typeof window !== 'undefined' &&
+      (window as any).turnstile &&
+      turnstileContainerRef.current &&
+      !turnstileWidgetIdRef.current
+    ) {
+      try {
+        turnstileContainerRef.current.innerHTML = '';
+        turnstileWidgetIdRef.current = (window as any).turnstile.render(
+          turnstileContainerRef.current,
+          {
+            sitekey: '0x4AAAAAAFQmDUhQSI4cvWsu',
+            action: 'upload_material',
+            theme: 'light',
+            callback: (token: string) => {
+              setTurnstileToken(token);
+            },
+            'expired-callback': () => {
+              setTurnstileToken('');
+            },
+            'error-callback': () => {
+              setTurnstileToken('');
+            },
+          }
+        );
+      } catch (err) {
+        console.warn('Turnstile explicit render error:', err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).turnstile) {
+      renderTurnstile();
+    } else {
+      const timer = setInterval(() => {
+        if (typeof window !== 'undefined' && (window as any).turnstile) {
+          clearInterval(timer);
+          renderTurnstile();
+        }
+      }, 250);
+      return () => clearInterval(timer);
+    }
+
+    return () => {
+      aiAbortControllerRef.current?.abort();
+      if (
+        typeof window !== 'undefined' &&
+        (window as any).turnstile &&
+        turnstileWidgetIdRef.current
+      ) {
+        try {
+          (window as any).turnstile.remove(turnstileWidgetIdRef.current);
+        } catch {}
+        turnstileWidgetIdRef.current = null;
+      }
+    };
+  }, []);
 
   // Form inputs
   const [category, setCategory] = useState<'note' | 'pyq'>('note');
@@ -150,6 +252,7 @@ export default function UploadPage() {
   // AI analysis state
   const [analyzingFile, setAnalyzingFile] = useState(false);
   const [aiAnalysisResult, setAiAnalysisResult] = useState<ExtractedMetadata | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const analyzeWithAI = async (targetFile: File) => {
     const isPdf = targetFile.type === 'application/pdf' || targetFile.name.toLowerCase().endsWith('.pdf');
@@ -157,17 +260,57 @@ export default function UploadPage() {
     if (!isPdf && !isImage) return;
     if (!user) return;
 
-    // Abort any prior in-flight AI analysis
+    // Reset previous AI feedback and cancel any in-flight request
+    setAiError(null);
+    setAiAnalysisResult(null);
     aiAbortControllerRef.current?.abort();
     const controller = new AbortController();
     aiAbortControllerRef.current = controller;
 
     try {
       setAnalyzingFile(true);
+
+      let payloadBlob: Blob = targetFile;
+      let originalPageCount: number | undefined;
+      let sampledPageIndices: number[] | undefined;
+
+      // 1. Client-Side PDF Milestone Sampling:
+      // Slices 6 milestone pages directly in the browser.
+      // A 40MB PDF drops to ~300KB before transmission, preventing Vercel 4.5MB payload limit errors.
+      if (isPdf) {
+        try {
+          const arrayBuffer = await targetFile.arrayBuffer();
+          const sampleResult = await samplePdfMilestones(arrayBuffer, 6);
+          payloadBlob = new Blob([sampleResult.sampledBytes], { type: 'application/pdf' });
+          originalPageCount = sampleResult.originalPageCount;
+          sampledPageIndices = sampleResult.sampledPageIndices;
+        } catch (sampleErr) {
+          console.warn('Client-side PDF sampling failed:', sampleErr);
+          if (targetFile.size > 4 * 1024 * 1024) {
+            setAiError('Document is too large for automatic AI scan. Please enter details manually.');
+            return;
+          }
+        }
+      } else if (isImage && targetFile.size > 2 * 1024 * 1024) {
+        payloadBlob = await compressImageForAI(targetFile, 1600);
+      }
+
+      // Safeguard against payload limit
+      if (payloadBlob.size > 4.2 * 1024 * 1024) {
+        setAiError('Document payload is too large for AI scan. Please fill in details manually.');
+        return;
+      }
+
       const idToken = await user.getIdToken();
       const fd = new FormData();
-      fd.append('file', targetFile);
+      fd.append('file', payloadBlob, targetFile.name);
       fd.append('fileName', targetFile.name);
+      if (originalPageCount) {
+        fd.append('originalPageCount', String(originalPageCount));
+      }
+      if (sampledPageIndices) {
+        fd.append('sampledPageIndices', JSON.stringify(sampledPageIndices));
+      }
 
       const res = await fetch('/api/ai/extract-metadata', {
         method: 'POST',
@@ -178,17 +321,20 @@ export default function UploadPage() {
         signal: controller.signal,
       });
 
-      if (res.status === 429) {
-        toast.error('AI rate limit reached (10/min). You can fill fields manually or wait a minute.');
-        return;
-      }
-
-      if (res.status === 401) {
-        toast.error('Please log in to use AI metadata detection');
-        return;
-      }
-
       if (!res.ok) {
+        let errorMsg = 'AI auto-fill unavailable';
+        try {
+          const errData = await res.json();
+          if (errData?.message) errorMsg = errData.message;
+        } catch {
+          if (res.status === 413) {
+            errorMsg = 'Document too large for AI auto-scan';
+          } else if (res.status === 429) {
+            errorMsg = 'AI rate limit reached (10/min)';
+          }
+        }
+        setAiError(`${errorMsg}. Please enter details manually.`);
+        toast.error(`${errorMsg}. Please enter details manually.`);
         return;
       }
 
@@ -196,6 +342,7 @@ export default function UploadPage() {
       if (data?.metadata) {
         const meta: ExtractedMetadata = data.metadata;
         setAiAnalysisResult(meta);
+        setAiError(null);
 
         if (meta.category) setCategory(meta.category);
         if (meta.subject) setSubject(meta.subject);
@@ -217,6 +364,8 @@ export default function UploadPage() {
     } catch (err: any) {
       if (err?.name === 'AbortError') return;
       console.warn('Analysis error:', err);
+      setAiError('Could not auto-detect document details. Please enter them manually.');
+      toast.error('AI auto-fill unavailable. Please enter details manually.');
     } finally {
       setAnalyzingFile(false);
     }
@@ -227,10 +376,12 @@ export default function UploadPage() {
       setFile(null);
       setFileValidation({ isValid: false });
       setAiAnalysisResult(null);
+      setAiError(null);
       return;
     }
     setSuccess(false);
     setError('');
+    setAiError(null);
     const validation = validateFile(pickedFile);
     setFileValidation(validation);
     setFile(pickedFile);
@@ -294,7 +445,9 @@ export default function UploadPage() {
     }
 
     const form = e.target as HTMLFormElement;
-    const turnstileResponse = form.querySelector<HTMLInputElement>('[name="cf-turnstile-response"]')?.value;
+    const turnstileResponse =
+      turnstileToken ||
+      form.querySelector<HTMLInputElement>('[name="cf-turnstile-response"]')?.value;
 
     if (!turnstileResponse) {
       setError('Please complete the security check to upload.');
@@ -392,8 +545,13 @@ export default function UploadPage() {
       }
 
       // Reset Turnstile token so subsequent uploads can generate a new valid token
+      setTurnstileToken('');
       if (typeof window !== 'undefined' && (window as any).turnstile) {
-        (window as any).turnstile.reset();
+        if (turnstileWidgetIdRef.current) {
+          (window as any).turnstile.reset(turnstileWidgetIdRef.current);
+        } else {
+          (window as any).turnstile.reset();
+        }
       }
 
     } catch (err) {
@@ -402,10 +560,13 @@ export default function UploadPage() {
       setError(msg);
       toast.error(msg);
       // Reset Turnstile token on failure so they can try again
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setTurnstileToken('');
       if (typeof window !== 'undefined' && (window as any).turnstile) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).turnstile.reset();
+        if (turnstileWidgetIdRef.current) {
+          (window as any).turnstile.reset(turnstileWidgetIdRef.current);
+        } else {
+          (window as any).turnstile.reset();
+        }
       }
     } finally {
       setUploading(false);
@@ -527,10 +688,10 @@ export default function UploadPage() {
                 className={`p-6 sm:p-8 rounded-2xl border-2 border-dashed transition-all cursor-pointer text-center ${
                   isDragOver
                     ? 'border-zinc-950 bg-zinc-100/60'
-                    : file && fileValidation.isValid
-                      ? 'border-emerald-400 bg-emerald-50/40'
-                      : file && !fileValidation.isValid
-                        ? 'border-rose-400 bg-rose-50/40'
+                    : file && !fileValidation.isValid
+                      ? 'border-rose-400 bg-rose-50/40'
+                      : file
+                        ? 'border-zinc-300 bg-zinc-50/60'
                         : 'border-zinc-200 hover:border-zinc-400 bg-zinc-50/50 hover:bg-zinc-50'
                 }`}
               >
@@ -538,7 +699,7 @@ export default function UploadPage() {
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-3.5 rounded-xl border border-zinc-200">
                     <div className="flex items-center gap-3 truncate text-left w-full sm:w-auto">
                       <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-800 shrink-0">
-                        <FileCheck className="w-5 h-5 text-emerald-600" />
+                        <FileText className="w-5 h-5 text-zinc-700" />
                       </div>
                       <div className="truncate">
                         <p className="text-xs font-semibold text-zinc-950 truncate max-w-sm">
@@ -556,6 +717,8 @@ export default function UploadPage() {
                         e.stopPropagation();
                         setFile(null);
                         setFileValidation({ isValid: false });
+                        setAiAnalysisResult(null);
+                        setAiError(null);
                         if (fileInputRef.current) fileInputRef.current.value = '';
                       }}
                       className="px-3 py-1.5 text-xs text-zinc-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-zinc-200"
@@ -593,6 +756,22 @@ export default function UploadPage() {
                 <div className="mt-3 flex items-center gap-2 px-3.5 py-2 rounded-xl bg-zinc-100 text-zinc-700 text-xs font-medium">
                   <Spinner size="sm" />
                   <span>Analyzing document...</span>
+                </div>
+              )}
+
+              {aiError && (
+                <div className="mt-2.5 px-3.5 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs flex items-center justify-between text-amber-900">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>{aiError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAiError(null)}
+                    className="text-amber-500 hover:text-amber-800 text-xs ml-2 shrink-0 cursor-pointer"
+                  >
+                    &times;
+                  </button>
                 </div>
               )}
 
@@ -873,12 +1052,15 @@ export default function UploadPage() {
             {/* TURNSTILE WIDGET                                                          */}
             {/* ========================================================================= */}
             <div className="pt-2 flex justify-end">
-              <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" />
+              <Script
+                src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+                strategy="afterInteractive"
+                onLoad={renderTurnstile}
+              />
               <div 
-                className="cf-turnstile" 
-                data-sitekey="0x4AAAAAAFQmDUhQSI4cvWsu" 
-                data-action="upload_material"
-              ></div>
+                ref={turnstileContainerRef} 
+                className="min-h-[65px] min-w-[300px] flex items-center justify-end"
+              />
             </div>
 
             {/* ========================================================================= */}
