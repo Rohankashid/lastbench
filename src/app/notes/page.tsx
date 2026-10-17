@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import NotesClient from './NotesClient';
+import NotesClient, { Note } from './NotesClient';
 import { supabase } from '@/lib/supabase';
 
 type Props = {
@@ -14,7 +14,7 @@ export async function generateMetadata(
   if (!v || typeof v !== 'string' || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
     return {
       title: 'Study Notes Archive - LastBench',
-      description: 'Explore comprehensive engineering study notes, lecture digests, and exam guides.',
+      description: 'Explore comprehensive engineering study notes, lecture digests, and exam guides across universities and branches.',
     };
   }
 
@@ -51,6 +51,39 @@ export async function generateMetadata(
   };
 }
 
-export default function Page() {
-  return <NotesClient />;
+export default async function Page() {
+  let initialNotes: Note[] = [];
+
+  try {
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      const { data, error } = await supabase
+        .from('materials')
+        .select('id, title, name, category, subject, university, university_short, branch, semester, year, download_url, file_url, uploaded_by, uploaded_at')
+        .eq('category', 'note')
+        .order('uploaded_at', { ascending: false })
+        .range(0, 19);
+
+      if (!error && data) {
+        initialNotes = data.map(row => ({
+          id: row.id,
+          title: row.title || row.name || '',
+          name: row.name || row.title || '',
+          description: '',
+          subject: row.subject || '',
+          semester: row.semester || '',
+          university: row.university || '',
+          branch: row.branch || '',
+          year: row.year || '',
+          downloadUrl: row.download_url || row.file_url || '',
+          fileUrl: row.file_url || row.download_url || '',
+          uploadedBy: row.uploaded_by || '',
+          uploadedAt: row.uploaded_at || '',
+        }));
+      }
+    }
+  } catch (err) {
+    console.error('Failed to pre-fetch notes on server:', err);
+  }
+
+  return <NotesClient initialNotes={initialNotes} />;
 }

@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
-interface Note {
+export interface Note {
   id: string;
   title: string;
   name: string; // Material name
@@ -65,7 +65,7 @@ const itemVariants = {
   show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } }
 };
 
-function NotesContent() {
+function NotesContent({ initialNotes = [] }: { initialNotes?: Note[] }) {
   const { user: _user } = useAuth();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -212,6 +212,8 @@ function NotesContent() {
     };
   };
 
+  const isDefaultFilters = !filters.semester && !filters.university && !filters.branch && !debouncedSearch.trim();
+
   const {
     data,
     fetchNextPage,
@@ -224,6 +226,13 @@ function NotesContent() {
     queryFn: fetchPage,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialPageParam: 0,
+    initialData: (isDefaultFilters && initialNotes.length > 0) ? {
+      pages: [{
+        items: initialNotes,
+        nextPage: initialNotes.length >= PAGE_SIZE ? 1 : undefined,
+      }],
+      pageParams: [0],
+    } : undefined,
   });
 
   const filteredNotes = useMemo(() => data?.pages.flatMap(page => page.items) || [], [data]);
@@ -602,7 +611,7 @@ function NotesContent() {
   );
 }
 
-export default function NotesPage() {
+export default function NotesPage({ initialNotes = [] }: { initialNotes?: Note[] }) {
   return (
     <Suspense
       fallback={
@@ -611,7 +620,7 @@ export default function NotesPage() {
         </div>
       }
     >
-      <NotesContent />
+      <NotesContent initialNotes={initialNotes} />
     </Suspense>
   );
 }

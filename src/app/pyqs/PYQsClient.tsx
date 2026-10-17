@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
-interface PYQ {
+export interface PYQ {
   id: string;
   title: string;
   name: string; // Material name
@@ -66,7 +66,7 @@ const itemVariants = {
   show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } }
 };
 
-function PYQsContent() {
+function PYQsContent({ initialPYQs = [] }: { initialPYQs?: PYQ[] }) {
   const { user: _user } = useAuth();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -214,6 +214,8 @@ function PYQsContent() {
     };
   };
 
+  const isDefaultFilters = !filters.semester && !filters.university && !filters.branch && !debouncedSearch.trim();
+
   const {
     data,
     fetchNextPage,
@@ -226,6 +228,13 @@ function PYQsContent() {
     queryFn: fetchPage,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialPageParam: 0,
+    initialData: (isDefaultFilters && initialPYQs.length > 0) ? {
+      pages: [{
+        items: initialPYQs,
+        nextPage: initialPYQs.length >= PAGE_SIZE ? 1 : undefined,
+      }],
+      pageParams: [0],
+    } : undefined,
   });
 
   const filteredPYQs = useMemo(() => data?.pages.flatMap(page => page.items) || [], [data]);
@@ -605,7 +614,7 @@ function PYQsContent() {
   );
 }
 
-export default function PYQsPage() {
+export default function PYQsPage({ initialPYQs = [] }: { initialPYQs?: PYQ[] }) {
   return (
     <Suspense
       fallback={
@@ -614,7 +623,7 @@ export default function PYQsPage() {
         </div>
       }
     >
-      <PYQsContent />
+      <PYQsContent initialPYQs={initialPYQs} />
     </Suspense>
   );
 }
