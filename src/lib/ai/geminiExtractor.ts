@@ -239,9 +239,11 @@ Respond ONLY with valid JSON following this JSON Schema:
     let detectedUnit = parsed.unitsCovered?.trim() || '';
     if (fileName) {
       let unitNum = null;
-      const m1 = fileName.match(/(?:unit|u|chapter|ch)\s*([0-9]+(?:\s*(?:&|and|-)\s*[0-9]+)?)/i);
+      // Match prefix: 'unit 1', 'u1', 'chapter 3', 'ch 4', 'unit IV'
+      const m1 = fileName.match(/\b(?:unit|units|chapter|ch|u)\s*([0-9]+(?:\s*(?:&|and|-)\s*[0-9]+)?|[ivxIVX]+)\b/i);
       if (m1 && m1[1]) unitNum = m1[1];
-      const m2 = fileName.match(/([0-9]+(?:\s*(?:&|and|-)\s*[0-9]+)?)\s*(?:unit|units|ch|chapter)/i);
+      // Match suffix: '1&2 unit', '3rd unit', '5 chapter'
+      const m2 = fileName.match(/\b([0-9]+(?:\s*(?:&|and|-)\s*[0-9]+)?|[ivxIVX]+)\s*(?:unit|units|chapter|ch)\b/i);
       if (m2 && m2[1]) unitNum = m2[1];
 
       if (unitNum) {
