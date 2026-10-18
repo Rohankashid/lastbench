@@ -286,7 +286,7 @@ export default function UploadPage() {
           sampledPageIndices = sampleResult.sampledPageIndices;
         } catch (sampleErr) {
           console.warn('Client-side PDF sampling failed:', sampleErr);
-          if (targetFile.size > 4 * 1024 * 1024) {
+          if (targetFile.size > 4.4 * 1024 * 1024) {
             setAiError('Document is too large for automatic AI scan. Please enter details manually.');
             return;
           }
@@ -295,9 +295,9 @@ export default function UploadPage() {
         payloadBlob = await compressImageForAI(targetFile, 1600);
       }
 
-      // Safeguard against payload limit
-      if (payloadBlob.size > 4.2 * 1024 * 1024) {
-        setAiError('Document payload is too large for AI scan. Please fill in details manually.');
+      // Safeguard against Vercel serverless payload limit (4.5MB ceiling)
+      if (payloadBlob.size > 4.4 * 1024 * 1024) {
+        setAiError('Document page image is too large for AI scan (>4MB per page). Please fill in details manually.');
         return;
       }
 
