@@ -33,7 +33,7 @@ export async function samplePdfMilestones(
   targetMaxBytes = TARGET_MAX_PAYLOAD_BYTES
 ): Promise<SampledPdfResult> {
   const inputBytes = pdfData instanceof Uint8Array ? pdfData : new Uint8Array(pdfData);
-  const fallbackBuffer = typeof Buffer !== 'undefined' ? Buffer.from(inputBytes) : (inputBytes as any);
+  const fallbackBuffer = typeof Buffer !== 'undefined' ? Buffer.from(inputBytes) : (inputBytes as unknown as Buffer);
 
   try {
     const srcDoc = await PDFDocument.load(inputBytes, { ignoreEncryption: true });
@@ -112,7 +112,7 @@ export async function samplePdfMilestones(
 
       // If within size threshold, or if this is the most reduced plan (Page 1 alone), return it
       if (sampledBytes.byteLength <= targetMaxBytes || pIdx === uniquePlans.length - 1) {
-        const sampledBuffer = typeof Buffer !== 'undefined' ? Buffer.from(sampledBytes) : (sampledBytes as any);
+        const sampledBuffer = typeof Buffer !== 'undefined' ? Buffer.from(sampledBytes) : (sampledBytes as unknown as Buffer);
         return {
           sampledBytes,
           sampledBuffer,
@@ -124,7 +124,7 @@ export async function samplePdfMilestones(
     }
 
     // Fallback if loop finishes
-    const sampledBuffer = typeof Buffer !== 'undefined' ? Buffer.from(lastSampledBytes) : (lastSampledBytes as any);
+    const sampledBuffer = typeof Buffer !== 'undefined' ? Buffer.from(lastSampledBytes) : (lastSampledBytes as unknown as Buffer);
     return {
       sampledBytes: lastSampledBytes,
       sampledBuffer,

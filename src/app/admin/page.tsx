@@ -71,6 +71,25 @@ interface PaperRequest {
   updatedAt?: string;
 }
 
+function formatTimeAgo(dateString?: string) {
+  if (!dateString) return 'Recently';
+  try {
+    const date = new Date(dateString);
+    const diffMs = Date.now() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  } catch {
+    return 'Recently';
+  }
+}
+
 export default function AdminPanel() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -122,31 +141,6 @@ export default function AdminPanel() {
     file: null as File | null,
   });
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      router.replace('/?auth=login&redirect=%2Fadmin');
-      return;
-    }
-
-    const checkAdminStatus = async () => {
-      try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (!userDoc.exists() || userDoc.data().role !== 'admin') {
-          router.push('/');
-          return;
-        }
-        fetchMaterials();
-        fetchPaperRequests();
-      } catch (err) {
-        console.error('Error checking admin status:', err);
-        setError('Failed to verify admin authorization');
-      }
-    };
-
-    checkAdminStatus();
-  }, [user, authLoading, router]);
-
   const fetchMaterials = async () => {
     try {
       setLoading(true);
@@ -177,6 +171,31 @@ export default function AdminPanel() {
       setLoadingRequests(false);
     }
   };
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      router.replace('/?auth=login&redirect=%2Fadmin');
+      return;
+    }
+
+    const checkAdminStatus = async () => {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists() || userDoc.data().role !== 'admin') {
+          router.push('/');
+          return;
+        }
+        fetchMaterials();
+        fetchPaperRequests();
+      } catch (err) {
+        console.error('Error checking admin status:', err);
+        setError('Failed to verify admin authorization');
+      }
+    };
+
+    checkAdminStatus();
+  }, [user, authLoading, router]);
 
   const handleRefreshAll = () => {
     fetchMaterials();
@@ -260,25 +279,6 @@ https://www.lastbench.online`
     }));
     setActiveAdminSection('materials');
     toast.success('Upload form pre-filled with request details!');
-  };
-
-  const formatTimeAgo = (dateString?: string) => {
-    if (!dateString) return 'Recently';
-    try {
-      const date = new Date(dateString);
-      const diffMs = Date.now() - date.getTime();
-      const diffMins = Math.floor(diffMs / (1000 * 60));
-      if (diffMins < 1) return 'Just now';
-      if (diffMins < 60) return `${diffMins}m ago`;
-      const diffHours = Math.floor(diffMins / 60);
-      if (diffHours < 24) return `${diffHours}h ago`;
-      const diffDays = Math.floor(diffHours / 24);
-      if (diffDays === 1) return 'Yesterday';
-      if (diffDays < 7) return `${diffDays}d ago`;
-      return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-    } catch {
-      return 'Recently';
-    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

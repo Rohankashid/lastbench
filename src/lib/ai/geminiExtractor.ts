@@ -124,21 +124,39 @@ export async function extractMetadataWithGemini({
     ? `The document has ${originalPageCount} total pages. You are examining ${sampledPageIndices?.length || 1} milestone pages sampled across the file (Pages: ${sampledPageIndices?.join(', ') || '1'}).`
     : 'You are analyzing the uploaded study document.';
 
+  const hasFile = Boolean(fileBase64 && mimeType);
   const prompt = `
 You are an expert academic archivist for Indian Engineering Universities (specifically Maharashtra: SPPU, Mumbai University, DBATU, RTMNU, COEP, VJTI).
-${pageInfoText}
+${hasFile ? pageInfoText : 'Analyze this academic study material based on its filename, common engineering course abbreviations, and Maharashtra university syllabus.'}
 
 ${fileName ? `Original Uploaded Filename: "${fileName}".
-CRITICAL FILENAME & UNIT RULES:
-- Inspect the filename "${fileName}". If it mentions a unit (e.g. "unit 1", "unit 2", "unit1", "unit 3", "u1", "u2", "ch 1"), this document is strictly for that unit!
-- Do NOT assume the document is "Complete Notes (Units 1 to 6)" if the filename or pages show a specific unit like Unit 1 or Unit 2!
+CRITICAL FILENAME & ABBREVIATION RULES:
+- Inspect the filename "${fileName}". If it contains common engineering subject abbreviations, expand them to full official subject name:
+  * "DS" or "DSA" -> "Data Structures" or "Data Structures and Algorithms"
+  * "DBMS" -> "Database Management Systems"
+  * "OS" -> "Operating Systems"
+  * "CN" or "CNS" -> "Computer Networks" / "Cryptography and Network Security"
+  * "TOC" -> "Theory of Computation"
+  * "OOP" or "OOPL" -> "Object Oriented Programming"
+  * "DAA" -> "Design and Analysis of Algorithms"
+  * "AI" or "AIML" -> "Artificial Intelligence" / "Machine Learning"
+  * "M1", "M2", "M3", "EM-I", "EM-II", "EM-III" -> "Engineering Mathematics"
+  * "FPL" -> "Fundamentals of Programming Languages"
+  * "BEE" -> "Basic Electrical Engineering"
+  * "BXE" -> "Basic Electronics Engineering"
+  * "EP" / "Physics" -> "Engineering Physics"
+  * "EC" / "Chemistry" -> "Engineering Chemistry"
+  * "EM" / "Mechanics" -> "Engineering Mechanics"
+  * "EG" / "Graphics" -> "Engineering Graphics"
+- If the filename mentions a unit (e.g. "unit 1", "unit 2", "unit 3", "unit3", "u1", "u2", "ch 1"), this document is strictly for that unit!
+- If the file is a presentation (.pptx, .ppt) or class document, "category" should be 'note'.
 - In "unitsCovered": Explicitly state the unit (e.g. "Unit 1", "Unit 2", "Unit 3", "Units 1 & 2", "Complete Notes").
-- In "topic": Write the specific unit and core chapter/concept title (e.g. "Unit 1: Product Architecture & System Concepts" or "Unit 2: High-Speed PCB & Power Design"). If it is a PYQ, write the exam session and type (e.g. "In-Sem Oct 2023 Exam Paper").` : ''}
+- In "topic": Write the specific unit and core chapter/concept title (e.g. "Unit 3" or "Unit 3: Trees & Graphs"). If it is a PYQ, write the exam session and type (e.g. "In-Sem Oct 2023 Exam Paper").` : ''}
 
 ${universityHint ? `The student is from university context: "${universityHint}". Prioritize matching this university's syllabus, pattern, and subject codes if consistent.` : ''}
 ${categoryHint ? `User indicated category preference: "${categoryHint}".` : ''}
 
-Task: Carefully inspect the document pages and extract structured academic metadata.
+Task: ${hasFile ? 'Carefully inspect the document pages and extract structured academic metadata.' : 'Extract structured academic metadata from the filename.'}
 Even if the notes are rough handwritten notebook scans with NO cover page and NO index, analyze the topics, formulas, headings, or problem sets across the sampled pages.
 
 Rules:
@@ -178,18 +196,23 @@ Respond ONLY with valid JSON following this JSON Schema:
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
+  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
+    { text: prompt },
+  ];
+
+  if (fileBase64 && mimeType) {
+    parts.push({
+      inlineData: {
+        mimeType,
+        data: fileBase64,
+      },
+    });
+  }
+
   const requestBody = {
     contents: [
       {
-        parts: [
-          { text: prompt },
-          {
-            inlineData: {
-              mimeType,
-              data: fileBase64,
-            },
-          },
-        ],
+        parts,
       },
     ],
     generationConfig: {
@@ -209,8 +232,8 @@ Respond ONLY with valid JSON following this JSON Schema:
       body: JSON.stringify(requestBody),
       signal: controller.signal,
     });
-  } catch (fetchErr: any) {
-    if (fetchErr?.name === 'AbortError') {
+  } catch (fetchErr: unknown) {
+    if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
       throw new Error('Gemini API call timed out after 25 seconds');
     }
     throw fetchErr;

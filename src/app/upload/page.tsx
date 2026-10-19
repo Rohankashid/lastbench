@@ -25,13 +25,32 @@ import {
   GraduationCap,
   ChevronDown,
   ChevronUp,
-  FileCheck,
   RotateCcw,
   Sparkles,
   ExternalLink
 } from 'lucide-react';
 import type { ExtractedMetadata } from '@/lib/ai/geminiExtractor';
 import { samplePdfMilestones } from '@/lib/ai/pdfSampler';
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        container: HTMLElement | string,
+        options: {
+          sitekey: string;
+          action?: string;
+          callback?: (token: string) => void;
+          'error-callback'?: () => void;
+          'expired-callback'?: () => void;
+          theme?: 'light' | 'dark' | 'auto';
+        }
+      ) => string;
+      reset: (widgetId?: string) => void;
+      remove: (widgetId?: string) => void;
+    };
+  }
+}
 
 async function compressImageForAI(file: File, maxDim = 1600): Promise<Blob> {
   return new Promise((resolve) => {
@@ -96,7 +115,6 @@ export default function UploadPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -115,13 +133,13 @@ export default function UploadPage() {
   const renderTurnstile = () => {
     if (
       typeof window !== 'undefined' &&
-      (window as any).turnstile &&
+      window.turnstile &&
       turnstileContainerRef.current &&
       !turnstileWidgetIdRef.current
     ) {
       try {
         turnstileContainerRef.current.innerHTML = '';
-        turnstileWidgetIdRef.current = (window as any).turnstile.render(
+        turnstileWidgetIdRef.current = window.turnstile.render(
           turnstileContainerRef.current,
           {
             sitekey: '0x4AAAAAAFQmDUhQSI4cvWsu',
@@ -145,11 +163,11 @@ export default function UploadPage() {
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).turnstile) {
+    if (typeof window !== 'undefined' && window.turnstile) {
       renderTurnstile();
     } else {
       const timer = setInterval(() => {
-        if (typeof window !== 'undefined' && (window as any).turnstile) {
+        if (typeof window !== 'undefined' && window.turnstile) {
           clearInterval(timer);
           renderTurnstile();
         }
@@ -161,11 +179,11 @@ export default function UploadPage() {
       aiAbortControllerRef.current?.abort();
       if (
         typeof window !== 'undefined' &&
-        (window as any).turnstile &&
+        window.turnstile &&
         turnstileWidgetIdRef.current
       ) {
         try {
-          (window as any).turnstile.remove(turnstileWidgetIdRef.current);
+          window.turnstile.remove(turnstileWidgetIdRef.current);
         } catch {}
         turnstileWidgetIdRef.current = null;
       }
@@ -184,7 +202,7 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   
   // Controls expanding the University & Branch section
-  const [isAudienceExpanded, setIsAudienceExpanded] = useState(false);
+  const [isAudienceExpanded, setIsAudienceExpanded] = useState(true);
 
   // File validation state
   const [fileValidation, setFileValidation] = useState<{
@@ -193,15 +211,11 @@ export default function UploadPage() {
     size?: string;
   }>({ isValid: false });
 
-  // Auth gate only: fields will be populated strictly from the uploaded document
+  // Auth gate only: redirect if unauthenticated once auth finishes loading
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
+    if (!authLoading && !user) {
       router.replace('/?auth=login&redirect=%2Fupload');
-      return;
     }
-    setLoading(false);
-    setIsAudienceExpanded(true);
   }, [user, authLoading, router]);
 
   // Derived professional document title
@@ -257,7 +271,14 @@ export default function UploadPage() {
   const analyzeWithAI = async (targetFile: File) => {
     const isPdf = targetFile.type === 'application/pdf' || targetFile.name.toLowerCase().endsWith('.pdf');
     const isImage = targetFile.type.startsWith('image/');
-    if (!isPdf && !isImage) return;
+    const isOffice = (
+      targetFile.name.toLowerCase().endsWith('.pptx') ||
+      targetFile.name.toLowerCase().endsWith('.ppt') ||
+      targetFile.name.toLowerCase().endsWith('.docx') ||
+      targetFile.name.toLowerCase().endsWith('.doc') ||
+      targetFile.name.toLowerCase().endsWith('.txt')
+    );
+    if (!isPdf && !isImage && !isOffice) return;
     if (!user) return;
 
     // Reset previous AI feedback and cancel any in-flight request
@@ -281,45 +302,111 @@ export default function UploadPage() {
         try {
           const arrayBuffer = await targetFile.arrayBuffer();
           const sampleResult = await samplePdfMilestones(arrayBuffer, 6);
-          payloadBlob = new Blob([sampleResult.sampledBytes], { type: 'application/pdf' });
+          payloadBlob = new Blob([sampleResult.sampledBytes as unknown as BlobPart], { type: 'application/pdf' });
           originalPageCount = sampleResult.originalPageCount;
           sampledPageIndices = sampleResult.sampledPageIndices;
         } catch (sampleErr) {
           console.warn('Client-side PDF sampling failed:', sampleErr);
-          if (targetFile.size > 4.4 * 1024 * 1024) {
-            setAiError('Document is too large for automatic AI scan. Please enter details manually.');
-            return;
-          }
         }
       } else if (isImage && targetFile.size > 2 * 1024 * 1024) {
-        payloadBlob = await compressImageForAI(targetFile, 1600);
-      }
-
-      // Safeguard against Vercel serverless payload limit (4.5MB ceiling)
-      if (payloadBlob.size > 4.4 * 1024 * 1024) {
-        setAiError('Document page image is too large for AI scan (>4MB per page). Please fill in details manually.');
-        return;
+        try {
+          payloadBlob = await compressImageForAI(targetFile, 1600);
+        } catch (imgErr) {
+          console.warn('Client-side image compression failed:', imgErr);
+        }
       }
 
       const idToken = await user.getIdToken();
-      const fd = new FormData();
-      fd.append('file', payloadBlob, targetFile.name);
-      fd.append('fileName', targetFile.name);
-      if (originalPageCount) {
-        fd.append('originalPageCount', String(originalPageCount));
-      }
-      if (sampledPageIndices) {
-        fd.append('sampledPageIndices', JSON.stringify(sampledPageIndices));
-      }
+      let res: Response;
 
-      const res = await fetch('/api/ai/extract-metadata', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${idToken}`,
-        },
-        body: fd,
-        signal: controller.signal,
-      });
+      if (isOffice) {
+        // Fast AI extraction from academic filename for Office presentations & documents (PPTX, DOCX)
+        res = await fetch('/api/ai/extract-metadata', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            fileName: targetFile.name,
+            university: university || undefined,
+            categoryHint: targetFile.name.toLowerCase().includes('pyq') || targetFile.name.toLowerCase().includes('paper') ? 'pyq' : 'note',
+          }),
+          signal: controller.signal,
+        });
+      } else if (payloadBlob.size > 3.5 * 1024 * 1024) {
+        // If document payload is larger than 3.5MB, bypass Vercel serverless HTTP limit by uploading directly to temporary S3 storage
+        const presignRes = await fetch('/api/ai/presign', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            filename: targetFile.name,
+            contentType: targetFile.type || 'application/pdf',
+            size: targetFile.size,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!presignRes.ok) {
+          const presignErr = await presignRes.json().catch(() => ({}));
+          throw new Error(presignErr.error || 'Failed to prepare upload for AI analysis');
+        }
+
+        const presignData = await presignRes.json();
+        const s3FormData = new FormData();
+        Object.entries(presignData.fields).forEach(([k, v]) => {
+          s3FormData.append(k, v as string);
+        });
+        s3FormData.append('file', targetFile);
+
+        const s3UploadRes = await fetch(presignData.url, {
+          method: 'POST',
+          body: s3FormData,
+          signal: controller.signal,
+        });
+
+        if (!s3UploadRes.ok) {
+          throw new Error('Failed to upload document to storage for AI analysis');
+        }
+
+        res = await fetch('/api/ai/extract-metadata', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            s3Key: presignData.key,
+            fileName: targetFile.name,
+            university: university || undefined,
+            categoryHint: category || undefined,
+          }),
+          signal: controller.signal,
+        });
+      } else {
+        // Fast inline path for documents within Vercel HTTP payload budget (instant transmission)
+        const fd = new FormData();
+        fd.append('file', payloadBlob, targetFile.name);
+        fd.append('fileName', targetFile.name);
+        if (originalPageCount) {
+          fd.append('originalPageCount', String(originalPageCount));
+        }
+        if (sampledPageIndices) {
+          fd.append('sampledPageIndices', JSON.stringify(sampledPageIndices));
+        }
+
+        res = await fetch('/api/ai/extract-metadata', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${idToken}`,
+          },
+          body: fd,
+          signal: controller.signal,
+        });
+      }
 
       if (!res.ok) {
         let errorMsg = 'AI auto-fill unavailable';
@@ -361,8 +448,8 @@ export default function UploadPage() {
 
         toast.success(`Detected: ${meta.subject}`);
       }
-    } catch (err: any) {
-      if (err?.name === 'AbortError') return;
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return;
       console.warn('Analysis error:', err);
       setAiError('Could not auto-detect document details. Please enter them manually.');
       toast.error('AI auto-fill unavailable. Please enter details manually.');
@@ -388,6 +475,37 @@ export default function UploadPage() {
 
     // If file is valid, trigger intelligent AI extraction
     if (validation.isValid) {
+      // Instant client-side deduction from filename (0ms response)
+      const lowerName = pickedFile.name.toLowerCase();
+
+      // Auto-set category if presentation
+      if (lowerName.endsWith('.pptx') || lowerName.endsWith('.ppt')) {
+        setCategory('note');
+      } else if (lowerName.includes('pyq') || lowerName.includes('question paper') || lowerName.includes('insem') || lowerName.includes('endsem')) {
+        setCategory('pyq');
+      }
+
+      // Auto-detect unit from filename (e.g. "DS Unit3.pptx" -> "Unit 3")
+      const unitMatch = pickedFile.name.match(/\b(?:unit|units|chapter|ch|u)\s*([0-9]+(?:\s*(?:&|and|-)\s*[0-9]+)?|[ivxIVX]+)\b/i);
+      if (unitMatch && unitMatch[1]) {
+        setTopic(`Unit ${unitMatch[1].replace(/\s+/g, ' ').toUpperCase()}`);
+      }
+
+      // Auto-detect common engineering abbreviations
+      if (/\bds\b/i.test(pickedFile.name) && !/\bdsa\b/i.test(pickedFile.name)) {
+        setSubject('Data Structures');
+      } else if (/\bdsa\b/i.test(pickedFile.name)) {
+        setSubject('Data Structures and Algorithms');
+      } else if (/\bdbms\b/i.test(pickedFile.name)) {
+        setSubject('Database Management Systems');
+      } else if (/\bos\b/i.test(pickedFile.name)) {
+        setSubject('Operating Systems');
+      } else if (/\bcn\b/i.test(pickedFile.name)) {
+        setSubject('Computer Networks');
+      } else if (/\btoc\b/i.test(pickedFile.name)) {
+        setSubject('Theory of Computation');
+      }
+
       analyzeWithAI(pickedFile);
     } else if (!subject) {
       // Fallback: If subject is empty, give a clean suggestion based on filename if helpful
@@ -546,11 +664,11 @@ export default function UploadPage() {
 
       // Reset Turnstile token so subsequent uploads can generate a new valid token
       setTurnstileToken('');
-      if (typeof window !== 'undefined' && (window as any).turnstile) {
+      if (typeof window !== 'undefined' && window.turnstile) {
         if (turnstileWidgetIdRef.current) {
-          (window as any).turnstile.reset(turnstileWidgetIdRef.current);
+          window.turnstile.reset(turnstileWidgetIdRef.current);
         } else {
-          (window as any).turnstile.reset();
+          window.turnstile.reset();
         }
       }
 
@@ -561,11 +679,11 @@ export default function UploadPage() {
       toast.error(msg);
       // Reset Turnstile token on failure so they can try again
       setTurnstileToken('');
-      if (typeof window !== 'undefined' && (window as any).turnstile) {
+      if (typeof window !== 'undefined' && window.turnstile) {
         if (turnstileWidgetIdRef.current) {
-          (window as any).turnstile.reset(turnstileWidgetIdRef.current);
+          window.turnstile.reset(turnstileWidgetIdRef.current);
         } else {
-          (window as any).turnstile.reset();
+          window.turnstile.reset();
         }
       }
     } finally {
@@ -573,7 +691,7 @@ export default function UploadPage() {
     }
   };
 
-  if (authLoading || loading || !user) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-50">
         <FullPageSpinner />
