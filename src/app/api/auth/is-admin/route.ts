@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth-server';
+import { verifyAuth, isAdminEmail } from '@/lib/auth-server';
 
 export async function GET(req: NextRequest) {
   try {
@@ -8,11 +8,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ isAdmin: false });
     }
 
-    const admins = (process.env.ADMIN_USER_EMAILS || '')
-      .split(',')
-      .map(e => e.trim().toLowerCase());
-
-    const isAdmin = admins.includes(token.email.toLowerCase());
+    const isAdmin = isAdminEmail(token.email);
     
     return NextResponse.json({ isAdmin });
   } catch (error) {

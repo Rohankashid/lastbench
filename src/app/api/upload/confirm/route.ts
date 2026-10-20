@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebaseAdmin';
-import { verifyAuth } from '@/lib/auth-server';
+import { verifyAuth, isAdminEmail } from '@/lib/auth-server';
 import { withRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/rateLimit';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -12,6 +12,7 @@ async function confirmHandler(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const isAdmin = isAdminEmail(decodedToken.email);
     const data = await req.json();
     const { metadata, fileDetails } = data;
     
@@ -28,7 +29,7 @@ async function confirmHandler(req: NextRequest) {
       originalName: fileDetails.originalName,
       fileSize: fileDetails.size,
       fileType: fileDetails.type,
-      uploadedBy: decodedToken.uid, // Force uploadedBy to be the authenticated user
+      uploadedBy: isAdmin ? 'team' : decodedToken.uid,
       uploadedAt: new Date().toISOString(),
       rightsConfirmed: metadata.rightsConfirmed || false,
       rightsConfirmedAt: metadata.rightsConfirmed ? new Date().toISOString() : null,
@@ -67,7 +68,7 @@ async function confirmHandler(req: NextRequest) {
           file_size: firestoreData.fileSize ? parseInt(String(firestoreData.fileSize), 10) : null,
           file_type: firestoreData.fileType || null,
           original_name: firestoreData.originalName || null,
-          uploaded_by: decodedToken.uid,
+          uploaded_by: isAdmin ? 'team' : decodedToken.uid,
           uploaded_at: firestoreData.uploadedAt,
           helpful_count: 0
         });
@@ -76,12 +77,14 @@ async function confirmHandler(req: NextRequest) {
       console.error('Supabase sync error in upload confirm:', supaErr);
     }
 
-    // Increment user's contribution count
-    const userRef = db.collection('users').doc(decodedToken.uid);
-    await userRef.set({
-      contributionsCount: FieldValue.increment(1),
-      lastContributionAt: new Date().toISOString()
-    }, { merge: true });
+    // Increment user's contribution count only for regular student contributors
+    if (!isAdmin) {
+      const userRef = db.collection('users').doc(decodedToken.uid);
+      await userRef.set({
+        contributionsCount: FieldValue.increment(1),
+        lastContributionAt: new Date().toISOString()
+      }, { merge: true });
+    }
 
     return NextResponse.json({ success: true, url: fileDetails.fileUrl });
   } catch (error) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth-server';
+import { verifyAuth, isAdminEmail } from '@/lib/auth-server';
 import { db } from '@/lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -10,11 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const admins = (process.env.ADMIN_USER_EMAILS || '')
-      .split(',')
-      .map(e => e.trim().toLowerCase());
-
-    if (!admins.includes(token.email.toLowerCase())) {
+    if (!isAdminEmail(token.email)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
