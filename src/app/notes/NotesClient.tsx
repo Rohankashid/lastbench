@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, Suspense, useRef, useMemo } from 'react';
+import Link from 'next/link';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
@@ -530,11 +531,17 @@ function NotesContent({ initialNotes = [] }: { initialNotes?: Note[] }) {
                   className="bg-white border border-zinc-200 rounded-lg p-5 sm:p-6 flex flex-col hover:border-zinc-300 transition-colors shadow-sm"
                 >
                   <div className="flex justify-between items-start mb-4">
-                    <h3 
-                      className="text-sm sm:text-base font-semibold text-zinc-900 leading-tight hover:underline cursor-pointer line-clamp-2 pr-4"
-                      onClick={() => handleOpenPreview(note)}
-                    >
-                      {note.name || note.title}
+                    <h3 className="text-sm sm:text-base font-semibold text-zinc-900 leading-tight line-clamp-2 pr-4">
+                      <Link 
+                        href={`/notes?v=${note.id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleOpenPreview(note);
+                        }}
+                        className="hover:underline cursor-pointer"
+                      >
+                        {note.name || note.title}
+                      </Link>
                     </h3>
                     
                   </div>
@@ -549,12 +556,16 @@ function NotesContent({ initialNotes = [] }: { initialNotes?: Note[] }) {
 
                   <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4">
                     <div className="flex items-center gap-4">
-                      <button 
-                        onClick={() => handleOpenPreview(note)} 
+                      <Link 
+                        href={`/notes?v=${note.id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleOpenPreview(note);
+                        }}
                         className="text-[11px] font-bold text-zinc-500 hover:text-zinc-900 uppercase tracking-wider transition-colors cursor-pointer"
                       >
                         View
-                      </button>
+                      </Link>
                       <button onClick={() => handleDownload(note)} className="text-[11px] font-bold text-zinc-500 hover:text-zinc-900 uppercase tracking-wider transition-colors cursor-pointer">
                         Download
                       </button>

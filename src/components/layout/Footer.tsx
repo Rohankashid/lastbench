@@ -60,6 +60,9 @@ const Footer = () => {
               <Link href="/terms" className="text-zinc-500 hover:text-zinc-950 transition-colors">
                 Terms of Service
               </Link>
+              <Link href="/takedown" className="text-zinc-500 hover:text-zinc-950 transition-colors">
+                DMCA & Takedown
+              </Link>
               <Link href="/contact" className="text-zinc-500 hover:text-zinc-950 transition-colors">
                 Contact Us
               </Link>
