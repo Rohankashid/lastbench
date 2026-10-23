@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 
 export type AuthMode = 'signin' | 'signup' | 'forgot-password';
@@ -42,15 +41,15 @@ function AuthModalWatcher({
 }: {
   openAuthModal: (mode?: AuthMode, options?: OpenAuthModalOptions) => void;
 }) {
-  const searchParams = useSearchParams();
   const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || typeof window === 'undefined') return;
 
-    // Check if ?auth=login or ?auth=signup is present in URL
-    const authParam = searchParams.get('auth');
-    const redirectParam = searchParams.get('redirect') || '';
+    // Check if ?auth=login or ?auth=signup is present in URL without triggering Next.js SSR bail-out
+    const params = new URLSearchParams(window.location.search);
+    const authParam = params.get('auth');
+    const redirectParam = params.get('redirect') || '';
 
     if (!user && (authParam === 'login' || authParam === 'signin')) {
       openAuthModal('signin', { redirectUrl: redirectParam });
@@ -64,7 +63,7 @@ function AuthModalWatcher({
     } else if (user && authParam) {
       cleanAuthUrl();
     }
-  }, [searchParams, user, loading, openAuthModal]);
+  }, [user, loading, openAuthModal]);
 
   return null;
 }
