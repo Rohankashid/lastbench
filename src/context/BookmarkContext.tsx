@@ -12,7 +12,14 @@ interface BookmarkContextType {
   loading: boolean;
 }
 
-const BookmarkContext = createContext<BookmarkContextType | undefined>(undefined);
+const defaultBookmarkContext: BookmarkContextType = {
+  bookmarks: [],
+  isBookmarked: () => false,
+  toggleBookmark: async () => {},
+  loading: false,
+};
+
+const BookmarkContext = createContext<BookmarkContextType>(defaultBookmarkContext);
 
 export function BookmarkProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -91,8 +98,5 @@ export function BookmarkProvider({ children }: { children: React.ReactNode }) {
 
 export function useBookmarks() {
   const context = useContext(BookmarkContext);
-  if (!context) {
-    throw new Error('useBookmarks must be used within a BookmarkProvider');
-  }
-  return context;
+  return context || defaultBookmarkContext;
 }

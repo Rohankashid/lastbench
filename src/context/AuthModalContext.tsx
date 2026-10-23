@@ -22,7 +22,17 @@ interface AuthModalContextType {
   onSuccessCallback?: () => void;
 }
 
-const AuthModalContext = createContext<AuthModalContextType | undefined>(undefined);
+const defaultAuthModalContext: AuthModalContextType = {
+  isOpen: false,
+  mode: 'signin',
+  contextMessage: '',
+  redirectUrl: '',
+  openAuthModal: () => {},
+  closeAuthModal: () => {},
+  setMode: () => {},
+};
+
+const AuthModalContext = createContext<AuthModalContextType>(defaultAuthModalContext);
 
 function cleanAuthUrl() {
   if (typeof window !== 'undefined') {
@@ -116,8 +126,5 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuthModal() {
   const context = useContext(AuthModalContext);
-  if (!context) {
-    throw new Error('useAuthModal must be used within an AuthModalProvider');
-  }
-  return context;
+  return context || defaultAuthModalContext;
 }

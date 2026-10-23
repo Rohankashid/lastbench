@@ -20,7 +20,14 @@ interface ToastContextType {
   };
 }
 
-const ToastContext = createContext<ToastContextType | undefined>(undefined);
+const defaultToastMethods = {
+  success: () => {},
+  error: () => {},
+  warning: () => {},
+  info: () => {},
+};
+
+const ToastContext = createContext<ToastContextType>({ toast: defaultToastMethods });
 
 const icons = {
   success: (
@@ -114,8 +121,5 @@ const ToastItem = ({ toast, onRemove }: { toast: ToastMessage, onRemove: () => v
 
 export const useToast = () => {
   const context = useContext(ToastContext);
-  if (context === undefined) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  return context;
+  return context || { toast: defaultToastMethods };
 };
