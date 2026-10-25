@@ -38,8 +38,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "https://www.lastbench.online/icon.png", 
-        width: 800,
-        height: 600,
+        width: 1024,
+        height: 1024,
         alt: "LastBench Logo",
       }
     ],
@@ -51,6 +51,16 @@ export const metadata: Metadata = {
     title: "LastBench | Engineering Notes & PYQs Community",
     description: "Open-access peer study archive for engineering students.",
     images: ["https://www.lastbench.online/icon.png"],
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/icon.png", sizes: "1024x1024", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
   },
   alternates: {
     canonical: "https://www.lastbench.online",
