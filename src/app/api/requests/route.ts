@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebaseAdmin';
+import { sendFulfillmentEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,18 +61,52 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id, status } = body;
+    const { id, status, sendNotification = true } = body;
 
     if (!id || !status) {
       return NextResponse.json({ error: 'ID and status required' }, { status: 400 });
     }
 
-    await db.collection('paper_requests').doc(id).update({
-      status,
-      updatedAt: new Date().toISOString(),
-    });
+    const docRef = db.collection('paper_requests').doc(id);
+    const docSnap = await docRef.get();
 
-    return NextResponse.json({ success: true });
+    if (!docSnap.exists) {
+      return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+    }
+
+    const data = docSnap.data();
+    const now = new Date().toISOString();
+    const updateData: Record<string, unknown> = {
+      status,
+      updatedAt: now,
+    };
+
+    let emailResult: { sent: boolean; error?: string } = { sent: false };
+
+    // Auto-send notification email if marking fulfilled and student provided an email
+    if (status === 'fulfilled' && sendNotification && data?.userEmail) {
+      try {
+        await sendFulfillmentEmail({
+          to: data.userEmail,
+          studentName: data.userName,
+          description: data.description || 'Requested study material',
+          source: data.source,
+        });
+        updateData.notifiedAt = now;
+        emailResult = { sent: true };
+      } catch (err: unknown) {
+        console.error('Failed to auto-send fulfillment email:', err);
+        emailResult = { sent: false, error: err instanceof Error ? err.message : 'Email delivery failed' };
+      }
+    }
+
+    await docRef.update(updateData);
+
+    return NextResponse.json({
+      success: true,
+      emailResult,
+      notifiedAt: updateData.notifiedAt || data?.notifiedAt || null,
+    });
   } catch (error) {
     console.error('Error updating paper request status:', error);
     return NextResponse.json({ error: 'Failed to update request' }, { status: 500 });

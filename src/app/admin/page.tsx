@@ -69,6 +69,7 @@ interface PaperRequest {
   status: 'pending' | 'in_progress' | 'fulfilled' | 'rejected';
   createdAt: string;
   updatedAt?: string;
+  notifiedAt?: string | null;
 }
 
 function formatTimeAgo(dateString?: string) {
@@ -125,6 +126,7 @@ export default function AdminPanel() {
   const [requestsFilter, setRequestsFilter] = useState<'all' | 'priority' | 'pending' | 'in_progress' | 'fulfilled'>('all');
   const [requestsSearch, setRequestsSearch] = useState('');
   const [updatingRequestId, setUpdatingRequestId] = useState<string | null>(null);
+  const [notifyingRequestId, setNotifyingRequestId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -202,27 +204,34 @@ export default function AdminPanel() {
     fetchPaperRequests();
   };
 
-  const buildNotifyMailto = (req: PaperRequest) => {
-    if (!req.userEmail) return '#';
-    const subject = encodeURIComponent('Your requested study material is now live on LastBench!');
-    const studentName = req.userName || 'Student';
-    const targetPage = req.source === 'notes' ? 'https://www.lastbench.online/notes' : 'https://www.lastbench.online/pyqs';
-    const body = encodeURIComponent(
-`Hi ${studentName},
+  const handleNotifyStudent = async (reqItem: PaperRequest) => {
+    if (!reqItem.userEmail) {
+      toast.error('No email address registered for this student');
+      return;
+    }
 
-Good news! The study material you requested on LastBench:
-"${req.description}"
+    try {
+      setNotifyingRequestId(reqItem.id);
+      const res = await fetch('/api/requests/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: reqItem.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to send notification email');
+      }
 
-has now been uploaded and is ready for you to view and download:
-${targetPage}
-
-Thank you for contributing to the LastBench student community!
-
-Best regards,
-The LastBench Team
-https://www.lastbench.online`
-    );
-    return `mailto:${req.userEmail}?subject=${subject}&body=${body}`;
+      setPaperRequests(prev =>
+        prev.map(r => (r.id === reqItem.id ? { ...r, notifiedAt: data.notifiedAt } : r))
+      );
+      toast.success(`Notification email delivered directly to ${reqItem.userName || reqItem.userEmail}!`);
+    } catch (err) {
+      console.error('Error sending student notification:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to send notification email');
+    } finally {
+      setNotifyingRequestId(null);
+    }
   };
 
   const handleUpdateStatus = async (id: string, newStatus: 'pending' | 'in_progress' | 'fulfilled' | 'rejected') => {
@@ -231,15 +240,31 @@ https://www.lastbench.online`
       const res = await fetch('/api/requests', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status: newStatus }),
+        body: JSON.stringify({ id, status: newStatus, sendNotification: true }),
       });
-      if (!res.ok) throw new Error('Failed to update status');
-      setPaperRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update status');
 
-      const targetReq = paperRequests.find(r => r.id === id);
-      if (newStatus === 'fulfilled' && targetReq?.userEmail) {
-        window.open(buildNotifyMailto(targetReq), '_blank');
-        toast.success('Request marked fulfilled! Pre-filled notification email opened.');
+      setPaperRequests(prev =>
+        prev.map(r =>
+          r.id === id
+            ? {
+                ...r,
+                status: newStatus,
+                ...(data.notifiedAt ? { notifiedAt: data.notifiedAt } : {}),
+              }
+            : r
+        )
+      );
+
+      if (newStatus === 'fulfilled') {
+        if (data.emailResult?.sent) {
+          toast.success('Request marked fulfilled & notification email sent to student!');
+        } else if (data.emailResult?.error) {
+          toast.warning(`Request fulfilled, but email could not be sent: ${data.emailResult.error}`);
+        } else {
+          toast.success('Request marked as fulfilled');
+        }
       } else {
         toast.success(`Request marked as ${newStatus.replace('_', ' ')}`);
       }
@@ -1183,6 +1208,15 @@ https://www.lastbench.online`
                             <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded">
                               Verified
                             </span>
+                            {req.notifiedAt && (
+                              <span
+                                className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-700 bg-blue-50 border border-blue-200/60 px-1.5 py-0.5 rounded"
+                                title={`Student was sent a notification on ${new Date(req.notifiedAt).toLocaleString()}`}
+                              >
+                                <Check className="w-2.5 h-2.5" />
+                                <span>Notified</span>
+                              </span>
+                            )}
                           </div>
                         ) : (
                           <span className="text-zinc-400 text-[11px] italic">
@@ -1193,18 +1227,40 @@ https://www.lastbench.online`
 
                       {/* Action buttons */}
                       <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
-                        {/* 1-Click Notify Student Button */}
+                        {/* 1-Click Background Notify Student Button */}
                         {req.userEmail && (
-                          <a
-                            href={buildNotifyMailto(req)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-2xs hover:shadow-xs cursor-pointer"
-                            title="Send pre-filled fulfillment notification email to student"
+                          <button
+                            type="button"
+                            disabled={notifyingRequestId === req.id || updatingRequestId === req.id}
+                            onClick={() => handleNotifyStudent(req)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shadow-2xs hover:shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                              req.notifiedAt
+                                ? 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border border-zinc-200'
+                                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                            }`}
+                            title={
+                              req.notifiedAt
+                                ? `Student notified on ${new Date(req.notifiedAt).toLocaleDateString()}. Click to re-send.`
+                                : 'Deliver notification email directly to student in background'
+                            }
                           >
-                            <Mail className="w-3.5 h-3.5" />
-                            <span>Notify Student</span>
-                          </a>
+                            {notifyingRequestId === req.id ? (
+                              <>
+                                <Spinner size="sm" />
+                                <span>Sending...</span>
+                              </>
+                            ) : req.notifiedAt ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Resend Email</span>
+                              </>
+                            ) : (
+                              <>
+                                <Mail className="w-3.5 h-3.5" />
+                                <span>Notify Student</span>
+                              </>
+                            )}
+                          </button>
                         )}
 
                         {/* Quick fulfill via upload */}
