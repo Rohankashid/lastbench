@@ -1,0 +1,85 @@
+/* LastBench Academic Publishing • Component: Question Bank Headers & Layout */
+.qa-card,
+.question-article {
+  break-before: page;
+  margin-bottom: 24pt;
+}
+
+.qa-header-block,
+.qa-header {
+  border-bottom: 0.5pt solid var(--rule);
+  padding-bottom: 8pt;
+  margin-bottom: 12pt;
+  break-after: avoid;
+}
+
+.qa-micro-label,
+.meta-row {
+  font-family: var(--font-sans);
+  font-size: 7.5pt;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 4pt;
+  display: flex;
+  justify-content: space-between;
+}
+
+.qa-question-title,
+.question-title {
+  font-family: var(--font-sans);
+  font-size: 12.5pt;
+  font-weight: 600;
+  line-height: 16pt;
+  color: var(--ink);
+  margin: 0 0 6pt 0;
+}
+
+.qa-tag-row,
+.tag-row {
+  display: flex;
+  gap: 12pt;
+  font-family: var(--font-sans);
+  font-size: 7.5pt;
+  color: var(--muted);
+}
+
+.qa-tag-row span,
+.tag-row span,
+.tag-row .tag {
+  display: inline-flex;
+  align-items: center;
+}
+
+.qa-tag-row .tag-marks,
+.tag-row .marks-badge {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.answer-section {
+  margin-bottom: 16pt;
+}
+
+.answer-heading,
+.section-label {
+  font-family: var(--font-sans);
+  font-size: 11pt;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 12pt 0 4pt 0;
+  break-after: avoid;
+}
+
+.boxed-result {
+  border: 1.25pt solid var(--ink);
+  background: var(--surface);
+  padding: 8pt 12pt;
+  margin: 12pt 0;
+  font-family: var(--font-mono);
+  font-size: 9.5pt;
+  font-weight: 600;
+  color: var(--ink);
+  break-inside: avoid;
+}

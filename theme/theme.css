@@ -1,0 +1,264 @@
+/* ==========================================================================
+   LastBench Academic Editorial Publishing • Design System
+   Subject: Computer Organisation and Architecture (COA) Course Pack
+   Palette: Midnight Ink (#0B1020), Bone Surface (#F3EEE4), Amber (#FFB02E)
+   Typography: Source Serif 4, IBM Plex Sans, IBM Plex Mono
+   ========================================================================== */
+
+@import url('fonts.css');
+@import url('components/callouts.css');
+@import url('components/tables.css');
+@import url('components/code.css');
+@import url('components/figure.css');
+@import url('components/qa-header.css');
+
+:root {
+  /* Brand Color Palette */
+  --ink: #0B1020;
+  --body: #1F2433;
+  --muted: #5B6275;
+  --rule: #D9D4C7;
+  --surface: #F3EEE4;
+  --accent: #FFB02E;
+  --paper: #FFFFFF;
+
+  /* Typographic Font Stacks */
+  --font-serif: 'Source Serif 4', Georgia, serif;
+  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'IBM Plex Mono', Menlo, Consolas, monospace;
+
+  /* Strict Spacing Scale (4, 8, 12, 16, 24, 32, 48 pt) */
+  --space-4: 4pt;
+  --space-8: 8pt;
+  --space-12: 12pt;
+  --space-16: 16pt;
+  --space-24: 24pt;
+  --space-32: 32pt;
+  --space-48: 48pt;
+}
+
+/* Page Geometry */
+@page {
+  size: A4;
+  margin: 20mm 20mm 22mm 20mm;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--paper);
+  color: var(--body);
+  font-family: var(--font-serif);
+  font-size: 10.25pt;
+  line-height: 1.55;
+  letter-spacing: 0;
+  text-align: left;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Page Flow & Break Rules */
+.page-break {
+  break-before: page;
+}
+
+.keep-together {
+  break-inside: avoid;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: var(--space-8);
+  orphans: 3;
+  widows: 3;
+}
+
+strong, b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+em, i {
+  font-style: italic;
+}
+
+hr.hairline {
+  border: none;
+  border-top: 0.5pt solid var(--rule);
+  margin: var(--space-16) 0;
+}
+
+/* Unit Opener Layout */
+.opener-container {
+  padding-bottom: var(--space-16);
+}
+
+.opener-brand {
+  font-family: var(--font-sans);
+  font-size: 7.5pt;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: var(--space-24);
+  display: flex;
+  justify-content: space-between;
+}
+
+.opener-numeral {
+  font-family: var(--font-sans);
+  font-size: 48pt;
+  font-weight: 700;
+  line-height: 48pt;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-8);
+}
+
+.opener-title {
+  font-family: var(--font-sans);
+  font-size: 24pt;
+  font-weight: 700;
+  line-height: 28pt;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin-bottom: var(--space-8);
+}
+
+.opener-scope {
+  font-family: var(--font-sans);
+  font-size: 9.5pt;
+  line-height: 14pt;
+  color: var(--muted);
+  margin-bottom: var(--space-16);
+  border-bottom: 0.5pt solid var(--rule);
+  padding-bottom: var(--space-12);
+}
+
+/* Section Headings */
+.section-block {
+  margin-top: var(--space-24);
+  margin-bottom: var(--space-16);
+  break-after: avoid;
+}
+
+.section-micro-label {
+  font-family: var(--font-sans);
+  font-size: 7.5pt;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: var(--space-4);
+  display: block;
+}
+
+.section-title {
+  font-family: var(--font-sans);
+  font-size: 16pt;
+  font-weight: 700;
+  line-height: 20pt;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.section-rule-amber {
+  width: 24pt;
+  height: 1.5pt;
+  background-color: var(--accent);
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-12);
+}
+
+h3.subheading {
+  font-family: var(--font-sans);
+  font-size: 11.5pt;
+  font-weight: 600;
+  line-height: 15pt;
+  color: var(--ink);
+  margin-top: var(--space-16);
+  margin-bottom: var(--space-8);
+  break-after: avoid;
+}
+
+/* Two-column layout for comparisons and revision sheets */
+.two-column {
+  display: flex;
+  gap: 12mm;
+  margin: var(--space-12) 0;
+}
+
+.two-column > .col {
+  flex: 1;
+}
+
+/* Revision Sheet Layout */
+.revision-sheet {
+  break-before: page;
+}
+
+.revision-header {
+  border-bottom: 1.5pt solid var(--ink);
+  padding-bottom: var(--space-8);
+  margin-bottom: var(--space-12);
+}
+
+.revision-header h2 {
+  font-family: var(--font-sans);
+  font-size: 16pt;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 var(--space-4) 0;
+}
+
+.revision-header .meta {
+  font-family: var(--font-sans);
+  font-size: 8pt;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.revision-grid {
+  display: flex;
+  gap: 10mm;
+}
+
+.revision-col {
+  flex: 1;
+}
+
+.revision-card {
+  background: var(--surface);
+  border: 0.5pt solid var(--rule);
+  border-radius: 2pt;
+  padding: var(--space-8) var(--space-12);
+  margin-bottom: var(--space-8);
+  break-inside: avoid;
+}
+
+.revision-card h4 {
+  font-family: var(--font-sans);
+  font-size: 8.5pt;
+  font-weight: 600;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 var(--space-4) 0;
+  border-bottom: 0.5pt solid var(--rule);
+  padding-bottom: 2pt;
+}
+
+.revision-card p,
+.revision-card ul {
+  font-size: 8.25pt;
+  line-height: 12pt;
+  margin: 0;
+  padding-left: 12pt;
+}

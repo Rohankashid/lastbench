@@ -7,6 +7,7 @@ import { Bookmark } from 'lucide-react';
 import { useBookmarks } from '@/context/BookmarkContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
+import { useToast } from '@/components/ui/Toast';
 
 interface BookmarkButtonProps {
   materialId?: string;
@@ -24,6 +25,7 @@ export function BookmarkButton({
   const { user } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { openAuthModal } = useAuthModal();
+  const { toast } = useToast();
 
   const bookmarked = isBookmarked(materialId);
 
@@ -40,7 +42,14 @@ export function BookmarkButton({
       return;
     }
 
+    const nextBookmarked = !bookmarked;
     await toggleBookmark(materialId);
+
+    if (nextBookmarked) {
+      toast.bookmark('Saved to your study materials');
+    } else {
+      toast.info('Removed from saved materials');
+    }
   };
 
   const iconSize = size === 'sm' ? 'w-4 h-4' : 'w-[18px] h-[18px]';

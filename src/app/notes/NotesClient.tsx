@@ -543,7 +543,6 @@ function NotesContent({ initialNotes = [] }: { initialNotes?: Note[] }) {
                         {note.name || note.title}
                       </Link>
                     </h3>
-                    
                   </div>
                   
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] sm:text-[11px] text-zinc-500 uppercase tracking-wide font-medium mb-6">

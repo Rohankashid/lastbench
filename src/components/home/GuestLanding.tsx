@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,10 @@ import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuthModal } from '@/context/AuthModalContext';
 import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
+import { InfiniteMarquee } from '@/components/ui/InfiniteMarquee';
+import { CountUp } from '@/components/ui/CountUp';
+import { AnnotatedText } from '@/components/ui/AnnotatedText';
+import { InkStamp } from '@/components/ui/InkStamp';
 import { 
   ArrowRight, 
   BookOpen, 
@@ -128,6 +132,25 @@ export function GuestLanding() {
   const { openAuthModal } = useAuthModal();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeBranchTab, setActiveBranchTab] = useState<'comp' | 'it' | 'aids' | 'entc' | 'mech' | 'fe'>('comp');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        if (
+          document.activeElement?.tagName === 'INPUT' &&
+          document.activeElement !== searchInputRef.current
+        ) {
+          return;
+        }
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -259,9 +282,11 @@ export function GuestLanding() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <FoundersClubBanner onSignUp={() => openAuthModal('signup')} />
             
-            <h1 className="text-4xl sm:text-6xl font-bold text-zinc-900 tracking-tight mb-6 leading-[1.1]">
+            <h1 className="text-4xl sm:text-6xl font-bold text-zinc-900 tracking-tight mb-6 leading-[1.15]">
               The open archive for <br className="hidden sm:block" />
-              <span className="text-zinc-500">engineering students.</span>
+              <AnnotatedText variant="highlight" color="#FFB02E">
+                engineering students.
+              </AnnotatedText>
             </h1>
             
             <p className="text-lg sm:text-xl text-zinc-600 mb-10 leading-relaxed max-w-2xl mx-auto">
@@ -274,6 +299,7 @@ export function GuestLanding() {
                 <Search className="w-5 h-5 text-zinc-400 group-focus-within:text-zinc-900 transition-colors" />
               </div>
               <input
+                ref={searchInputRef}
                 type="text"
                 name="q"
                 value={searchQuery}
@@ -281,10 +307,13 @@ export function GuestLanding() {
                 placeholder="Search for subjects, topics, or course codes..."
                 className="w-full pl-14 pr-32 py-4 sm:py-5 bg-white border-2 border-zinc-200 rounded-2xl text-base text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-4 focus:ring-zinc-900/5 transition-all shadow-sm"
               />
-              <div className="absolute inset-y-2 right-2 flex items-center">
+              <div className="absolute inset-y-2 right-2 flex items-center gap-2">
+                <span className="hidden sm:inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-mono text-zinc-400 bg-zinc-100 rounded-md border border-zinc-200 select-none">
+                  <kbd className="font-sans">⌘</kbd>K
+                </span>
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center px-6 py-2.5 sm:py-3 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
+                  className="inline-flex items-center justify-center px-6 py-2.5 sm:py-3 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-xl transition-colors shadow-sm cursor-pointer"
                 >
                   Search
                 </button>
@@ -312,38 +341,58 @@ export function GuestLanding() {
       </div>
 
       {/* University Marquee */}
-      <div className="border-y border-zinc-100 bg-zinc-50/50 py-10 overflow-hidden relative">
-        <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-zinc-50/50 to-transparent z-10" />
-        <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-zinc-50/50 to-transparent z-10" />
-        <div className="flex w-max animate-marquee items-center">
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="flex items-center shrink-0">
-              {[
-                { name: 'Pune University (SPPU)', src: '/logos/Pune.png' },
-                { name: 'Mumbai University', src: '/logos/Mumbai.png', invert: true },
-                { name: 'Shivaji University', src: '/logos/Shivaji.jpg' },
-                { name: 'DBATU', src: '/logos/DBATU.png' },
-                { name: 'Nagpur University', src: '/logos/Nagpur.png' },
-                { name: 'Amravati University', src: '/logos/Amravati.jpg' },
-                { name: 'BAMU', src: '/logos/BAMU.png' },
-              ].map((uni, j) => (
-                <UniversityLogo key={`${i}-${j}`} uni={uni} />
-              ))}
-            </div>
-          ))}
+      <div className="border-y border-zinc-200/70 bg-zinc-50/60 py-8 overflow-hidden relative">
+        <div className="text-center mb-4">
+          <p className="text-[11px] font-mono uppercase tracking-widest text-zinc-400 font-semibold">
+            Serving engineering students across 25+ Maharashtra technical universities
+          </p>
         </div>
-        <style jsx>{`
-          @keyframes marquee {
-            0% { transform: translateX(0%); }
-            100% { transform: translateX(-50%); }
-          }
-          .animate-marquee {
-            animation: marquee 40s linear infinite;
-          }
-          .animate-marquee:hover {
-            animation-play-state: paused;
-          }
-        `}</style>
+        <InfiniteMarquee
+          speed={30}
+          pauseOnHover={true}
+          gap="2.5rem"
+          items={[
+            { name: 'Pune University (SPPU)', src: '/logos/Pune.png' },
+            { name: 'Mumbai University', src: '/logos/Mumbai.png', invert: true },
+            { name: 'Shivaji University', src: '/logos/Shivaji.jpg' },
+            { name: 'DBATU', src: '/logos/DBATU.png' },
+            { name: 'Nagpur University', src: '/logos/Nagpur.png' },
+            { name: 'Amravati University', src: '/logos/Amravati.jpg' },
+            { name: 'BAMU', src: '/logos/BAMU.png' },
+          ].map((uni, j) => (
+            <UniversityLogo key={j} uni={uni} />
+          ))}
+        />
+      </div>
+
+      {/* Platform Impact Stats Section */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 sm:-mt-8 relative z-20">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 p-4 sm:p-6 bg-white/90 backdrop-blur-md border border-zinc-200/90 rounded-2xl shadow-sm">
+          <div className="p-3 sm:p-4 text-center">
+            <p className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-zinc-950">
+              <CountUp to={730} suffix="+" />
+            </p>
+            <p className="text-[11px] sm:text-xs text-zinc-500 font-mono mt-1 uppercase tracking-wider">
+              Verified Materials
+            </p>
+          </div>
+          <div className="p-3 sm:p-4 text-center border-t sm:border-t-0 sm:border-l border-zinc-100">
+            <p className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-zinc-950">
+              <CountUp to={25} suffix="+" />
+            </p>
+            <p className="text-[11px] sm:text-xs text-zinc-500 font-mono mt-1 uppercase tracking-wider">
+              Universities
+            </p>
+          </div>
+          <div className="p-3 sm:p-4 text-center border-t sm:border-t-0 sm:border-l border-zinc-100">
+            <p className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-zinc-950">
+              <CountUp to={100} suffix="%" />
+            </p>
+            <p className="text-[11px] sm:text-xs text-zinc-500 font-mono mt-1 uppercase tracking-wider">
+              Free Access
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24 space-y-32">
@@ -366,7 +415,7 @@ export function GuestLanding() {
             
             {/* Visual / Mockup inside the card (Visible on both mobile and desktop) */}
             <div className="relative md:absolute md:-right-4 md:top-1/2 md:-translate-y-1/2 w-full md:w-80 mt-auto flex justify-center md:block">
-              <div className="w-64 sm:w-80 bg-white rounded-2xl border border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-5 transform md:rotate-3 group-hover:-rotate-1 transition-transform duration-500 translate-y-4 md:translate-y-0">
+              <div className="w-64 sm:w-80 bg-white rounded-2xl border border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-5 transform md:rotate-3 group-hover:-rotate-1 transition-transform duration-500 translate-y-4 md:translate-y-0 relative">
                 <div className="flex items-center justify-between mb-4 border-b border-zinc-100 pb-3 sm:pb-4">
                    <span className="text-[9px] sm:text-[10px] font-mono font-medium text-emerald-700 bg-emerald-50 px-2 sm:px-2.5 py-1 rounded-full border border-emerald-100">UNIT 4</span>
                    <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400">PDF DOC</span>
@@ -375,6 +424,11 @@ export function GuestLanding() {
                 <div className="h-2 sm:h-2.5 w-full bg-zinc-50 rounded mb-2 sm:mb-2.5"></div>
                 <div className="h-2 sm:h-2.5 w-5/6 bg-zinc-50 rounded mb-2 sm:mb-2.5"></div>
                 <div className="h-2 sm:h-2.5 w-4/6 bg-zinc-50 rounded"></div>
+                
+                {/* Archival Ink Stamp */}
+                <div className="absolute right-3 bottom-3">
+                  <InkStamp text="LECTURE NOTES" variant="accent" rotate={-8} size="sm" />
+                </div>
               </div>
             </div>
           </div>
@@ -409,7 +463,9 @@ export function GuestLanding() {
                 <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span>Open Educational Utility</span>
               </div>
-              <h3 className="text-xl sm:text-3xl font-semibold text-white mb-3 sm:mb-4 tracking-tight">100% Free. No paywalls.</h3>
+              <h3 className="text-xl sm:text-3xl font-semibold text-white mb-3 sm:mb-4 tracking-tight">
+                100% Free. <AnnotatedText variant="wavy" color="#34d399">No paywalls.</AnnotatedText>
+              </h3>
               <p className="text-sm sm:text-base text-zinc-400 leading-relaxed">
                 LastBench is built by students, for students. We believe educational resources should be universally accessible. No subscriptions, no hidden fees, ever.
               </p>

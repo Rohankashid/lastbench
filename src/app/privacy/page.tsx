@@ -34,7 +34,7 @@ export default function PrivacyPolicyPage() {
                 <strong>Account & Profile Information:</strong> When you voluntarily register an account via Google Sign-In or email, we collect your name, email address, profile photo, and academic preferences (such as your university, engineering branch, and semester).
               </li>
               <li>
-                <strong>User-Generated Content:</strong> Study materials, unit notes, question papers, titles, and descriptions you upload, as well as comments or questions posted in our community spaces.
+                <strong>User-Generated Content:</strong> Study materials, unit notes, question papers, titles, and descriptions you upload, as well as comments posted on study materials.
               </li>
               <li>
                 <strong>Usage & Interaction Data:</strong> Search queries, bookmarks, helpful votes, and navigation interactions used to improve catalog ranking, discovery, and search relevance.

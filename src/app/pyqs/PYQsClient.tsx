@@ -19,6 +19,7 @@ import { SignInModal } from '@/components/ui/SignInModal';
 import { RequestPaperModal } from '@/components/ui/RequestPaperModal';
 import { DocumentViewer } from '@/components/ui/DocumentViewer';
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
+import { InkStamp } from '@/components/ui/InkStamp';
 import { 
   UNIVERSITY_SELECT_GROUPS, 
   BRANCH_SELECT_GROUPS, 
@@ -546,7 +547,11 @@ function PYQsContent({ initialPYQs = [] }: { initialPYQs?: PYQ[] }) {
                         {pyq.name || pyq.title}
                       </Link>
                     </h3>
-                    {(pyq.examYear || pyq.year) && <span className="text-xs font-mono text-zinc-500 shrink-0">{pyq.examYear || pyq.year}</span>}
+                    {(pyq.examYear || pyq.year) && (
+                      <div className="shrink-0 mt-0.5">
+                        <InkStamp text={pyq.examYear || pyq.year} variant="approved" rotate={-4} size="sm" />
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] sm:text-[11px] text-zinc-500 uppercase tracking-wide font-medium mb-6">

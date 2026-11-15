@@ -66,7 +66,6 @@ export default function Navbar() {
     { name: 'Home', path: '/' },
     { name: 'Notes', path: '/notes' },
     { name: 'PYQs', path: '/pyqs' },
-    { name: 'Community', path: '/community' },
     { name: 'Leaderboard', path: '/leaderboard' },
     ...(user ? [{ name: 'Upload', path: '/upload' }] : []),
   ];
@@ -268,7 +267,7 @@ export default function Navbar() {
                     Go exploring.
                   </h2>
                   <p className="text-xs text-zinc-500 mt-1.5 leading-relaxed max-w-[210px]">
-                    Semester notes, question papers, syllabus guides and community.
+                    Semester notes, question papers, and syllabus guides.
                   </p>
                 </div>
                 <button
@@ -288,7 +287,6 @@ export default function Navbar() {
                 {[
                   { name: 'Notes', path: '/notes' },
                   { name: 'PYQs', path: '/pyqs' },
-                                { name: 'Community', path: '/community' },
                   { name: 'Leaderboard', path: '/leaderboard' },
                   ...(user ? [{ name: 'Upload', path: '/upload' }] : []),
                   { name: 'Home', path: '/' },

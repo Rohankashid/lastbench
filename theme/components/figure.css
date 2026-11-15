@@ -1,0 +1,60 @@
+/* LastBench Academic Publishing • Component: Figures & SVG Diagrams */
+.figure-block {
+  margin: 16pt 0;
+  text-align: center;
+  break-inside: avoid;
+}
+
+.figure-block svg {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Monoline SVG diagram styling */
+.figure-block svg line,
+.figure-block svg rect,
+.figure-block svg path,
+.figure-block svg circle,
+.figure-block svg polygon {
+  stroke: var(--ink);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.figure-block svg path,
+.figure-block svg line {
+  fill: none;
+}
+
+.figure-block svg text {
+  font-family: var(--font-mono);
+  font-size: 7.5pt;
+  fill: var(--ink);
+  stroke: none;
+}
+
+.figure-block svg .active-path,
+.figure-block svg .signal-amber {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.figure-block svg .fill-surface {
+  fill: var(--surface);
+}
+
+.figure-block svg .fill-white {
+  fill: var(--paper);
+}
+
+.figure-block .figure-caption {
+  font-family: var(--font-sans);
+  font-size: 8pt;
+  line-height: 11pt;
+  color: var(--muted);
+  margin-top: 6pt;
+  text-align: center;
+}

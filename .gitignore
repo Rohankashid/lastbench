@@ -45,3 +45,9 @@ next-env.d.ts
 upload_content/
 scripts/*report.json
 scratch/
+
+# course pack publishing & intermediate build caches
+content/
+theme/katex/
+BEE_Unit_*.pdf
+public/documents/COA_Unit_*.pdf

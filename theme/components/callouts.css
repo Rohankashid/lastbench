@@ -1,0 +1,50 @@
+/* LastBench Academic Publishing • Component: Callouts */
+.callout {
+  background: var(--surface);
+  border-radius: 2pt;
+  padding: 6pt 10pt;
+  margin: 7pt 0;
+  break-inside: avoid;
+}
+
+.callout .callout-label {
+  font-family: var(--font-sans);
+  font-size: 7pt;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 2pt;
+  display: block;
+}
+
+.callout p {
+  margin: 0;
+  font-size: 8.5pt;
+  line-height: 1.4;
+  color: var(--body);
+}
+
+.callout-definition {
+  border-left: 2.5pt solid var(--ink);
+}
+
+.callout-definition .callout-label {
+  color: var(--ink);
+}
+
+.callout-exam-tip {
+  border-left: 2.5pt solid var(--accent);
+}
+
+.callout-exam-tip .callout-label {
+  color: var(--ink);
+}
+
+.callout-mistake {
+  border-left: 2.5pt solid #8B2500;
+}
+
+.callout-mistake .callout-label {
+  color: #8B2500;
+}

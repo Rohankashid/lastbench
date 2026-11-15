@@ -15,6 +15,15 @@ const nextConfig: NextConfig = {
   experimental: {
     agentUpgrade: "security",
   },
+  async redirects() {
+    return [
+      {
+        source: '/community',
+        destination: '/',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

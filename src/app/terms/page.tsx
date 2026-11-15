@@ -52,7 +52,7 @@ export default function TermsOfServicePage() {
             <ul className="list-disc pl-5 space-y-1 text-zinc-600">
               <li>Upload malware, viruses, or malicious code.</li>
               <li>Post spam, promotional content, or irrelevant material.</li>
-              <li>Harass, abuse, or harm other students in the community forum.</li>
+              <li>Harass, abuse, or harm other students on the platform.</li>
               <li>Attempt to scrape, reverse engineer, or disrupt the platform&apos;s infrastructure.</li>
             </ul>
           </section>

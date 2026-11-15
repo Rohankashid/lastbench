@@ -11,7 +11,7 @@
 [![Traction](https://img.shields.io/badge/Pageviews-1K%2B%20%2F%20mo-success)](https://www.lastbench.online)
 [![Active Users](https://img.shields.io/badge/WAU-30%2B%20users-blue)](https://www.lastbench.online)
 
-An open-access, production-grade academic repository and document intelligence platform built for engineering students across 25+ Maharashtra technical universities (SPPU, DBATU, MU, etc.). LastBench delivers sub-50ms catalog searches across 730+ verified study materials, zero-server-overhead document uploads, multimodal AI document indexing, and an interactive study community.
+An open-access, production-grade academic repository and document intelligence platform built for engineering students across 25+ Maharashtra technical universities (SPPU, DBATU, MU, etc.). LastBench delivers sub-50ms catalog searches across 730+ verified study materials, zero-server-overhead document uploads, multimodal AI document indexing, and peer-to-peer academic exchange.
 
 **Traction & Reach:** Scaled organically to **1,000+ page views in <30 days** post-launch with **30+ weekly active users (WAU)** via Google Search Console indexing and dynamic Next.js SSR metadata optimization.
 
