@@ -11,7 +11,21 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const searchParams = await props.searchParams;
   const v = searchParams.v;
+  const q = typeof searchParams.q === 'string' ? searchParams.q.trim() : undefined;
+
   if (!v || typeof v !== 'string' || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    if (q) {
+      const qTitle = `${q} Notes & Exam Question Bank | LastBench`;
+      const qDesc = `Download verified university study notes, course packs, and PYQ solutions for ${q} on LastBench. Free inline PDF preview, zero paywalls.`;
+      return {
+        title: qTitle,
+        description: qDesc,
+        openGraph: {
+          title: qTitle,
+          description: qDesc,
+        },
+      };
+    }
     return {
       title: 'Study Notes Archive - LastBench',
       description: 'Explore comprehensive engineering study notes, lecture digests, and exam guides across universities and branches.',

@@ -264,8 +264,8 @@ export function GuestLanding() {
       subjects: [
         { name: 'Engineering Mathematics', topics: 'Calculus, Matrices' },
         { name: 'Engineering Mechanics', topics: 'Statics, Kinetics' },
-        { name: 'Basic Electrical', topics: 'Kirchhoff Laws, AC' },
-        { name: 'Engineering Physics', topics: 'Quantum, Lasers' },
+        { name: 'Basic Electrical Engineering', topics: 'Kirchhoff Laws, AC' },
+        { name: 'Basic Electronics Engineering', topics: 'Diodes, Op-Amps, Sensors' },
       ],
     },
   };
@@ -556,10 +556,14 @@ export function GuestLanding() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {activeBranch.subjects.map((sub, idx) => (
-                  <div key={idx} className="p-5 rounded-2xl border border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-sm transition-all group cursor-pointer">
+                  <Link
+                    key={idx}
+                    href={`/notes?q=${encodeURIComponent(sub.name)}`}
+                    className="p-5 rounded-2xl border border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-sm transition-all group cursor-pointer block"
+                  >
                     <h4 className="font-semibold text-zinc-900 mb-2 group-hover:text-emerald-600 transition-colors">{sub.name}</h4>
                     <p className="text-sm text-zinc-500 line-clamp-2">Units: {sub.topics}</p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>

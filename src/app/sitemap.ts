@@ -63,6 +63,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.5,
     },
+    // High-Yield University Course Pack Canonical Landing Routes
+    {
+      url: `${baseUrl}/notes?q=Engineering+Mathematics+I`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/notes?q=Computer+Organisation+and+Architecture`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/notes?q=Basic+Electrical+Engineering`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/notes?q=Engineering+Mechanics`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/notes?q=Basic+Electronics+Engineering`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    },
   ];
 
   try {

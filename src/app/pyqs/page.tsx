@@ -11,7 +11,21 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const searchParams = await props.searchParams;
   const v = searchParams.v;
+  const q = typeof searchParams.q === 'string' ? searchParams.q.trim() : undefined;
+
   if (!v || typeof v !== 'string' || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    if (q) {
+      const qTitle = `${q} PYQs & University Question Papers | LastBench`;
+      const qDesc = `Download solved university question papers (PYQs) and model answer schemes for ${q} on LastBench. Free PDF preview, no paywalls.`;
+      return {
+        title: qTitle,
+        description: qDesc,
+        openGraph: {
+          title: qTitle,
+          description: qDesc,
+        },
+      };
+    }
     return {
       title: 'Previous Year Question Papers (PYQs) - LastBench',
       description: 'Find past exam question papers from top engineering universities including SPPU and DBATU.',
