@@ -106,15 +106,6 @@ function NotesContent({ initialNotes = [] }: { initialNotes?: Note[] }) {
     openedIdRef.current = note.id;
     setPreviewTarget(note);
     updateViewUrl(note.id);
-    trackDocumentView({
-      id: note.id,
-      title: note.name || note.title,
-      subject: note.subject,
-      semester: note.semester,
-      university: note.university,
-      category: 'note',
-      branch: note.branch,
-    });
   };
 
   const handleClosePreview = () => {

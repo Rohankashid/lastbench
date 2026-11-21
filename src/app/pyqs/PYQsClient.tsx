@@ -108,16 +108,6 @@ function PYQsContent({ initialPYQs = [] }: { initialPYQs?: PYQ[] }) {
     openedIdRef.current = pyq.id;
     setPreviewTarget(pyq);
     updateViewUrl(pyq.id);
-    trackDocumentView({
-      id: pyq.id,
-      title: pyq.name || pyq.title,
-      subject: pyq.subject,
-      semester: pyq.semester,
-      university: pyq.university,
-      category: 'pyq',
-      branch: pyq.branch,
-      examYear: pyq.examYear || pyq.year,
-    });
   };
 
   const handleClosePreview = () => {

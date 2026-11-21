@@ -38,21 +38,28 @@ export function DocumentViewer({
   const [isLoading, setIsLoading] = useState(true);
   const [showSignInModal, setShowSignInModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const lastTrackedDocIdRef = React.useRef<string | null>(null);
 
   // Reset loading state and track document view whenever a new document is opened
   useEffect(() => {
     if (isOpen && fileUrl) {
       setIsLoading(true);
-      trackDocumentView({
-        id: materialId || fileUrl,
-        title,
-        subject: metadata?.subject,
-        semester: metadata?.semester,
-        university: metadata?.university,
-        year: metadata?.year,
-      });
+      const docKey = materialId || fileUrl;
+      if (lastTrackedDocIdRef.current !== docKey) {
+        lastTrackedDocIdRef.current = docKey;
+        trackDocumentView({
+          id: docKey,
+          title,
+          subject: metadata?.subject,
+          semester: metadata?.semester,
+          university: metadata?.university,
+          year: metadata?.year,
+        });
+      }
+    } else if (!isOpen) {
+      lastTrackedDocIdRef.current = null;
     }
-  }, [isOpen, fileUrl, materialId, title, metadata]);
+  }, [isOpen, fileUrl, materialId, title, metadata?.subject, metadata?.semester, metadata?.university, metadata?.year]);
 
   const handleDownloadClick = (e: React.MouseEvent) => {
     if (!user) {
