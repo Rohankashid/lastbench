@@ -19,6 +19,7 @@ import { SignInModal } from '@/components/ui/SignInModal';
 import { RequestPaperModal } from '@/components/ui/RequestPaperModal';
 import { DocumentViewer } from '@/components/ui/DocumentViewer';
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
+import { trackDocumentView, trackDocumentDownload } from '@/lib/analytics';
 import { 
   UNIVERSITY_SELECT_GROUPS, 
   BRANCH_SELECT_GROUPS, 
@@ -105,6 +106,15 @@ function NotesContent({ initialNotes = [] }: { initialNotes?: Note[] }) {
     openedIdRef.current = note.id;
     setPreviewTarget(note);
     updateViewUrl(note.id);
+    trackDocumentView({
+      id: note.id,
+      title: note.name || note.title,
+      subject: note.subject,
+      semester: note.semester,
+      university: note.university,
+      category: 'note',
+      branch: note.branch,
+    });
   };
 
   const handleClosePreview = () => {
@@ -121,6 +131,15 @@ function NotesContent({ initialNotes = [] }: { initialNotes?: Note[] }) {
   };
 
   const handleDownload = (item: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
+    trackDocumentDownload({
+      id: item.id,
+      title: item.name || item.title,
+      subject: item.subject,
+      semester: item.semester,
+      university: item.university,
+      category: 'note',
+      branch: item.branch,
+    });
     if (!_user) {
       setDownloadTarget(item);
       return;

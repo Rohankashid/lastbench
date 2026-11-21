@@ -10,6 +10,7 @@ import { BookmarkButton } from '@/components/ui/BookmarkButton';
 import { HelpfulButton } from '@/components/ui/HelpfulButton';
 import Link from 'next/link';
 import { Spinner } from '@/components/ui/Spinner';
+import { trackDocumentView, trackDocumentDownload } from '@/lib/analytics';
 
 interface DocumentViewerProps {
   isOpen: boolean;
@@ -38,12 +39,36 @@ export function DocumentViewer({
   const [showSignInModal, setShowSignInModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  // Reset loading state whenever a new document is opened
+  // Reset loading state and track document view whenever a new document is opened
   useEffect(() => {
     if (isOpen && fileUrl) {
       setIsLoading(true);
+      trackDocumentView({
+        id: materialId || fileUrl,
+        title,
+        subject: metadata?.subject,
+        semester: metadata?.semester,
+        university: metadata?.university,
+        year: metadata?.year,
+      });
     }
-  }, [isOpen, fileUrl]);
+  }, [isOpen, fileUrl, materialId, title, metadata]);
+
+  const handleDownloadClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault();
+      setShowSignInModal(true);
+      return;
+    }
+    trackDocumentDownload({
+      id: materialId || fileUrl,
+      title,
+      subject: metadata?.subject,
+      semester: metadata?.semester,
+      university: metadata?.university,
+      year: metadata?.year,
+    });
+  };
 
   // Lock scroll without horizontal layout shift (compensate scrollbar width)
   useEffect(() => {
@@ -186,12 +211,7 @@ export function DocumentViewer({
                     <a
                       href={user ? `/api/download?url=${encodeURIComponent(fileUrl)}&filename=${encodeURIComponent((title || 'document') + '.pdf')}` : '#'}
                       download={user ? true : undefined}
-                      onClick={(e) => {
-                        if (!user) {
-                          e.preventDefault();
-                          setShowSignInModal(true);
-                        }
-                      }}
+                      onClick={handleDownloadClick}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-950 text-white hover:bg-zinc-800 text-xs font-medium transition-colors shadow-sm cursor-pointer"
                       title="Download File"
                     >
@@ -247,12 +267,7 @@ export function DocumentViewer({
                   <a
                     href={user ? `/api/download?url=${encodeURIComponent(fileUrl)}&filename=${encodeURIComponent((title || 'document') + '.pdf')}` : '#'}
                     download={user ? true : undefined}
-                    onClick={(e) => {
-                      if (!user) {
-                        e.preventDefault();
-                        setShowSignInModal(true);
-                      }
-                    }}
+                    onClick={handleDownloadClick}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-950 text-white hover:bg-zinc-800 text-xs font-medium transition-colors shadow-sm whitespace-nowrap shrink-0"
                   >
                     <Download className="w-3.5 h-3.5" />

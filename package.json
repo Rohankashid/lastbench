@@ -28,6 +28,7 @@
     "next": "^16.4.3",
     "nodemailer": "^10.5.0",
     "pdf-lib": "^1.17.1",
+    "posthog-js": "^1.453.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",

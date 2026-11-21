@@ -20,6 +20,7 @@ import { RequestPaperModal } from '@/components/ui/RequestPaperModal';
 import { DocumentViewer } from '@/components/ui/DocumentViewer';
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
 import { InkStamp } from '@/components/ui/InkStamp';
+import { trackDocumentView, trackDocumentDownload } from '@/lib/analytics';
 import { 
   UNIVERSITY_SELECT_GROUPS, 
   BRANCH_SELECT_GROUPS, 
@@ -107,6 +108,16 @@ function PYQsContent({ initialPYQs = [] }: { initialPYQs?: PYQ[] }) {
     openedIdRef.current = pyq.id;
     setPreviewTarget(pyq);
     updateViewUrl(pyq.id);
+    trackDocumentView({
+      id: pyq.id,
+      title: pyq.name || pyq.title,
+      subject: pyq.subject,
+      semester: pyq.semester,
+      university: pyq.university,
+      category: 'pyq',
+      branch: pyq.branch,
+      examYear: pyq.examYear || pyq.year,
+    });
   };
 
   const handleClosePreview = () => {
@@ -123,6 +134,16 @@ function PYQsContent({ initialPYQs = [] }: { initialPYQs?: PYQ[] }) {
   };
 
   const handleDownload = (item: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
+    trackDocumentDownload({
+      id: item.id,
+      title: item.name || item.title,
+      subject: item.subject,
+      semester: item.semester,
+      university: item.university,
+      category: 'pyq',
+      branch: item.branch,
+      examYear: item.examYear || item.year,
+    });
     if (!_user) {
       setDownloadTarget(item);
       return;

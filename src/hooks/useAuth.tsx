@@ -13,6 +13,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
+import { trackIdentifyUser, trackResetUser } from '@/lib/analytics';
 
 export interface UserProfile {
   uid: string;
@@ -86,10 +87,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (currentUser) {
         document.cookie = 'lb_auth=1; path=/; max-age=31536000; SameSite=Lax';
         try { localStorage.setItem('lb_auth', '1'); } catch {}
+        trackIdentifyUser(currentUser.uid, {
+          email: currentUser.email,
+          name: currentUser.displayName,
+        });
         await fetchProfile(currentUser.uid);
       } else {
         document.cookie = 'lb_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax';
         try { localStorage.removeItem('lb_auth'); } catch {}
+        trackResetUser();
         setUserData(null);
       }
       setLoading(false);
@@ -131,6 +137,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       document.cookie = 'lb_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax';
       try { localStorage.removeItem('lb_auth'); } catch {}
+      trackResetUser();
       await firebaseSignOut(auth);
       setUserData(null);
     } catch (error) {

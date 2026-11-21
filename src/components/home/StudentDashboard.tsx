@@ -12,6 +12,7 @@ import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
 import { DocumentViewer } from '@/components/ui/DocumentViewer';
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
 import { useBookmarks } from '@/context/BookmarkContext';
+import { trackDocumentDownload } from '@/lib/analytics';
 import { 
   Search, 
   Plus, 
@@ -650,6 +651,17 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
                       href={item.fileUrl || item.downloadUrl}
                       download
                       rel="noopener noreferrer"
+                      onClick={() => {
+                        trackDocumentDownload({
+                          id: item.id,
+                          title: item.name || item.title,
+                          subject: item.subject,
+                          semester: item.semester,
+                          university: item.university,
+                          category: item.category,
+                          examYear: item.examYear,
+                        });
+                      }}
                       className="flex-1 inline-flex justify-center items-center gap-1 px-3 py-1.5 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-medium rounded-lg transition-colors"
                     >
                       <Download className="w-3.5 h-3.5" />
