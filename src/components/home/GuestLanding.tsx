@@ -56,27 +56,48 @@ const UniversityLogo = ({ uni }: { uni: { name: string, src: string, invert?: bo
 const FOUNDERS_LIMIT = 100;
 
 function FoundersClubBanner({ onSignUp }: { onSignUp: () => void }) {
-  const [claimedCount, setClaimedCount] = useState<number | null>(null);
+  const [claimedCount, setClaimedCount] = useState<number | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('lb_founders_claimed');
+        if (cached !== null) {
+          const num = parseInt(cached, 10);
+          if (!isNaN(num)) return num;
+        }
+      } catch {}
+    }
+    return null;
+  });
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchCount = async () => {
       try {
         const res = await fetch('/api/founders-count');
         if (res.ok) {
           const data = await res.json();
-          setClaimedCount(Math.min(data.count ?? 0, FOUNDERS_LIMIT));
+          const count = Math.min(data.count ?? 0, FOUNDERS_LIMIT);
+          if (isMounted) {
+            setClaimedCount(count);
+          }
+          try {
+            localStorage.setItem('lb_founders_claimed', String(count));
+          } catch {}
         } else {
-          setClaimedCount(0);
+          if (isMounted) setClaimedCount(prev => (prev === null ? 0 : prev));
         }
       } catch {
-        setClaimedCount(0);
+        if (isMounted) setClaimedCount(prev => (prev === null ? 0 : prev));
       }
     };
     fetchCount();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const spotsLeft = claimedCount !== null ? FOUNDERS_LIMIT - claimedCount : null;
+  const spotsLeft = claimedCount !== null ? Math.max(0, FOUNDERS_LIMIT - claimedCount) : null;
   const isFull = spotsLeft !== null && spotsLeft <= 0;
 
   if (isFull) return null;
@@ -91,9 +112,16 @@ function FoundersClubBanner({ onSignUp }: { onSignUp: () => void }) {
         <span className="text-sm text-zinc-700 font-medium">
           Founders Club
         </span>
-        {spotsLeft !== null && (
-          <span className="text-xs text-zinc-400 font-mono">{spotsLeft} spots left</span>
-        )}
+        <span
+          suppressHydrationWarning
+          className="text-xs text-zinc-400 font-mono inline-flex items-center min-w-[72px]"
+        >
+          {spotsLeft !== null ? (
+            <span>{spotsLeft} spots left</span>
+          ) : (
+            <span className="inline-block w-16 h-3 bg-zinc-200/80 rounded-full animate-pulse" />
+          )}
+        </span>
         <ChevronRight className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${expanded ? 'rotate-90' : ''}`} />
       </button>
 

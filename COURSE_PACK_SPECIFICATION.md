@@ -354,3 +354,26 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.
 supabase.from("materials").select("id, title, file_url").ilike("title", "%COA Unit%").then(r => console.log(r.data));
 '
 ```
+
+---
+
+## 10. Token-Optimized Authoring Standard
+
+To minimize LLM token overhead by **70–80%** when authoring new subjects:
+
+1. **Use `build/common_engine.py`**:
+   - Never output repetitive HTML tags, styling boilerplate, or `<article>` wrappers in LLM prompts.
+   - Author purely structured data dictionaries adhering to `skeleton`:
+     ```python
+     from common_engine import render_coursepack_document, render_model_answer
+     ```
+
+2. **Automated LaTeX Sanitizer in `build/render_math.js`**:
+   - KaTeX parsing issues (`\mathbf{\text{...}}`, trailing `}}`, `%` in `\text{}`) are automatically sanitized pre-flight by `render_math.js`. No token-heavy manual regex edit turns are needed.
+
+3. **Standard Component Word/Character Budget (Turn-1 1.5–2.0 Page Guarantee)**:
+   - `direct_answer`: 60–80 words
+   - `explanation`: 220–260 words + 4–6 display math equations
+   - `advantages_tradeoffs`: 6–8 rows $\times$ 3 columns table
+   - `practice_problem` & `practice_answer`: 40–50 words + 2 lines of verified math
+   - This calibration guarantees a vertical fill of 1.60–1.75 pages on the initial generation, eliminating trial-and-error rebuild cycles.

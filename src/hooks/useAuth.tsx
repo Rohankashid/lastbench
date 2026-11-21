@@ -84,8 +84,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
+        document.cookie = 'lb_auth=1; path=/; max-age=31536000; SameSite=Lax';
+        try { localStorage.setItem('lb_auth', '1'); } catch {}
         await fetchProfile(currentUser.uid);
       } else {
+        document.cookie = 'lb_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax';
+        try { localStorage.removeItem('lb_auth'); } catch {}
         setUserData(null);
       }
       setLoading(false);
@@ -103,6 +107,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      document.cookie = 'lb_auth=1; path=/; max-age=31536000; SameSite=Lax';
+      try { localStorage.setItem('lb_auth', '1'); } catch {}
       return userCredential.user;
     } catch (error) {
       throw error;
@@ -113,6 +119,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name });
+      document.cookie = 'lb_auth=1; path=/; max-age=31536000; SameSite=Lax';
+      try { localStorage.setItem('lb_auth', '1'); } catch {}
       return userCredential.user;
     } catch (error) {
       throw error;
@@ -121,6 +129,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
+      document.cookie = 'lb_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax';
+      try { localStorage.removeItem('lb_auth'); } catch {}
       await firebaseSignOut(auth);
       setUserData(null);
     } catch (error) {
@@ -132,6 +142,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
+      document.cookie = 'lb_auth=1; path=/; max-age=31536000; SameSite=Lax';
+      try { localStorage.setItem('lb_auth', '1'); } catch {}
       return userCredential.user;
     } catch (error) {
       throw error;

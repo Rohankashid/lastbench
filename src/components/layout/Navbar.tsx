@@ -12,7 +12,7 @@ import { Bookmark, ArrowUpRight, X, LogOut, User } from 'lucide-react';
 import { useBookmarks } from '@/context/BookmarkContext';
 
 export default function Navbar() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading } = useAuth();
   const { openAuthModal } = useAuthModal();
   const { bookmarks } = useBookmarks();
   const pathname = usePathname();
@@ -200,8 +200,12 @@ export default function Navbar() {
                     )}
                   </AnimatePresence>
                 </div>
+              ) : loading && typeof document !== 'undefined' && document.cookie.includes('lb_auth=1') ? (
+                <div suppressHydrationWarning className="flex items-center gap-2 p-1.5">
+                  <div className="w-8 h-8 rounded-full bg-zinc-200 animate-pulse" />
+                </div>
               ) : (
-                <div className="flex items-center gap-2">
+                <div suppressHydrationWarning className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => openAuthModal('signin')}
