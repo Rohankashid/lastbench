@@ -34,6 +34,7 @@ import {
   GraduationCap, 
   RotateCcw,
   X,
+  Lock,
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
@@ -104,6 +105,18 @@ function PYQsContent({ initialPYQs = [] }: { initialPYQs?: PYQ[] }) {
   };
 
   const handleOpenPreview = (pyq: PYQ) => {
+    if (!_user) {
+      openAuthModal('signin', {
+        contextMessage: `Sign in with Google to view solved question paper: "${pyq.name || pyq.title}"`,
+        onSuccess: () => {
+          dismissedIdsRef.current.delete(pyq.id);
+          openedIdRef.current = pyq.id;
+          setPreviewTarget(pyq);
+          updateViewUrl(pyq.id);
+        },
+      });
+      return;
+    }
     dismissedIdsRef.current.delete(pyq.id);
     openedIdRef.current = pyq.id;
     setPreviewTarget(pyq);
@@ -146,7 +159,7 @@ function PYQsContent({ initialPYQs = [] }: { initialPYQs?: PYQ[] }) {
   const shareOnWhatsApp = (item: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.lastbench.online';
     const pyqUrl = `${origin}/pyqs?v=${item.id}`;
-    const text = `📚 Check out ${item.title || item.name} on LastBench - free preview, no login needed!\n${pyqUrl}`;
+    const text = `📚 Check out ${item.title || item.name} on LastBench - solved university question paper with step-by-step answers!\n${pyqUrl}`;
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
@@ -581,12 +594,17 @@ function PYQsContent({ initialPYQs = [] }: { initialPYQs?: PYQ[] }) {
                           e.preventDefault();
                           handleOpenPreview(pyq);
                         }}
-                        className="text-[11px] font-bold text-zinc-500 hover:text-zinc-900 uppercase tracking-wider transition-colors cursor-pointer"
+                        className="text-[11px] font-bold text-zinc-500 hover:text-zinc-900 uppercase tracking-wider transition-colors cursor-pointer inline-flex items-center gap-1"
                       >
-                        View
+                        {!_user && <Lock className="w-3 h-3 text-amber-600 shrink-0" />}
+                        <span>View</span>
                       </Link>
-                      <button onClick={() => handleDownload(pyq)} className="text-[11px] font-bold text-zinc-500 hover:text-zinc-900 uppercase tracking-wider transition-colors cursor-pointer">
-                        Download
+                      <button 
+                        onClick={() => handleDownload(pyq)} 
+                        className="text-[11px] font-bold text-zinc-500 hover:text-zinc-900 uppercase tracking-wider transition-colors cursor-pointer inline-flex items-center gap-1"
+                      >
+                        {!_user && <Lock className="w-3 h-3 text-zinc-400 shrink-0" />}
+                        <span>Download</span>
                       </button>
                     </div>
                     
@@ -630,7 +648,10 @@ function PYQsContent({ initialPYQs = [] }: { initialPYQs?: PYQ[] }) {
             subject: previewTarget.subject,
             semester: previewTarget.semester,
             university: previewTarget.university,
+            year: previewTarget.examYear || previewTarget.year,
+            category: 'pyq',
           }}
+          requireAuth={true}
         />
       )}
 
