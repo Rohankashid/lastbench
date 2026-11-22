@@ -19,7 +19,12 @@ export default function Navbar() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -199,12 +204,12 @@ export default function Navbar() {
                     )}
                   </AnimatePresence>
                 </div>
-              ) : loading && typeof document !== 'undefined' && document.cookie.includes('lb_auth=1') ? (
-                <div suppressHydrationWarning className="flex items-center gap-2 p-1.5">
+              ) : mounted && loading && typeof document !== 'undefined' && document.cookie.includes('lb_auth=1') ? (
+                <div className="flex items-center gap-2 p-1.5">
                   <div className="w-8 h-8 rounded-full bg-zinc-200 animate-pulse" />
                 </div>
               ) : (
-                <div suppressHydrationWarning className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => openAuthModal('signin')}
