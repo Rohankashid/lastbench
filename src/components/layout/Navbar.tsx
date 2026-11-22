@@ -66,7 +66,6 @@ export default function Navbar() {
     { name: 'Home', path: '/' },
     { name: 'Notes', path: '/notes' },
     { name: 'PYQs', path: '/pyqs' },
-    { name: 'Leaderboard', path: '/leaderboard' },
     ...(user ? [{ name: 'Upload', path: '/upload' }] : []),
   ];
 
@@ -291,7 +290,6 @@ export default function Navbar() {
                 {[
                   { name: 'Notes', path: '/notes' },
                   { name: 'PYQs', path: '/pyqs' },
-                  { name: 'Leaderboard', path: '/leaderboard' },
                   ...(user ? [{ name: 'Upload', path: '/upload' }] : []),
                   { name: 'Home', path: '/' },
                 ].map((item) => {

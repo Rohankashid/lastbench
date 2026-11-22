@@ -22,6 +22,11 @@ const nextConfig: NextConfig = {
         destination: '/',
         permanent: true,
       },
+      {
+        source: '/leaderboard',
+        destination: '/',
+        permanent: true,
+      },
     ];
   },
   async headers() {
