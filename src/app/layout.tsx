@@ -5,7 +5,6 @@ import "./globals.css";
 import { AuthProvider } from '@/hooks/useAuth';
 import { AuthModalProvider } from '@/context/AuthModalContext';
 import { BookmarkProvider } from '@/context/BookmarkContext';
-import { AuthModal } from '@/components/auth/AuthModal';
 import { Analytics } from "@vercel/analytics/next";
 import { ToastProvider } from '@/components/ui/Toast';
 import Navbar from '@/components/layout/Navbar';
@@ -79,12 +78,6 @@ export default function RootLayout({
         <link rel="ard" href="/.well-known/ard.json" />
         <link rel="ai-catalog" href="/.well-known/ai-catalog.json" />
         <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt" />
-        <Script
-          id="adsense-init"
-          strategy="lazyOnload"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5720306425929294"
-          crossOrigin="anonymous"
-        />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 relative">
@@ -105,7 +98,6 @@ export default function RootLayout({
                       <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
                         {children}
                       </main>
-                      <AuthModal />
                       <GoogleAdSenseController />
                     </ToastProvider>
                   </BookmarkProvider>
@@ -114,6 +106,12 @@ export default function RootLayout({
               </AuthProvider>
             </Providers>
             <Footer />
+            <Script
+              id="adsense-init"
+              strategy="lazyOnload"
+              src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5720306425929294"
+              crossOrigin="anonymous"
+            />
           </div>
         </div>
       </body>

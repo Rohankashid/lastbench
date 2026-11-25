@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import React from 'react';
 
 interface InfiniteMarqueeProps {
   items: React.ReactNode[];
@@ -22,14 +21,10 @@ export function InfiniteMarquee({
   fade = true,
   className = '',
 }: InfiniteMarqueeProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const shouldReduceMotion = useReducedMotion();
-
   const isReverse = direction === 'right';
 
   return (
     <div
-      ref={containerRef}
       className={`relative w-full overflow-hidden select-none min-h-[96px] sm:min-h-[128px] ${className}`}
       style={{
         maskImage: fade
@@ -40,29 +35,13 @@ export function InfiniteMarquee({
           : undefined,
       }}
     >
-      <motion.div
-        className="flex w-max items-center"
-        style={{ gap }}
-        animate={
-          shouldReduceMotion
-            ? undefined
-            : {
-                x: isReverse ? ['-50%', '0%'] : ['0%', '-50%'],
-              }
-        }
-        transition={
-          shouldReduceMotion
-            ? undefined
-            : {
-                x: {
-                  repeat: Infinity,
-                  repeatType: 'loop',
-                  duration: speed,
-                  ease: 'linear',
-                },
-              }
-        }
-        whileHover={pauseOnHover ? { animationPlayState: 'paused' } : undefined}
+      <div
+        className={`flex w-max items-center ${pauseOnHover ? 'hover:[animation-play-state:paused]' : ''}`}
+        style={{
+          gap,
+          animation: `${isReverse ? 'marquee-reverse' : 'marquee'} ${speed}s linear infinite`,
+          willChange: 'transform',
+        }}
       >
         {/* First track */}
         <div className="flex shrink-0 items-center" style={{ gap }}>
@@ -81,7 +60,7 @@ export function InfiniteMarquee({
             </div>
           ))}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

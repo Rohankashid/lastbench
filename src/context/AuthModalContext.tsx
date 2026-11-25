@@ -1,7 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/hooks/useAuth';
+
+const LazyAuthModal = dynamic(() => import('@/components/auth/AuthModal').then((m) => m.AuthModal), {
+  ssr: false,
+});
 
 export type AuthMode = 'signin' | 'signup' | 'forgot-password';
 
@@ -120,6 +125,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
         <AuthModalWatcher openAuthModal={openAuthModal} />
       </Suspense>
       {children}
+      {isOpen && <LazyAuthModal />}
     </AuthModalContext.Provider>
   );
 }

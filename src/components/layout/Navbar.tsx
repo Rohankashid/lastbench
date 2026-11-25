@@ -7,7 +7,6 @@ import { useAuthModal } from '@/context/AuthModalContext';
 import { usePathname } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Bookmark, ArrowUpRight, X, LogOut, User } from 'lucide-react';
 import { useBookmarks } from '@/context/BookmarkContext';
 
@@ -108,10 +107,8 @@ export default function Navbar() {
                     }`}
                   >
                     {active && (
-                      <motion.div
-                        layoutId="nav-pill"
+                      <div
                         className="absolute inset-0 bg-white rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-zinc-200/50 -z-10"
-                        transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                       />
                     )}
                     <span className="relative z-10 flex items-center gap-1.5">
@@ -152,65 +149,59 @@ export default function Navbar() {
                     </svg>
                   </button>
 
-                  <AnimatePresence>
-                    {isDropdownOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-48 rounded-xl bg-white shadow-xl border border-zinc-200 p-1 overflow-hidden z-50"
-                      >
-                        <div className="px-3 py-2 border-b border-zinc-100">
-                          <p className="text-[11px] font-mono uppercase text-zinc-400">Account</p>
-                          <p className="text-xs font-medium text-zinc-800 truncate">{user.email}</p>
-                        </div>
-                        <div className="py-1">
-                          <Link
-                            href="/?tab=saved"
-                            onClick={() => setIsDropdownOpen(false)}
-                            className="flex items-center justify-between px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
-                          >
-                            <span className="flex items-center gap-2">
-                              <Bookmark className="w-3.5 h-3.5 text-zinc-400" />
-                              <span>Saved Materials</span>
+                  {isDropdownOpen && (
+                    <div
+                      className="absolute right-0 mt-2 w-48 rounded-xl bg-white shadow-xl border border-zinc-200 p-1 overflow-hidden z-50 animate-zoom-in"
+                    >
+                      <div className="px-3 py-2 border-b border-zinc-100">
+                        <p className="text-[11px] font-mono uppercase text-zinc-400">Account</p>
+                        <p className="text-xs font-medium text-zinc-800 truncate">{user.email}</p>
+                      </div>
+                      <div className="py-1">
+                        <Link
+                          href="/?tab=saved"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center justify-between px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
+                        >
+                          <span className="flex items-center gap-2">
+                            <Bookmark className="w-3.5 h-3.5 text-zinc-400" />
+                            <span>Saved Materials</span>
+                          </span>
+                          {bookmarks.length > 0 && (
+                            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 text-zinc-600 font-medium">
+                              {bookmarks.length}
                             </span>
-                            {bookmarks.length > 0 && (
-                              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 text-zinc-600 font-medium">
-                                {bookmarks.length}
-                              </span>
-                            )}
-                          </Link>
+                          )}
+                        </Link>
+                        <Link
+                          href="/profile"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
+                        >
+                          Profile Settings
+                        </Link>
+                        {isAdmin && (
                           <Link
-                            href="/profile"
+                            href="/admin"
                             onClick={() => setIsDropdownOpen(false)}
                             className="flex items-center px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
                           >
-                            Profile Settings
+                            Admin Dashboard
                           </Link>
-                          {isAdmin && (
-                            <Link
-                              href="/admin"
-                              onClick={() => setIsDropdownOpen(false)}
-                              className="flex items-center px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
-                            >
-                              Admin Dashboard
-                            </Link>
-                          )}
-                          <div className="border-t border-zinc-100 my-1"></div>
-                          <button
-                            onClick={() => {
-                              setIsDropdownOpen(false);
-                              signOut();
-                            }}
-                            className="w-full text-left flex items-center px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                          >
-                            Sign Out
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                        )}
+                        <div className="border-t border-zinc-100 my-1"></div>
+                        <button
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            signOut();
+                          }}
+                          className="w-full text-left flex items-center px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                        >
+                          Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : mounted && loading && typeof document !== 'undefined' && document.cookie.includes('lb_auth=1') ? (
                 <div className="flex items-center gap-2 p-1.5">
@@ -253,30 +244,19 @@ export default function Navbar() {
       </header>
 
       {/* Mobile Floating Menu Card (mkrting / Rare UI Minimalist Style) */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            key="mobile-nav-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-[70] md:hidden flex items-start sm:items-center justify-center p-4 pt-6 sm:p-6 bg-black/50 backdrop-blur-md overflow-y-auto"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setIsMobileMenuOpen(false);
-            }}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-[70] md:hidden flex items-start sm:items-center justify-center p-4 pt-6 sm:p-6 bg-black/50 backdrop-blur-md overflow-y-auto animate-fade-in"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsMobileMenuOpen(false);
+          }}
+        >
+          {/* Floating Card */}
+          <div
+            className="w-full max-w-sm sm:max-w-md bg-white rounded-[2rem] shadow-2xl border border-zinc-100 p-6 sm:p-7 flex flex-col my-auto relative overflow-hidden animate-zoom-in"
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Floating Card */}
-            <motion.div
-              key="mobile-nav-card"
-              initial={{ opacity: 0, scale: 0.96, y: -8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: -8 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="w-full max-w-sm sm:max-w-md bg-white rounded-[2rem] shadow-2xl border border-zinc-100 p-6 sm:p-7 flex flex-col my-auto relative overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Card Header */}
+            {/* Card Header */}
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-3xl font-bold tracking-tight text-zinc-950">
@@ -403,10 +383,9 @@ export default function Navbar() {
                   </button>
                 </div>
               )}
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
     </>
   );
 }

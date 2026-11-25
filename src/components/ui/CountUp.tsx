@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useInView, animate } from 'framer-motion';
 
 interface CountUpProps {
   to: number;
@@ -23,26 +22,51 @@ export function CountUp({
   className = '',
 }: CountUpProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-40px' });
   const [displayValue, setDisplayValue] = useState<string>(from.toFixed(decimals));
 
   useEffect(() => {
-    if (!isInView) return;
+    const el = ref.current;
+    if (!el) return;
 
-    const controls = animate(from, to, {
-      duration,
-      ease: [0.16, 1, 0.3, 1], // easeOutExpo curve for buttery deceleration
-      onUpdate: (value) => {
-        if (decimals > 0) {
-          setDisplayValue(value.toFixed(decimals));
-        } else {
-          setDisplayValue(Math.round(value).toLocaleString());
+    let startTime: number | null = null;
+    let animationFrameId: number;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          observer.disconnect();
+
+          const step = (timestamp: number) => {
+            if (!startTime) startTime = timestamp;
+            const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
+            // Ease out cubic
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            const current = from + (to - from) * easeOut;
+
+            if (decimals > 0) {
+              setDisplayValue(current.toFixed(decimals));
+            } else {
+              setDisplayValue(Math.round(current).toLocaleString());
+            }
+
+            if (progress < 1) {
+              animationFrameId = requestAnimationFrame(step);
+            }
+          };
+
+          animationFrameId = requestAnimationFrame(step);
         }
       },
-    });
+      { rootMargin: '-40px' }
+    );
 
-    return () => controls.stop();
-  }, [isInView, from, to, duration, decimals]);
+    observer.observe(el);
+
+    return () => {
+      observer.disconnect();
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    };
+  }, [from, to, duration, decimals]);
 
   return (
     <span ref={ref} className={`font-mono tabular-nums ${className}`}>

@@ -1,10 +1,24 @@
 'use client';
 
 import React, { Suspense, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Spinner } from '@/components/ui/Spinner';
 import { useAuth } from '@/hooks/useAuth';
 import { GuestLanding } from '@/components/home/GuestLanding';
-import { StudentDashboard } from '@/components/home/StudentDashboard';
+
+const StudentDashboard = dynamic(
+  () => import('@/components/home/StudentDashboard').then((m) => m.StudentDashboard),
+  {
+    loading: () => (
+      <div className="flex flex-col justify-center items-center min-h-[60vh] gap-3">
+        <h1 className="sr-only">LastBench - Engineering Notes and PYQs</h1>
+        <Spinner size="sm" />
+        <span className="text-xs text-zinc-400 font-mono">Loading your study desk...</span>
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
 interface HomePageClientProps {
   initialHasSession: boolean;

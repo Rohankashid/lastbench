@@ -1,5 +1,3 @@
-import posthog from 'posthog-js';
-
 export interface DocumentAnalyticsData {
   id: string;
   title: string;
@@ -13,13 +11,26 @@ export interface DocumentAnalyticsData {
   [key: string]: unknown;
 }
 
+async function getPostHog() {
+  if (typeof window === 'undefined') return null;
+  const win = window as unknown as { posthog?: typeof import('posthog-js').default };
+  if (win.posthog) return win.posthog;
+  try {
+    const { default: posthog } = await import('posthog-js');
+    return posthog;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Track when a study material or past paper is viewed / previewed.
  */
-export function trackDocumentView(doc: DocumentAnalyticsData) {
+export async function trackDocumentView(doc: DocumentAnalyticsData) {
   if (typeof window === 'undefined') return;
   try {
-    posthog.capture('document_viewed', {
+    const ph = await getPostHog();
+    ph?.capture('document_viewed', {
       doc_id: doc.id,
       title: doc.title,
       subject: doc.subject || 'Unknown Subject',
@@ -38,10 +49,11 @@ export function trackDocumentView(doc: DocumentAnalyticsData) {
 /**
  * Track when a study material or past paper is downloaded.
  */
-export function trackDocumentDownload(doc: DocumentAnalyticsData) {
+export async function trackDocumentDownload(doc: DocumentAnalyticsData) {
   if (typeof window === 'undefined') return;
   try {
-    posthog.capture('document_downloaded', {
+    const ph = await getPostHog();
+    ph?.capture('document_downloaded', {
       doc_id: doc.id,
       title: doc.title,
       subject: doc.subject || 'Unknown Subject',
@@ -60,13 +72,14 @@ export function trackDocumentDownload(doc: DocumentAnalyticsData) {
 /**
  * Identify a user in PostHog when they sign in.
  */
-export function trackIdentifyUser(
+export async function trackIdentifyUser(
   userId: string,
   traits?: { email?: string | null; name?: string | null; [key: string]: unknown }
 ) {
   if (typeof window === 'undefined') return;
   try {
-    posthog.identify(userId, traits || {});
+    const ph = await getPostHog();
+    ph?.identify(userId, traits || {});
   } catch (err) {
     console.debug('Analytics identify error:', err);
   }
@@ -75,10 +88,11 @@ export function trackIdentifyUser(
 /**
  * Reset user identity on sign out.
  */
-export function trackResetUser() {
+export async function trackResetUser() {
   if (typeof window === 'undefined') return;
   try {
-    posthog.reset();
+    const ph = await getPostHog();
+    ph?.reset();
   } catch (err) {
     console.debug('Analytics reset error:', err);
   }
