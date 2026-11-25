@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from '@/hooks/useAuth';
 import { AuthModalProvider } from '@/context/AuthModalContext';
@@ -15,11 +16,13 @@ import { GoogleAdSenseController } from '@/components/ads/GoogleAdSense';
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -73,8 +76,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script
-          async
+        <link rel="ard" href="/.well-known/ard.json" />
+        <link rel="ai-catalog" href="/.well-known/ai-catalog.json" />
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt" />
+        <Script
+          id="adsense-init"
+          strategy="lazyOnload"
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5720306425929294"
           crossOrigin="anonymous"
         />

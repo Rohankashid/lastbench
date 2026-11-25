@@ -42,6 +42,10 @@ const UniversityLogo = ({ uni }: { uni: { name: string, src: string, invert?: bo
         <img 
           src={uni.src}
           alt={uni.name} 
+          width={96}
+          height={96}
+          loading="lazy"
+          decoding="async"
           style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           className={uni.invert ? 'invert' : ''}
           onError={() => setError(true)}
@@ -68,7 +72,7 @@ function FoundersClubBanner({ onSignUp }: { onSignUp: () => void }) {
         }
       } catch {}
     }
-    return null;
+    return 72;
   });
   const [expanded, setExpanded] = useState(false);
 
@@ -157,6 +161,14 @@ function FoundersClubBanner({ onSignUp }: { onSignUp: () => void }) {
   );
 }
 
+const DEFAULT_TRENDING: { label: string; query: string }[] = [
+  { label: 'Basic Electrical Engineering', query: 'Basic Electrical Engineering' },
+  { label: 'Computer Organisation and Architecture', query: 'Computer Organisation and Architecture' },
+  { label: 'Engineering Chemistry', query: 'Engineering Chemistry' },
+  { label: 'Engineering Mathematics I', query: 'Engineering Mathematics I' },
+  { label: 'Engineering Physics', query: 'Engineering Physics' },
+];
+
 export function GuestLanding() {
   const router = useRouter();
   const { openAuthModal } = useAuthModal();
@@ -188,7 +200,7 @@ export function GuestLanding() {
     router.push(`/notes?search=${encodeURIComponent(searchQuery.trim())}`);
   };
 
-  const [trendingTopics, setTrendingTopics] = useState<{ label: string; query: string }[]>([]);
+  const [trendingTopics, setTrendingTopics] = useState<{ label: string; query: string }[]>(DEFAULT_TRENDING);
 
   useEffect(() => {
     const fetchTrending = async () => {
@@ -212,15 +224,8 @@ export function GuestLanding() {
           .slice(0, 5)
           .map(([subj]) => ({ label: subj, query: subj }));
         
-        // Fallback static trending if none loaded
-        if (dynamicTrending.length === 0) {
-            setTrendingTopics([
-                { label: 'Data Structures', query: 'Data Structures' },
-                { label: 'OS', query: 'OS' },
-                { label: 'Mathematics III', query: 'Mathematics III' },
-            ]);
-        } else {
-            setTrendingTopics(dynamicTrending);
+        if (dynamicTrending.length > 0) {
+          setTrendingTopics(dynamicTrending);
         }
       } catch (err) {
         console.error('Failed to load trending subjects:', err);
@@ -309,7 +314,7 @@ export function GuestLanding() {
       {/* Hero Section */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 pb-20">
         <div className="text-center max-w-3xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <div className="transition-opacity duration-300">
             <FoundersClubBanner onSignUp={() => openAuthModal('signup')} />
             
             <h1 className="text-4xl sm:text-6xl font-bold text-zinc-900 tracking-tight mb-6 leading-[1.15]">
@@ -323,8 +328,17 @@ export function GuestLanding() {
               Access comprehensive lecture notes, verified past year question papers, and syllabus guides across top universities. Free and accessible anywhere.
             </p>
 
-            {/* Omnibox Search */}
-            <Form action="/notes" className="relative max-w-2xl mx-auto group mb-6">
+            {/* Omnibox Search with WebMCP Declarative Tool Support */}
+            <Form 
+              action="/notes" 
+              className="relative max-w-2xl mx-auto group mb-6"
+              {...({
+                toolname: "search_materials",
+                tooldescription: "Search university lecture notes, past year question papers (PYQs), and syllabus guides across engineering branches and universities"
+              } as Record<string, string>)}
+              data-mcp-tool="search_materials"
+              data-mcp-description="Search university lecture notes, past year question papers (PYQs), and syllabus guides across engineering branches and universities"
+            >
               <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                 <Search className="w-5 h-5 text-zinc-400 group-focus-within:text-zinc-900 transition-colors" />
               </div>
@@ -336,6 +350,8 @@ export function GuestLanding() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for subjects, topics, or course codes..."
                 className="w-full pl-14 pr-32 py-4 sm:py-5 bg-white border-2 border-zinc-200 rounded-2xl text-base text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-4 focus:ring-zinc-900/5 transition-all shadow-sm"
+                data-mcp-input="q"
+                aria-label="Search study materials"
               />
               <div className="absolute inset-y-2 right-2 flex items-center gap-2">
                 <span className="hidden sm:inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-mono text-zinc-400 bg-zinc-100 rounded-md border border-zinc-200 select-none">
@@ -352,26 +368,26 @@ export function GuestLanding() {
 
             {/* Trending */}
             {trendingTopics.length > 0 && (
-              <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-zinc-500">
-                <TrendingUp className="w-4 h-4 mr-1" />
-                <span>Trending:</span>
+              <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-zinc-500 min-h-[36px]">
+                <TrendingUp className="w-4 h-4 mr-1 shrink-0" />
+                <span className="shrink-0 font-medium">Trending:</span>
                 {trendingTopics.map((topic) => (
                   <Link
                     key={topic.label}
                     href={`/notes?q=${encodeURIComponent(topic.query)}`}
-                    className="px-3 py-1 rounded-md bg-zinc-50 hover:bg-zinc-100 text-zinc-700 transition-colors"
+                    className="px-3 py-1 rounded-md bg-zinc-50 hover:bg-zinc-100 text-zinc-700 transition-colors text-xs sm:text-sm font-medium"
                   >
                     {topic.label}
                   </Link>
                 ))}
               </div>
             )}
-          </motion.div>
+          </div>
         </div>
       </div>
 
       {/* University Marquee */}
-      <div className="border-y border-zinc-200/70 bg-zinc-50/60 py-8 overflow-hidden relative">
+      <div className="border-y border-zinc-200/70 bg-zinc-50/60 py-8 overflow-hidden relative min-h-[160px] sm:min-h-[192px]">
         <div className="text-center mb-4">
           <p className="text-[11px] font-mono uppercase tracking-widest text-zinc-400 font-semibold">
             Serving engineering students across 25+ Maharashtra technical universities

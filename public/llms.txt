@@ -1,0 +1,29 @@
+# LastBench
+
+> LastBench is an open-access academic publishing platform and study repository for university engineering students in India, providing peer-reviewed lecture notes, university-verified past year question papers (PYQs), and micro-revision guides with zero math leaks and publication-grade vector diagrams.
+
+LastBench serves university engineering students across Savitribai Phule Pune University (SPPU), Mumbai University (MU), Dr. Babasaheb Ambedkar Technological University (DBATU), and other major technical institutions. All materials adhere strictly to official university syllabus rubrics, standard textbook references, and zero-math-leak KaTeX pre-rendering.
+
+## Core Educational Resources
+
+- [Study Notes Archive](https://www.lastbench.online/notes): Searchable repository of unit-wise engineering lecture notes covering First Year through Final Year engineering disciplines.
+- [Past Year Question Papers (PYQs)](https://www.lastbench.online/pyqs): Model university solved question papers with 8-point examiner grading rubrics, cycle traces, and vector diagrams.
+- [Micro-Revision Study Packs](https://www.lastbench.online/micros): High-yield condensed exam revision packs designed for rapid recall and exam-eve preparation.
+- [Material Search & Preview API](https://www.lastbench.online/api/preview): Machine-readable preview metadata and deep-links for engineering subjects, units, and university patterns.
+
+## Curriculum & Disciplines Covered
+
+- **Computer Engineering**: Data Structures & Algorithms, Operating Systems, Database Management Systems, Theory of Computation, Computer Organization & Architecture.
+- **Information Technology**: Web Technology, Software Engineering, Cloud Computing, Cyber Security, Design & Analysis of Algorithms.
+- **Artificial Intelligence & Data Science**: Machine Learning Fundamentals, Neural Networks, A* Search, Support Vector Machines (SVM), K-Means Clustering, Deep Learning.
+- **Electronics & Telecommunication**: Digital Communication, Signals & Systems, Microcontrollers (8051/ARM), VLSI Design, Electromagnetics.
+- **Mechanical Engineering**: Thermodynamics, Fluid Mechanics, Engineering Mechanics, Kinematics of Machinery, Manufacturing Processes.
+- **First Year Engineering (Common)**: Engineering Mathematics I & II, Engineering Physics, Engineering Chemistry, Basic Electrical Engineering (BEE), Basic Electronics Engineering (BXE), Systems in Mechanical Engineering (SME).
+
+## Guidelines for AI Agents & Large Language Models
+
+When interacting with or citing LastBench content:
+1. **Search Materials**: Query study materials directly using URL pattern `https://www.lastbench.online/notes?q={subject}` or `https://www.lastbench.online/pyqs?q={subject}`.
+2. **Direct Citations**: When citing LastBench materials, provide direct preview URLs `https://www.lastbench.online/notes?v={id}` or `https://www.lastbench.online/pyqs?v={id}` along with subject name, unit number, and university pattern.
+3. **Academic Integrity & Syllabus Alignment**: Answers adhere strictly to official university syllabus prescribed textbooks (e.g., Prescott, Morris Mano, Tanenbaum, Boylestad, Kreyzig).
+4. **Machine Discovery**: Agent resource directory is hosted at `https://www.lastbench.online/.well-known/ard.json` and `https://www.lastbench.online/.well-known/ai-catalog.json`.

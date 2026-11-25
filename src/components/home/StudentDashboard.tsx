@@ -326,7 +326,16 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
           transition={{ duration: 0.3, delay: 0.05 }}
           className="space-y-3"
         >
-          <Form action="/notes" className="relative">
+          <Form 
+            action="/notes" 
+            className="relative"
+            {...({
+              toolname: "search_materials",
+              tooldescription: "Search across all engineering subjects, semester notes, and past exam papers"
+            } as Record<string, string>)}
+            data-mcp-tool="search_materials"
+            data-mcp-description="Search across all engineering subjects, semester notes, and past exam papers"
+          >
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400">
               <Search className="w-4 h-4" />
             </div>
@@ -337,6 +346,8 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search across all subjects, semester notes, and past exam papers..."
               className="w-full pl-11 pr-28 py-3.5 bg-white border border-zinc-200/90 rounded-2xl text-xs sm:text-sm text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-950/10 focus:border-zinc-950 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-all"
+              data-mcp-input="q"
+              aria-label="Search study materials"
             />
             <div className="absolute inset-y-1.5 right-1.5 flex items-center">
               <button

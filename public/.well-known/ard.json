@@ -1,0 +1,46 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "LastBench",
+    "identifier": "urn:air:lastbench.online:host:root"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:lastbench.online:service:search",
+      "displayName": "LastBench Engineering Search",
+      "type": "application/mcp-server-card+json",
+      "url": "https://www.lastbench.online/api/preview",
+      "representativeQueries": [
+        "Find SPPU SE Engineering Mathematics PYQ",
+        "Computer Organization and Architecture notes",
+        "Operating Systems solved question papers",
+        "Data Structures and Algorithms university questions",
+        "Basic Electrical Engineering unit question bank"
+      ]
+    },
+    {
+      "identifier": "urn:air:lastbench.online:resource:notes",
+      "displayName": "LastBench Engineering Notes",
+      "type": "text/html",
+      "url": "https://www.lastbench.online/notes",
+      "representativeQueries": [
+        "Engineering Chemistry lecture notes",
+        "Basic Electronics Engineering notes",
+        "Kinematics of Machinery study materials",
+        "Microprocessor 8086 pinout and architecture"
+      ]
+    },
+    {
+      "identifier": "urn:air:lastbench.online:resource:pyqs",
+      "displayName": "LastBench Solved PYQ Question Papers",
+      "type": "text/html",
+      "url": "https://www.lastbench.online/pyqs",
+      "representativeQueries": [
+        "SPPU In-Sem and End-Sem solved papers",
+        "AI ML Fundamentals past year question paper",
+        "Computer Architecture solved question bank",
+        "Engineering Mathematics 1 model answers"
+      ]
+    }
+  ]
+}

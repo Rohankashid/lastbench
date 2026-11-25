@@ -30,7 +30,7 @@ export function InfiniteMarquee({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full overflow-hidden select-none ${className}`}
+      className={`relative w-full overflow-hidden select-none min-h-[96px] sm:min-h-[128px] ${className}`}
       style={{
         maskImage: fade
           ? 'linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)'
