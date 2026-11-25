@@ -23,6 +23,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.lastbench.online"),
   title: {
     default: "LastBench | Engineering Notes & PYQs Community",
     template: "%s | LastBench"
@@ -61,9 +62,6 @@ export const metadata: Metadata = {
       { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
     ],
     shortcut: "/favicon.ico",
-  },
-  alternates: {
-    canonical: "https://www.lastbench.online",
   },
 };
 

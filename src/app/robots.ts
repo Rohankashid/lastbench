@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
+        allow: ['/', '/api/preview'],
         disallow: ['/api/', '/admin/'],
       },
       {
@@ -14,7 +14,8 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'Googlebot',
-        allow: '/',
+        allow: ['/', '/api/preview'],
+        disallow: ['/api/', '/admin/'],
       },
     ],
     sitemap: 'https://www.lastbench.online/sitemap.xml',

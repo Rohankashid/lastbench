@@ -2,6 +2,10 @@
   "name": "lastbench",
   "version": "0.1.0",
   "private": true,
+  "browserslist": [
+    "defaults",
+    "not dead"
+  ],
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

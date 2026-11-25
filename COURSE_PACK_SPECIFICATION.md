@@ -377,3 +377,17 @@ To minimize LLM token overhead by **70–80%** when authoring new subjects:
    - `advantages_tradeoffs`: 6–8 rows $\times$ 3 columns table
    - `practice_problem` & `practice_answer`: 40–50 words + 2 lines of verified math
    - This calibration guarantees a vertical fill of 1.60–1.75 pages on the initial generation, eliminating trial-and-error rebuild cycles.
+
+---
+
+## 3. SPPU University Examination & Rechecking Standard (Mandatory)
+
+1. **Maximal Depth & No Short Answers**:
+   - Provide exhaustive, publication-grade academic answers for all university question papers.
+   - Target **1.50 to 2.00 printed pages per model answer**.
+   - Let students condense or extract points if needed, but the published paper must provide the full, comprehensive derivation, state table, circuit analysis, and comparative matrix.
+
+2. **Official SPPU Syllabus Reference Backing for Rechecking**:
+   - Every model answer must explicitly cite the official SPPU Board of Studies prescribed textbook (Author, Title, Edition).
+   - Use standard university notation and definitions matching the syllabus references (e.g. Ogata / Nagrath & Gopal, Morris Mano / R.P. Jain, Hamacher / Stallings / Douglas Hall, Gupta & Kapoor / Walpole, P.K. Nag / Cengel, M.S. Shetty / Neville).
+   - The depth and rigor must be legally defensible so that any student can use our published answer as evidence when applying for university verification or rechecking.

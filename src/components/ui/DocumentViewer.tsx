@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, Download, Share2, Check, Flag, Lock } from 'lucide-react';
+import { X, ExternalLink, Download, Share2, Check, Flag, Lock, Scissors } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/context/AuthModalContext';
@@ -221,6 +221,15 @@ export function DocumentViewer({
                       <ExternalLink className="w-3.5 h-3.5 text-zinc-500" />
                       <span>Open in Tab</span>
                     </a>
+
+                    <Link
+                      href={`/micros?src=${encodeURIComponent(fileUrl)}&title=${encodeURIComponent(title || 'Notes')}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50/80 text-amber-900 hover:bg-amber-100 text-xs font-medium transition-colors shadow-xs cursor-pointer"
+                      title="Convert to 4-in-1 or 8-in-1 Micro Pocket Sheet"
+                    >
+                      <Scissors className="w-3.5 h-3.5 text-amber-700" />
+                      <span>Export Micro (4-up)</span>
+                    </Link>
 
                     <a
                       href={user ? `/api/download?url=${encodeURIComponent(fileUrl)}&filename=${encodeURIComponent((title || 'document') + '.pdf')}` : '#'}

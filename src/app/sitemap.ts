@@ -126,7 +126,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .from('materials')
         .select('id, category, uploaded_at')
         .order('uploaded_at', { ascending: false })
-        .limit(1000);
+        .limit(50000);
 
       if (!error && Array.isArray(data)) {
         const dynamicRoutes: MetadataRoute.Sitemap = data.map((item) => ({

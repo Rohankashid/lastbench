@@ -71,6 +71,7 @@ export default function Navbar() {
     { name: 'Home', path: '/' },
     { name: 'Notes', path: '/notes' },
     { name: 'PYQs', path: '/pyqs' },
+    { name: 'Micros', path: '/micros', badge: 'NEW' },
     ...(user ? [{ name: 'Upload', path: '/upload' }] : []),
   ];
 
@@ -113,7 +114,14 @@ export default function Navbar() {
                         transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                       />
                     )}
-                    <span className="relative z-10">{link.name}</span>
+                    <span className="relative z-10 flex items-center gap-1.5">
+                      {link.name}
+                      {link.badge && (
+                        <span className="px-1.5 py-0.5 rounded-full text-[8.5px] font-mono font-semibold bg-zinc-950 text-white">
+                          {link.badge}
+                        </span>
+                      )}
+                    </span>
                   </Link>
                 );
               })}
@@ -295,6 +303,7 @@ export default function Navbar() {
                 {[
                   { name: 'Notes', path: '/notes' },
                   { name: 'PYQs', path: '/pyqs' },
+                  { name: 'Micros (4-in-1)', path: '/micros' },
                   ...(user ? [{ name: 'Upload', path: '/upload' }] : []),
                   { name: 'Home', path: '/' },
                 ].map((item) => {

@@ -10,32 +10,39 @@ export async function generateMetadata(
   props: Props
 ): Promise<Metadata> {
   const searchParams = await props.searchParams;
-  const v = searchParams.v;
+  const v = typeof searchParams.v === 'string' ? searchParams.v.trim() : undefined;
   const q = typeof searchParams.q === 'string' ? searchParams.q.trim() : undefined;
 
-  if (!v || typeof v !== 'string' || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  if (!v || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
     if (q) {
       const qTitle = `${q} Notes & Exam Question Bank | LastBench`;
-      const qDesc = `Download verified university study notes, course packs, and PYQ solutions for ${q} on LastBench. Free inline PDF preview, zero paywalls.`;
+      const qDesc = `Download verified university study notes, course packs, and solutions for ${q} on LastBench. Free inline PDF preview, zero paywalls.`;
       return {
         title: qTitle,
         description: qDesc,
+        alternates: {
+          canonical: `/notes?q=${encodeURIComponent(q)}`,
+        },
         openGraph: {
           title: qTitle,
           description: qDesc,
+          url: `https://www.lastbench.online/notes?q=${encodeURIComponent(q)}`,
         },
       };
     }
     return {
       title: 'Study Notes Archive - LastBench',
       description: 'Explore comprehensive engineering study notes, lecture digests, and exam guides across universities and branches.',
+      alternates: {
+        canonical: '/notes',
+      },
     };
   }
 
   try {
     const { data } = await supabase
       .from('materials')
-      .select('title, name, subject, university')
+      .select('id, title, name, subject, university, branch, semester, year')
       .eq('id', v)
       .single();
 
@@ -45,15 +52,26 @@ export async function generateMetadata(
       const subject = data.subject || '';
       
       const fullTitle = `${title} ${subject ? '- ' + subject : ''} | LastBench`;
-      const description = `Download ${title} ${university ? 'for ' + university : ''} completely free on LastBench.`;
+      const description = `Download ${title} ${university ? 'for ' + university : ''} completely free on LastBench. Access comprehensive engineering lecture digests and verified notes.`;
+      const docCanonical = `/notes?v=${encodeURIComponent(v)}`;
 
       return {
         title: fullTitle,
         description: description,
+        alternates: {
+          canonical: docCanonical,
+        },
         openGraph: {
           title: fullTitle,
           description: description,
-        }
+          url: `https://www.lastbench.online${docCanonical}`,
+          type: 'article',
+        },
+        twitter: {
+          card: 'summary_large_image',
+          title: fullTitle,
+          description: description,
+        },
       };
     }
   } catch (e) {
@@ -62,14 +80,49 @@ export async function generateMetadata(
 
   return {
     title: 'Study Note - LastBench',
+    alternates: {
+      canonical: `/notes?v=${encodeURIComponent(v)}`,
+    },
   };
 }
 
-export default async function Page() {
+export default async function Page(props: Props) {
+  const searchParams = await props.searchParams;
+  const v = typeof searchParams.v === 'string' ? searchParams.v.trim() : undefined;
+
   let initialNotes: Note[] = [];
+  let targetedDoc: Note | null = null;
 
   try {
     if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      // 1. If a specific doc is requested via ?v=<id>, fetch it server-side first
+      if (v) {
+        const { data: docData } = await supabase
+          .from('materials')
+          .select('id, title, name, category, subject, university, university_short, branch, semester, year, download_url, file_url, uploaded_by, uploaded_at')
+          .eq('id', v)
+          .single();
+
+        if (docData) {
+          targetedDoc = {
+            id: docData.id,
+            title: docData.title || docData.name || '',
+            name: docData.name || docData.title || '',
+            description: '',
+            subject: docData.subject || '',
+            semester: docData.semester || '',
+            university: docData.university || '',
+            branch: docData.branch || '',
+            year: docData.year || '',
+            downloadUrl: docData.download_url || docData.file_url || '',
+            fileUrl: docData.file_url || docData.download_url || '',
+            uploadedBy: docData.uploaded_by || '',
+            uploadedAt: docData.uploaded_at || '',
+          };
+        }
+      }
+
+      // 2. Pre-fetch the latest 20 notes for instant SSR feed
       const { data, error } = await supabase
         .from('materials')
         .select('id, title, name, category, subject, university, university_short, branch, semester, year, download_url, file_url, uploaded_by, uploaded_at')
@@ -94,10 +147,57 @@ export default async function Page() {
           uploadedAt: row.uploaded_at || '',
         }));
       }
+
+      // If targetedDoc exists and isn't already in initialNotes, prepend it
+      if (targetedDoc && !initialNotes.some(n => n.id === targetedDoc!.id)) {
+        initialNotes = [targetedDoc, ...initialNotes];
+      }
     }
   } catch (err) {
     console.error('Failed to pre-fetch notes on server:', err);
   }
 
-  return <NotesClient initialNotes={initialNotes} />;
+  // Generate structured JSON-LD for Search Engines
+  const jsonLd = targetedDoc ? {
+    '@context': 'https://schema.org',
+    '@type': 'LearningResource',
+    name: targetedDoc.title || targetedDoc.name,
+    description: `Engineering study notes and curriculum lecture material for ${targetedDoc.subject || targetedDoc.title} at ${targetedDoc.university || 'SPPU'}.`,
+    educationalLevel: targetedDoc.year || 'Higher Education / B.Tech Engineering',
+    about: targetedDoc.subject,
+    educationalUse: 'Lecture Notes and Exam Revision',
+    inLanguage: 'en',
+    provider: {
+      '@type': 'Organization',
+      name: 'LastBench',
+      url: 'https://www.lastbench.online',
+    },
+    encodingFormat: 'application/pdf',
+    url: `https://www.lastbench.online/notes?v=${targetedDoc.id}`,
+    datePublished: targetedDoc.uploadedAt || undefined,
+  } : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      {/* Crawlable server-rendered semantic fallback for search bots */}
+      {targetedDoc && (
+        <article className="sr-only" aria-label="Study Note Details">
+          <h1>{targetedDoc.title || targetedDoc.name}</h1>
+          <p>
+            Subject: {targetedDoc.subject} | University: {targetedDoc.university} | Branch: {targetedDoc.branch} | Semester: {targetedDoc.semester}
+          </p>
+          <a href={targetedDoc.downloadUrl || targetedDoc.fileUrl} download>
+            Download PDF: {targetedDoc.title || targetedDoc.name}
+          </a>
+        </article>
+      )}
+      <NotesClient initialNotes={initialNotes} />
+    </>
+  );
 }

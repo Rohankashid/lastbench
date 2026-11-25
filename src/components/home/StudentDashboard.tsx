@@ -28,7 +28,8 @@ import {
   Flame,
   ArrowUpRight,
   School,
-  Bookmark
+  Bookmark,
+  Scissors
 } from 'lucide-react';
 
 interface Material {
@@ -236,7 +237,14 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
             </div>
 
             {/* Action Controls */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Link
+                href="/micros"
+                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50/80 text-amber-950 text-xs font-medium hover:bg-amber-100 transition-colors shadow-xs"
+              >
+                <Scissors className="w-3.5 h-3.5 text-amber-700" />
+                <span>Micro Xerox (4-up)</span>
+              </Link>
               <Link
                 href="/upload"
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-950 text-white text-xs font-medium hover:bg-zinc-800 transition-colors shadow-sm"
