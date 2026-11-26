@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from '@/hooks/useAuth';
 import { AuthModalProvider } from '@/context/AuthModalContext';
@@ -106,12 +105,6 @@ export default function RootLayout({
               </AuthProvider>
             </Providers>
             <Footer />
-            <Script
-              id="adsense-init"
-              strategy="lazyOnload"
-              src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5720306425929294"
-              crossOrigin="anonymous"
-            />
           </div>
         </div>
       </body>

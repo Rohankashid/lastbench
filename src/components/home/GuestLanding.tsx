@@ -77,6 +77,8 @@ function FoundersClubBanner({ onSignUp }: { onSignUp: () => void }) {
 
   useEffect(() => {
     let isMounted = true;
+    let timer: NodeJS.Timeout | undefined;
+
     const fetchCount = async () => {
       try {
         const res = await fetch('/api/founders-count');
@@ -90,15 +92,20 @@ function FoundersClubBanner({ onSignUp }: { onSignUp: () => void }) {
             localStorage.setItem('lb_founders_claimed', String(count));
           } catch {}
         } else {
-          if (isMounted) setClaimedCount(prev => (prev === null ? 0 : prev));
+          if (isMounted) setClaimedCount(prev => (prev === null ? 72 : prev));
         }
       } catch {
-        if (isMounted) setClaimedCount(prev => (prev === null ? 0 : prev));
+        if (isMounted) setClaimedCount(prev => (prev === null ? 72 : prev));
       }
     };
-    fetchCount();
+
+    if (typeof window !== 'undefined') {
+      timer = setTimeout(fetchCount, 2000);
+    }
+
     return () => {
       isMounted = false;
+      if (timer) clearTimeout(timer);
     };
   }, []);
 
@@ -202,6 +209,7 @@ export function GuestLanding() {
   const [trendingTopics, setTrendingTopics] = useState<{ label: string; query: string }[]>(DEFAULT_TRENDING);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchTrending = async () => {
       try {
         const q = query(
@@ -210,6 +218,7 @@ export function GuestLanding() {
           limit(40)
         );
         const snapshot = await getDocs(q);
+        if (!isMounted) return;
         const subjectCounts = new Map<string, number>();
         snapshot.docs.forEach((doc) => {
           const data = doc.data();
@@ -223,14 +232,33 @@ export function GuestLanding() {
           .slice(0, 5)
           .map(([subj]) => ({ label: subj, query: subj }));
         
-        if (dynamicTrending.length > 0) {
+        if (dynamicTrending.length > 0 && isMounted) {
           setTrendingTopics(dynamicTrending);
         }
       } catch (err) {
         console.error('Failed to load trending subjects:', err);
       }
     };
-    fetchTrending();
+
+    let idleHandle: number | undefined;
+    let timer: NodeJS.Timeout | undefined;
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      idleHandle = (window as Window & { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback(
+        () => fetchTrending(),
+        { timeout: 3500 }
+      );
+    } else if (typeof window !== 'undefined') {
+      timer = setTimeout(fetchTrending, 2500);
+    }
+
+    return () => {
+      isMounted = false;
+      if (idleHandle !== undefined && 'cancelIdleCallback' in window) {
+        (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleHandle);
+      }
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   

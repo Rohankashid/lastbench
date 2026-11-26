@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface CountUpProps {
   to: number;
@@ -22,7 +22,7 @@ export function CountUp({
   className = '',
 }: CountUpProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [displayValue, setDisplayValue] = useState<string>(from.toFixed(decimals));
+  const formattedTarget = decimals > 0 ? to.toFixed(decimals) : Math.round(to).toLocaleString();
 
   useEffect(() => {
     const el = ref.current;
@@ -42,12 +42,9 @@ export function CountUp({
             // Ease out cubic
             const easeOut = 1 - Math.pow(1 - progress, 3);
             const current = from + (to - from) * easeOut;
+            const formatted = decimals > 0 ? current.toFixed(decimals) : Math.round(current).toLocaleString();
 
-            if (decimals > 0) {
-              setDisplayValue(current.toFixed(decimals));
-            } else {
-              setDisplayValue(Math.round(current).toLocaleString());
-            }
+            el.textContent = `${prefix}${formatted}${suffix}`;
 
             if (progress < 1) {
               animationFrameId = requestAnimationFrame(step);
@@ -66,13 +63,11 @@ export function CountUp({
       observer.disconnect();
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
-  }, [from, to, duration, decimals]);
+  }, [from, to, duration, decimals, prefix, suffix]);
 
   return (
     <span ref={ref} className={`font-mono tabular-nums ${className}`}>
-      {prefix}
-      {displayValue}
-      {suffix}
+      {prefix}{formattedTarget}{suffix}
     </span>
   );
 }
