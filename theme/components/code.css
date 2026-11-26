@@ -17,6 +17,10 @@ pre.code-block {
 pre.code-block code {
   font-family: inherit;
   font-size: inherit;
+  color: inherit;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
 }
 
 code {

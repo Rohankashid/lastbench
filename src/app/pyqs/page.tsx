@@ -189,7 +189,7 @@ export default async function Page(props: Props) {
         />
       )}
       {/* Crawlable server-rendered semantic fallback for search bots */}
-      {targetedDoc && (
+      {targetedDoc ? (
         <article className="sr-only" aria-label="Solved Question Paper Details">
           <h1>{targetedDoc.title || targetedDoc.name}</h1>
           <p>
@@ -199,6 +199,26 @@ export default async function Page(props: Props) {
             Download Solved PDF: {targetedDoc.title || targetedDoc.name}
           </a>
         </article>
+      ) : (
+        initialPYQs.length > 0 && (
+          <nav className="sr-only" aria-label="Latest Solved Question Papers">
+            <h2>Latest Solved Engineering Question Papers (PYQs)</h2>
+            <ul>
+              {initialPYQs.map((item) => (
+                <li key={item.id}>
+                  <a href={`/pyqs?v=${item.id}`}>
+                    {item.title || item.name} ({item.subject} - {item.university})
+                  </a>
+                  {(item.downloadUrl || item.fileUrl) && (
+                    <a href={item.downloadUrl || item.fileUrl} download>
+                      Download PDF: {item.title || item.name}
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )
       )}
       <PYQsClient initialPYQs={initialPYQs} />
     </>

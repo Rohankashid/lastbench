@@ -186,7 +186,7 @@ export default async function Page(props: Props) {
         />
       )}
       {/* Crawlable server-rendered semantic fallback for search bots */}
-      {targetedDoc && (
+      {targetedDoc ? (
         <article className="sr-only" aria-label="Study Note Details">
           <h1>{targetedDoc.title || targetedDoc.name}</h1>
           <p>
@@ -196,6 +196,26 @@ export default async function Page(props: Props) {
             Download PDF: {targetedDoc.title || targetedDoc.name}
           </a>
         </article>
+      ) : (
+        initialNotes.length > 0 && (
+          <nav className="sr-only" aria-label="Latest Study Notes">
+            <h2>Latest Engineering Course Packs and Study Notes</h2>
+            <ul>
+              {initialNotes.map((item) => (
+                <li key={item.id}>
+                  <a href={`/notes?v=${item.id}`}>
+                    {item.title || item.name} ({item.subject} - {item.university})
+                  </a>
+                  {(item.downloadUrl || item.fileUrl) && (
+                    <a href={item.downloadUrl || item.fileUrl} download>
+                      Download PDF: {item.title || item.name}
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )
       )}
       <NotesClient initialNotes={initialNotes} />
     </>
