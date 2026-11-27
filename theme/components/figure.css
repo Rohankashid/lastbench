@@ -12,24 +12,33 @@
   height: auto;
 }
 
-/* Monoline SVG diagram styling */
-.figure-block svg line,
-.figure-block svg rect,
-.figure-block svg path,
-.figure-block svg circle,
-.figure-block svg polygon {
+/* Fallback: open paths and lines default to no fill so unclosed paths never create black artifacts */
+.figure-block svg path:not([fill]) {
+  fill: none;
+}
+
+.figure-block svg line:not([fill]) {
+  fill: none;
+}
+
+/* Explicit monoline diagram styling (only when .figure-monoline is added) */
+.figure-block.figure-monoline svg line,
+.figure-block.figure-monoline svg rect,
+.figure-block.figure-monoline svg path,
+.figure-block.figure-monoline svg circle,
+.figure-block.figure-monoline svg polygon {
   stroke: var(--ink);
   stroke-width: 1.25;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.figure-block svg path,
-.figure-block svg line {
+.figure-block.figure-monoline svg path,
+.figure-block.figure-monoline svg line {
   fill: none;
 }
 
-.figure-block svg text {
+.figure-block.figure-monoline svg text {
   font-family: var(--font-mono);
   font-size: 7.5pt;
   fill: var(--ink);
