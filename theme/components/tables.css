@@ -81,7 +81,12 @@ table.data-table th {
   vertical-align: bottom;
 }
 
-table.data-table th:first-child,
+table.data-table th:first-child {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
 table.data-table td:first-child {
   text-align: center;
   font-variant-numeric: tabular-nums;
